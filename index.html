@@ -77,6 +77,36 @@
             color: #ef4444;
         }
 
+        .social-links {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .facebook-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #1877f2;
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+        }
+
+        .facebook-btn:hover {
+            background: #165ed4;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(24, 119, 242, 0.4);
+        }
+
+        .facebook-icon {
+            font-size: 1.2rem;
+        }
+
         .hero {
             background: #1a1a2e;
             padding: 0;
@@ -505,6 +535,10 @@
                 justify-content: space-between;
             }
 
+            .social-links {
+                display: none;
+            }
+
             .header {
                 position: relative;
             }
@@ -533,6 +567,12 @@
                     <li><a href="#contact" onclick="closeMenu()">Contact</a></li>
                 </ul>
             </nav>
+            <div class="social-links">
+                <a href="https://www.facebook.com/p/Riverview-Fire-Department-100064782363910/" target="_blank" rel="noopener noreferrer" class="facebook-btn" aria-label="Visit our Facebook page">
+                    <span class="facebook-icon">f</span>
+                    <span>Facebook</span>
+                </a>
+            </div>
         </div>
     </header>
 
