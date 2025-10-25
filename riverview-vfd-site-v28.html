@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Riverview Volunteer Fire Department | York County, SC</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            position: relative;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            padding: 1rem 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            transition: color 0.3s;
+            font-weight: 500;
+        }
+
+        nav a:hover {
+            color: #ef4444;
+        }
+
+        .hero {
+            background: #1a1a2e;
+            padding: 0;
+            text-align: center;
+            color: white;
+            margin-top: 70px;
+            position: relative;
+            overflow: hidden;
+            min-height: 600px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .hero-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center bottom;
+            z-index: 0;
+        }
+
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.6));
+            z-index: 1;
+        }
+
+
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            padding: 4rem 2rem;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .hero p {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .emergency-banner {
+            background: #dc2626;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem auto;
+            max-width: 400px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(220, 38, 38, 0.4);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .emergency-banner h2 {
+            font-size: 1.3rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .emergency-number {
+            font-size: 2.2rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .section {
+            margin-bottom: 4rem;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            color: #1a1a2e;
+            margin-bottom: 2rem;
+            text-align: center;
+            position: relative;
+            padding-bottom: 1rem;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(90deg, #dc2626, #991b1b);
+            border-radius: 2px;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            border-top: 4px solid #dc2626;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 8px 30px rgba(220, 38, 38, 0.2);
+        }
+
+        .card-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #1a1a2e;
+        }
+
+        .cta-section {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            padding: 4rem 2rem;
+            text-align: center;
+            border-radius: 10px;
+            margin: 4rem 0;
+        }
+
+        .cta-section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: #dc2626;
+            color: white;
+            padding: 1rem 3rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-top: 1.5rem;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+        }
+
+        .cta-button:hover {
+            background: #991b1b;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(220, 38, 38, 0.6);
+        }
+
+        .about-content {
+            background: white;
+            padding: 3rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            line-height: 1.8;
+            font-size: 1.1rem;
+        }
+
+        .contact-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .contact-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .contact-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            margin: 0 auto 1rem;
+        }
+
+        .stations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 3rem;
+            margin-top: 3rem;
+        }
+
+        .station-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .station-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(220, 38, 38, 0.2);
+        }
+
+        .station-photo-placeholder {
+            width: 100%;
+            height: 250px;
+            background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: #6b7280;
+        }
+
+        .station-info {
+            padding: 2rem;
+        }
+
+        .station-info h3 {
+            font-size: 2rem;
+            color: #1a1a2e;
+            margin-bottom: 1rem;
+            border-bottom: 3px solid #dc2626;
+            padding-bottom: 0.5rem;
+        }
+
+        .station-address {
+            font-size: 1.1rem;
+            margin: 1rem 0;
+            color: #4b5563;
+            line-height: 1.6;
+        }
+
+        .station-address a {
+            color: #4b5563;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .station-address a:hover {
+            color: #dc2626;
+            text-decoration: underline;
+        }
+
+        .station-phone {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-top: 1rem;
+        }
+
+        .station-phone a {
+            color: #dc2626;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .station-phone a:hover {
+            color: #991b1b;
+        }
+
+        .apparatus-container {
+            margin-top: 3rem;
+        }
+
+        .apparatus-station-group {
+            margin-bottom: 4rem;
+        }
+
+        .apparatus-station-title {
+            font-size: 2rem;
+            color: #1a1a2e;
+            margin-bottom: 2rem;
+            padding-left: 1rem;
+            border-left: 5px solid #dc2626;
+        }
+
+        .apparatus-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .apparatus-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .apparatus-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(220, 38, 38, 0.2);
+        }
+
+        .apparatus-photo-placeholder {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: #6b7280;
+        }
+
+        .apparatus-card h4 {
+            font-size: 1.5rem;
+            color: #1a1a2e;
+            padding: 1.5rem;
+            text-align: center;
+            background: #f9fafb;
+        }
+
+        footer {
+            background: #1a1a2e;
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 4rem;
+        }
+
+        .mobile-menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.8rem;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .hero p {
+                font-size: 1.2rem;
+            }
+
+            .emergency-number {
+                font-size: 2rem;
+            }
+
+            .mobile-menu-toggle {
+                display: block;
+            }
+
+            nav {
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: #1a1a2e;
+                max-height: 0;
+                overflow: hidden;
+                transition: max-height 0.3s ease;
+            }
+
+            nav.active {
+                max-height: 400px;
+                border-top: 1px solid rgba(255,255,255,0.1);
+            }
+
+            nav ul {
+                flex-direction: column;
+                gap: 0;
+                padding: 0;
+            }
+
+            nav ul li {
+                border-bottom: 1px solid rgba(255,255,255,0.1);
+            }
+
+            nav ul li a {
+                display: block;
+                padding: 1rem 2rem;
+            }
+
+            .nav-container {
+                flex-direction: row;
+                justify-content: space-between;
+            }
+
+            .header {
+                position: relative;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="nav-container">
+            <div class="logo">
+                <div class="logo-icon">
+                    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" alt="Riverview VFD Logo" id="logoImg">
+                </div>
+                <span>Riverview VFD</span>
+            </div>
+            <button class="mobile-menu-toggle" onclick="toggleMenu()" aria-label="Toggle menu">
+                ☰
+            </button>
+            <nav id="mainNav">
+                <ul>
+                    <li><a href="#about" onclick="closeMenu()">About</a></li>
+                    <li><a href="#stations" onclick="closeMenu()">Stations</a></li>
+                    <li><a href="#apparatus" onclick="closeMenu()">Apparatus</a></li>
+                    <li><a href="#services" onclick="closeMenu()">Services</a></li>
+                    <li><a href="#volunteer" onclick="closeMenu()">Volunteer</a></li>
+                    <li><a href="#contact" onclick="closeMenu()">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="hero">
+        <img src="" alt="Fire truck background" class="hero-bg" id="heroBgImg">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <h1>Riverview Volunteer Fire Department</h1>
+            <p>Proudly Serving York County, South Carolina</p>
+            <div class="emergency-banner">
+                <h2>Emergency?</h2>
+                <div class="emergency-number">CALL 911</div>
+            </div>
+        </div>
+    </section>
+
+    <div class="container">
+        <section id="about" class="section">
+            <h2 class="section-title">About Us</h2>
+            <div class="about-content">
+                <p>Riverview Volunteer Fire Department is dedicated to protecting the lives and property of our community in York County, South Carolina. Our team of dedicated volunteer firefighters and emergency responders are available 24/7 to answer the call when our neighbors need us most.</p>
+                <p style="margin-top: 1rem;">Founded on the principles of service, courage, and community, we combine professional training with local knowledge to provide the highest level of emergency response. Whether it's fire suppression, emergency medical services, or community education, Riverview VFD stands ready to serve.</p>
+            </div>
+        </section>
+
+        <section id="stations" class="section">
+            <h2 class="section-title">Our Stations</h2>
+            <div class="stations-grid">
+                <div class="station-card">
+                    <div class="station-photo-placeholder">
+                        <img src="station1.jpg" alt="Station 1" style="width:100%; height:100%; object-fit:cover;">
+                    </div>
+                    <div class="station-info">
+                        <h3>Station 1</h3>
+                        <p class="station-address">📍 <a href="https://www.google.com/maps/search/?api=1&query=1899+Harris+Road,+Fort+Mill,+SC+29708" target="_blank" rel="noopener noreferrer">1899 Harris Road<br>Fort Mill, SC 29708</a></p>
+                        <p class="station-phone">📞 <a href="tel:803-547-5921">803-547-5921</a></p>
+                    </div>
+                </div>
+                <div class="station-card">
+                    <div class="station-photo-placeholder">
+                        <img src="station2.jpg" alt="Station 1" style="width:100%; height:100%; object-fit:cover;">
+                    </div>
+                    <div class="station-info">
+                        <h3>Station 2</h3>
+                        <p class="station-address">📍 <a href="https://www.google.com/maps/search/?api=1&query=141+Grant+Farm+Dr,+Fort+Mill,+SC+29708" target="_blank" rel="noopener noreferrer">141 Grant Farm Dr<br>Fort Mill, SC 29708</a></p>
+                        <p class="station-phone">📞 <a href="tel:803-547-5922">803-547-5922</a></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="apparatus" class="section">
+            <h2 class="section-title">Apparatus</h2>
+            <div class="apparatus-container">
+                <div class="apparatus-station-group">
+                    <h3 class="apparatus-station-title">Station 1</h3>
+                    <div class="apparatus-grid">
+                        <div class="apparatus-card">
+                            <div class="apparatus-photo-placeholder">
+                                <img src="engine1.jpg" alt="Station 1" style="width:100%; height:100%; object-fit:cover;">
+                            </div>
+                            <h4>Engine 1</h4>
+                        </div>
+                        <div class="apparatus-card">
+                            <div class="apparatus-photo-placeholder">
+                                <img src="rescue1.jpg" alt="Station 1" style="width:100%; height:100%; object-fit:cover;">
+                            </div>
+                            <h4>Rescue 1</h4>
+                        </div>
+                        <div class="apparatus-card">
+                            <div class="apparatus-photo-placeholder">
+                                <img src="grass1.jpg" alt="Station 1" style="width:100%; height:100%; object-fit:cover;">
+                            </div>
+                            <h4>Grass 1</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="apparatus-station-group">
+                    <h3 class="apparatus-station-title">Station 2</h3>
+                    <div class="apparatus-grid">
+                        <div class="apparatus-card">
+                            <div class="apparatus-photo-placeholder">
+                                <img src="engine2.jpg" alt="Station 1" style="width:100%; height:100%; object-fit:cover;">
+                            </div>
+                            <h4>Engine 2</h4>
+                        </div>
+                        <div class="apparatus-card">
+                            <div class="apparatus-photo-placeholder">
+                                <img src="ladder1.jpg" alt="Station 1" style="width:100%; height:100%; object-fit:cover;">
+                            </div>
+                            <h4>Ladder 1</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="services" class="section">
+            <h2 class="section-title">Our Services</h2>
+            <div class="cards">
+                <div class="card">
+                    <div class="card-icon">🔥</div>
+                    <h3>Fire Suppression</h3>
+                    <p>Rapid response to structure fires, vehicle fires, and wildland fires with state-of-the-art equipment and trained personnel.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon">🚑</div>
+                    <h3>Emergency Medical</h3>
+                    <p>First responder medical services providing critical care until advanced medical units arrive on scene.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon">⚠️</div>
+                    <h3>Rescue Operations</h3>
+                    <p>Vehicle extrication, technical rescue, and emergency assistance for a wide range of situations.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon">🏫</div>
+                    <h3>Fire Prevention</h3>
+                    <p>Community education programs, school visits, and fire safety inspections to prevent emergencies before they happen.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon">💧</div>
+                    <h3>Water Rescue</h3>
+                    <p>Specialized training and equipment for water-related emergencies in our local waterways.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon">🌪️</div>
+                    <h3>Disaster Response</h3>
+                    <p>Emergency response coordination during severe weather, natural disasters, and large-scale incidents.</p>
+                </div>
+            </div>
+        </section>
+
+        <div class="cta-section" id="volunteer">
+            <h2>Join Our Team</h2>
+            <p style="font-size: 1.2rem; margin-bottom: 1rem;">Be a hero in your community. Riverview VFD is always looking for dedicated volunteers who want to make a difference.</p>
+            <p>No experience necessary - we provide comprehensive training!</p>
+            <a href="#contact" class="cta-button">Become a Volunteer</a>
+        </div>
+
+        <section id="contact" class="section">
+            <h2 class="section-title">Contact Us</h2>
+            <div class="contact-info">
+                <div class="contact-card">
+                    <div class="contact-icon">📞</div>
+                    <h3>Emergency</h3>
+                    <p style="font-size: 1.5rem; font-weight: bold; color: #dc2626;">911</p>
+                </div>
+                <div class="contact-card">
+                    <div class="contact-icon">📱</div>
+                    <h3>Non-Emergency</h3>
+                    <p>Contact your local dispatch for non-emergency inquiries</p>
+                </div>
+                <div class="contact-card">
+                    <div class="contact-icon">📍</div>
+                    <h3>Location</h3>
+                    <p>Serving Riverview and surrounding areas in York County, SC</p>
+                </div>
+                <div class="contact-card">
+                    <div class="contact-icon">✉️</div>
+                    <h3>General Inquiries</h3>
+                    <p>Visit us at the station or reach out through York County Emergency Services</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 Riverview Volunteer Fire Department | York County, South Carolina</p>
+        <p style="margin-top: 0.5rem;">Dedicated to Protecting Our Community</p>
+    </footer>
+
+    <script>
+        // Set the logo image - replace this URL with the actual path to your uploaded logo
+        // document.getElementById('logoImg').src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Ccircle cx="50" cy="50" r="45" fill="%23dc2626"/%3E%3Ctext x="50" y="65" font-size="40" text-anchor="middle" fill="white"%3E🔥%3C/text%3E%3C/svg%3E';
+        // To use your uploaded logo, replace the line above with:
+        document.getElementById('logoImg').src = 'logo.jpg';
+
+        // Set the hero background image - UPDATE THIS PATH with your fire truck image
+        document.getElementById('heroBgImg').src = 'background.jpg';
+        // Examples of possible paths:
+        // document.getElementById('heroBgImg').src = 'firetruck.jpg';
+        // document.getElementById('heroBgImg').src = 'images/firetruck.jpg';
+        // document.getElementById('heroBgImg').src = './firetruck.jpg';
+
+        function toggleMenu() {
+            const nav = document.getElementById('mainNav');
+            nav.classList.toggle('active');
+        }
+
+        function closeMenu() {
+            const nav = document.getElementById('mainNav');
+            nav.classList.remove('active');
+        }
+
+        // Close menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const nav = document.getElementById('mainNav');
+            const toggle = document.querySelector('.mobile-menu-toggle');
+            const isClickInside = nav.contains(event.target) || toggle.contains(event.target);
+            
+            if (!isClickInside && nav.classList.contains('active')) {
+                nav.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>
