@@ -901,7 +901,7 @@
             });
         });
     </script>
-    <!-- --- NEW SCRIPT FOR INSTAGRAM EMBED --- -->
-    <script async src="//www.instagram.com/embed.js"></script>
+    <!-- --- MODIFIED SCRIPT FOR INSTAGRAM EMBED --- -->
+    <script async src="//www.instagram.com/embed.js" onload="if (typeof window.instgrm !== 'undefined') { console.log('Processing Instagram Embeds...'); window.instgrm.Embeds.process(); }"></script>
 </body>
 </html>
