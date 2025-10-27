@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Station 2 | Riverview Fire Department</title>
+    <!-- Copied styles from index.html for consistency -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            position: relative;
+            background-color: #f9fafb; /* Light bg for content page */
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            padding: 1rem 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+            align-items: center; /* Added for vertical alignment */
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            transition: color 0.3s;
+            font-weight: 500;
+        }
+
+        nav a:hover {
+            color: #ef4444;
+        }
+
+        .social-links {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .facebook-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #1877f2;
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+        }
+
+        .facebook-btn:hover {
+            background: #165ed4;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(24, 119, 242, 0.4);
+        }
+
+        .facebook-icon {
+            font-size: 1.2rem;
+        }
+        
+        .instagram-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%);
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+        }
+
+        .instagram-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4); /* Re-used red shadow for consistency */
+        }
+
+        .insta-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+            padding-top: 120px; /* Account for fixed header */
+        }
+
+        .section {
+            margin-bottom: 4rem;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            color: #1a1a2e;
+            margin-bottom: 2rem;
+            text-align: center;
+            position: relative;
+            padding-bottom: 1rem;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(90deg, #dc2626, #991b1b);
+            border-radius: 2px;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: #dc2626;
+            color: white;
+            padding: 1rem 3rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-top: 1.5rem;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+        }
+
+        .cta-button:hover {
+            background: #991b1b;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(220, 38, 38, 0.6);
+        }
+
+        .page-content {
+            background: white;
+            padding: 3rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            line-height: 1.8;
+            font-size: 1.1rem;
+        }
+
+        .apparatus-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .apparatus-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .apparatus-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(220, 38, 38, 0.2);
+        }
+
+        .apparatus-photo-placeholder {
+            width: 100%;
+            height: 220px;
+            background: #e5e7eb;
+        }
+        
+        .apparatus-photo-placeholder img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .apparatus-card h4 {
+            font-size: 1.3rem;
+            color: #1a1a2e;
+            padding: 1.25rem;
+            text-align: center;
+            background: #f9fafb;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        footer {
+            background: #1a1a2e;
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 4rem;
+        }
+
+        .mobile-menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.8rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            z-index: 10; /* Ensure toggle is clickable */
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-toggle {
+                display: block;
+            }
+            
+            .nav-container {
+                justify-content: space-between;
+            }
+
+            nav {
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: #1a1a2e;
+                max-height: 0;
+                overflow: hidden;
+                transition: max-height 0.3s ease;
+            }
+
+            nav.active {
+                max-height: 500px; /* Increased max-height */
+                border-top: 1px solid rgba(255,255,255,0.1);
+            }
+
+            nav ul {
+                flex-direction: column;
+                gap: 0;
+                padding: 0;
+                align-items: stretch; /* Make list items full width */
+            }
+
+            nav ul li {
+                border-bottom: 1px solid rgba(255,255,255,0.1);
+            }
+
+            nav ul li a {
+                display: block;
+                padding: 1rem 2rem;
+            }
+
+            .nav-container {
+                flex-direction: row;
+                justify-content: space-between;
+            }
+            .social-links {
+                padding: 1rem 2rem; /* Match the 'a' padding */
+                justify-content: center; /* Center the buttons */
+                flex-wrap: wrap; /* Wrap if needed */
+                gap: 1rem;
+            }
+
+            .header {
+                position: fixed; /* Keep header fixed */
+            }
+
+            .container {
+                padding-top: 100px; /* Adjust for header */
+            }
+            
+            .apparatus-grid {
+                 grid-template-columns: 1fr; /* Stack on mobile */
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="nav-container">
+            <div class="logo">
+                <div class="logo-icon">
+                    <img src="logo.jpg" alt="Riverview FD Logo" id="logoImg">
+                </div>
+                <span>Riverview FD</span>
+            </div>
+            <button class="mobile-menu-toggle" onclick="toggleMenu()" aria-label="Toggle menu">
+                ☰
+            </button>
+            <nav id="mainNav">
+                <ul>
+                    <!-- Updated links to point back to index.html sections -->
+                    <li><a href="index.html#about" onclick="closeMenu()">About</a></li>
+                    <li><a href="index.html#stations" onclick="closeMenu()">Stations</a></li>
+                    <li><a href="index.html#apparatus" onclick="closeMenu()">Apparatus</a></li>
+                    <li><a href="index.html#services" onclick="closeMenu()">Services</a></li>
+                    <li><a href="index.html#events" onclick="closeMenu()">Events</a></li>
+                    <li><a href="index.html#volunteer" onclick="closeMenu()">Join Us</a></li>
+                    <li><a href="index.html#contact" onclick="closeMenu()">Contact</a></li>
+                    <li class="social-links">
+                        <a href="https://www.facebook.com/p/Riverview-Fire-Department-100064782363910/" target="_blank" rel="noopener noreferrer" class="facebook-btn" aria-label="Visit our Facebook page">
+                            <span class="facebook-icon">f</span>
+                            <span>Facebook</span>
+                        </a>
+                        <a href="https://www.instagram.com/riverview_fire_department/" target="_blank" rel="noopener noreferrer" class="instagram-btn" aria-label="Visit our Instagram page">
+                            <span class="insta-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                            </span>
+                            <span>Instagram</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <section id="station-detail" class="section">
+            <h2 class="section-title">Station 2</h2>
+            
+            <a href="index.html" class="cta-button" style="margin-bottom: 2.5rem; padding: 0.8rem 2rem; font-size: 1rem; background: #6b7280;">&larr; Back to Home</a>
+
+            <div class="page-content">
+                <!-- Photo Grid -->
+                <div class="apparatus-grid">
+                    <div class="apparatus-card">
+                        <div class="apparatus-photo-placeholder">
+                            <img src="station2.jpg" alt="Station 2 Building">
+                        </div>
+                        <h4>Station 2</h4>
+                    </div>
+                    <div class="apparatus-card">
+                        <div class="apparatus-photo-placeholder">
+                            <img src="engine2.jpg" alt="Engine 2">
+                        </div>
+                        <h4>Engine 2</h4>
+                    </div>
+                    <div class="apparatus-card">
+                        <div class="apparatus-photo-placeholder">
+                            <img src="ladder1.jpg" alt="Ladder 1">
+                        </div>
+                        <h4>Ladder 1</h4>
+                    </div>
+                    <div class="apparatus-card">
+                        <div class="apparatus-photo-placeholder">
+                            <img src="squad2.jpg" alt="Squad 2">
+                        </div>
+                        <h4>Squad 2</h4>
+                    </div>
+                </div>
+
+                <!-- Blurb -->
+                <p>Station 2, our second station located at 141 Grant Farm Dr, extends our coverage and enhances our response capabilities. This modern facility is home to key pieces of apparatus, including Engine 2, a versatile pumper, and Ladder 1, our aerial ladder truck.</p>
+                <p style="margin-top: 1rem;">Ladder 1 is essential for fires in multi-story buildings, providing elevated water streams and a safe platform for rooftop operations and rescues. Station 2 also houses Squad 2, a quick-response support vehicle. Together, the crews and apparatus at Station 2 are vital to protecting the growing communities in our service area, particularly in dense residential neighborhoods like Baxter Village.</p>
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 Riverview Fire Department | York County, South Carolina</p>
+        <p style="margin-top: 0.5rem;">Dedicated to Protecting Our Community</p>
+    </footer>
+
+    <script>
+        // Set the logo image
+        document.getElementById('logoImg').src = 'logo.jpg';
+
+        function toggleMenu() {
+            const nav = document.getElementById('mainNav');
+            nav.classList.toggle('active');
+        }
+
+        function closeMenu() {
+            const nav = document.getElementById('mainNav');
+            nav.classList.remove('active');
+        }
+
+        // Close menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const nav = document.getElementById('mainNav');
+            const toggle = document.querySelector('.mobile-menu-toggle');
+            // Check if the click is outside the nav and toggle button
+            const isClickInsideNav = nav.contains(event.target);
+            const isClickOnToggle = toggle.contains(event.target);
+            
+            if (!isClickInsideNav && !isClickOnToggle && nav.classList.contains('active')) {
+                nav.classList.remove('active');
+            }
+        });
+
+        // Clean up image placeholders and use alt text if images fail to load
+        document.addEventListener('DOMContentLoaded', function() {
+            const images = document.querySelectorAll('.apparatus-photo-placeholder img');
+            images.forEach(img => {
+                img.onerror = function() {
+                    const altText = this.alt || 'Image';
+                    const placeholder = this.parentElement;
+                    if (placeholder) {
+                        placeholder.innerHTML = altText; // Replace image with alt text
+                        placeholder.style.padding = '1rem'; // Add some padding
+                        placeholder.style.color = '#6b7280';
+                        placeholder.style.display = 'flex';
+                        placeholder.style.alignItems = 'center';
+                        placeholder.style.justifyContent = 'center';
+                    }
+                    this.style.display='none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -423,6 +423,8 @@
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             overflow: hidden;
             transition: transform 0.3s, box-shadow 0.3s;
+            display: flex; /* Added for layout */
+            flex-direction: column; /* Added for layout */
         }
 
         .station-card:hover {
@@ -450,6 +452,9 @@
 
         .station-info {
             padding: 2rem;
+            display: flex; /* Added for layout */
+            flex-direction: column; /* Added for layout */
+            flex-grow: 1; /* Added for layout */
         }
 
         .station-info h3 {
@@ -482,6 +487,7 @@
             font-size: 1.2rem;
             font-weight: bold;
             margin-top: 1rem;
+            margin-bottom: auto; /* Pushes button to bottom */
         }
 
         .station-phone a {
@@ -734,6 +740,8 @@
                         <h3>Station 1</h3>
                         <p class="station-address">📍 <a href="https://www.google.com/maps/search/?api=1&query=1899+Harris+Road,+Fort+Mill,+SC+29708" target="_blank" rel="noopener noreferrer">1899 Harris Road<br>Fort Mill, SC 29708</a></p>
                         <p class="station-phone">📞 <a href="tel:803-547-5921">803-547-5921</a></p>
+                        <!-- ADDED LEARN MORE BUTTON -->
+                        <a href="station1.html" class="cta-button" style="margin-top: 1.5rem; padding: 0.8rem 1.5rem; font-size: 1rem; text-align: center;">Learn More</a>
                     </div>
                 </div>
                 <div class="station-card">
@@ -744,6 +752,8 @@
                         <h3>Station 2</h3>
                         <p class="station-address">📍 <a href="https://www.google.com/maps/search/?api=1&query=141+Grant+Farm+Dr,+Fort+Mill,+SC+29708" target="_blank" rel="noopener noreferrer">141 Grant Farm Dr<br>Fort Mill, SC 29708</a></p>
                         <p class="station-phone">📞 <a href="tel:803-547-5922">803-547-5922</a></p>
+                        <!-- ADDED LEARN MORE BUTTON -->
+                        <a href="station2.html" class="cta-button" style="margin-top: 1.5rem; padding: 0.8rem 1.5rem; font-size: 1rem; text-align: center;">Learn More</a>
                     </div>
                 </div>
             </div>
@@ -980,4 +990,3 @@
     </script>
 </body>
 </html>
-
