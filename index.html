@@ -64,7 +64,7 @@
             display: flex;
             list-style: none;
             gap: 2rem;
-            align-items: center; /* Added for vertical alignment */
+            align-items: center;
         }
 
         nav a {
@@ -126,7 +126,7 @@
         .instagram-btn:hover {
             opacity: 0.9;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4); /* Re-used red shadow for consistency */
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
         }
 
         .insta-icon {
@@ -134,8 +134,6 @@
             align-items: center;
             justify-content: center;
         }
-        /* --- End New Styles --- */
-
 
         .hero {
             background: #1a1a2e;
@@ -292,22 +290,20 @@
             color: #1a1a2e;
         }
 
-        /* --- Event Card Styles --- */
         .event-card {
             background: white;
-            padding: 0; /* Remove padding */
+            padding: 0;
             border-radius: 10px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             transition: transform 0.3s, box-shadow 0.3s;
             border-top: 4px solid #dc2626;
-            overflow: hidden; /* Keep image corners rounded */
+            overflow: hidden;
         }
         
         .event-card:hover {
             transform: translateY(-10px);
             box-shadow: 0 8px 30px rgba(220, 38, 38, 0.2);
         }
-
         .event-card-image {
             width: 100%;
             height: 200px;
@@ -321,11 +317,9 @@
             font-weight: bold;
         }
         
-        /* Specific images for event cards */
         .event-img-1 { background-image: url('fun_with_first_responders.jpg'); }
         .event-img-2 { background-image: url('baxter_fling.jpg'); }
         .event-img-3 { background-image: url('good_night_santa.jpg'); }
-
 
         .event-card-content {
             padding: 2rem;
@@ -336,8 +330,6 @@
             margin-bottom: 1rem;
             color: #1a1a2e;
         }
-        /* --- End Event Card Styles --- */
-
 
         .cta-section {
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
@@ -423,8 +415,8 @@
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             overflow: hidden;
             transition: transform 0.3s, box-shadow 0.3s;
-            display: flex; /* Added for layout */
-            flex-direction: column; /* Added for layout */
+            display: flex;
+            flex-direction: column;
         }
 
         .station-card:hover {
@@ -452,9 +444,9 @@
 
         .station-info {
             padding: 2rem;
-            display: flex; /* Added for layout */
-            flex-direction: column; /* Added for layout */
-            flex-grow: 1; /* Added for layout */
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
         }
 
         .station-info h3 {
@@ -487,7 +479,7 @@
             font-size: 1.2rem;
             font-weight: bold;
             margin-top: 1rem;
-            margin-bottom: auto; /* Pushes button to bottom */
+            margin-bottom: auto;
         }
 
         .station-phone a {
@@ -560,13 +552,11 @@
             background: #f9fafb;
         }
 
-        /* --- New styles for Instagram Embed --- */
         .instagram-embed-container {
             margin-top: 3rem;
             display: flex;
             justify-content: center;
         }
-        /* --- End new styles --- */
 
         footer {
             background: #1a1a2e;
@@ -584,7 +574,7 @@
             font-size: 1.8rem;
             cursor: pointer;
             padding: 0.5rem;
-            z-index: 10; /* Ensure toggle is clickable */
+            z-index: 10;
         }
 
         @media (max-width: 768px) {
@@ -605,7 +595,6 @@
             }
             
             .nav-container {
-                /* Ensure toggle is on the right */
                 justify-content: space-between;
             }
 
@@ -621,7 +610,7 @@
             }
 
             nav.active {
-                max-height: 500px; /* Increased max-height */
+                max-height: 500px;
                 border-top: 1px solid rgba(255,255,255,0.1);
             }
 
@@ -629,7 +618,7 @@
                 flex-direction: column;
                 gap: 0;
                 padding: 0;
-                align-items: stretch; /* Make list items full width */
+                align-items: stretch;
             }
 
             nav ul li {
@@ -646,24 +635,19 @@
                 justify-content: space-between;
             }
 
-            /* --- This rule is MODIFIED --- */
-            /* This replaces the old 'display: none' rule */
             .social-links {
-                padding: 1rem 2rem; /* Match the 'a' padding */
-                justify-content: center; /* Center the buttons */
-                flex-wrap: wrap; /* Wrap if needed */
+                padding: 1rem 2rem;
+                justify-content: center;
+                flex-wrap: wrap;
                 gap: 1rem;
             }
-            /* --- End Modified Rule --- */
-
 
             .header {
-                /* position: relative; */ /* This was causing issues with fixed header */
-                position: fixed; /* Keep header fixed */
+                position: fixed;
             }
-            
+
             .hero {
-                margin-top: 70px; /* Ensure hero starts below fixed header */
+                margin-top: 70px;
             }
         }
     </style>
@@ -682,7 +666,6 @@
             </button>
             <nav id="mainNav">
                 <ul>
-                    <!-- Links in correct order -->
                     <li><a href="#about" onclick="closeMenu()">About</a></li>
                     <li><a href="#stations" onclick="closeMenu()">Stations</a></li>
                     <li><a href="#apparatus" onclick="closeMenu()">Apparatus</a></li>
@@ -708,7 +691,7 @@
     </header>
 
     <section class="hero">
-        <img src="background.jpg" alt="Fire truck background" class="hero-bg" id="heroBgImg">
+        <img src="background.jpg" alt="A Riverview Fire Department truck with lights flashing at night" class="hero-bg" id="heroBgImg">
         <div class="hero-overlay"></div>
         <div class="hero-content">
             <h1>Riverview Fire Department</h1>
@@ -738,7 +721,7 @@
             <div class="stations-grid">
                 <div class="station-card">
                     <div class="station-photo-placeholder">
-                        <img src="station1.jpg" alt="Station 1">
+                        <img src="station1.jpg" alt="Exterior view of Riverview Fire Department Station 1">
                     </div>
                     <div class="station-info">
                         <h3>Station 1</h3>
@@ -748,7 +731,7 @@
                 </div>
                 <div class="station-card">
                     <div class="station-photo-placeholder">
-                        <img src="station2.jpg" alt="Station 2">
+                        <img src="station2.jpg" alt="Exterior view of Riverview Fire Department Station 2">
                     </div>
                     <div class="station-info">
                         <h3>Station 2</h3>
@@ -759,7 +742,6 @@
             </div>
         </section>
 
-        <!-- RESTORED APPARATUS SECTION -->
         <section id="apparatus" class="section">
             <h2 class="section-title">Apparatus</h2>
             <div class="apparatus-container">
@@ -768,39 +750,25 @@
                     <div class="apparatus-grid">
                         <div class="apparatus-card">
                             <div class="apparatus-photo-placeholder">
-                                <img src="engine1.jpg" alt="Engine 1">
+                                <img src="engine1.jpg" alt="Riverview Fire Department Engine 1 apparatus">
                             </div>
                             <h4>Engine 1</h4>
                         </div>
                         <div class="apparatus-card">
                             <div class="apparatus-photo-placeholder">
-                                <img src="rescue1.jpg" alt="Rescue 1">
+                                <img src="rescue1.jpg" alt="Riverview Fire Department Rescue 1 apparatus">
                             </div>
                             <h4>Rescue 1</h4>
                         </div>
-                        <!-- Commented out until photo is available
                         <div class="apparatus-card">
                             <div class="apparatus-photo-placeholder">
-                                <img src="grass1.jpg" alt="Grass 1">
-                            </div>
-                            <h4>Grass 1</h4>
-                        </div> -->
-                        <div class="apparatus-card">
-                            <div class="apparatus-photo-placeholder">
-                                <img src="tanker1.jpeg" alt="Tanker 1">
+                                <img src="tanker1.jpeg" alt="Riverview Fire Department Tanker 1 apparatus at a fire scene">
                             </div>
                             <h4>Tanker 1</h4>
                         </div>
-                        <!-- Commented out until photo is available
-                        <div class="apparatus-card">
-                            <div class="apparatus-photo-placeholder">
-                                <img src="squad1.jpg" alt="Squad 1">
-                            </div>
-                            <h4>Squad 1</h4>
-                        </div> -->
 						<div class="apparatus-card">
                             <div class="apparatus-photo-placeholder">
-                                <img src="atv1.jpeg" alt="ATV 1">
+                                <img src="atv1.jpeg" alt="Riverview Fire Department ATV utility vehicle in the station bay">
                             </div>
                             <h4>ATV</h4>
                         </div>
@@ -811,19 +779,19 @@
                     <div class="apparatus-grid">
                         <div class="apparatus-card">
                             <div class="apparatus-photo-placeholder">
-                                <img src="engine2.jpg" alt="Engine 2">
+                                <img src="engine2.jpg" alt="Riverview Fire Department Engine 2 apparatus">
                             </div>
                             <h4>Engine 2</h4>
                         </div>
                         <div class="apparatus-card">
                             <div class="apparatus-photo-placeholder">
-                                <img src="ladder1.jpg" alt="Ladder 1">
+                                <img src="ladder1.jpg" alt="Riverview Fire Department Ladder 1 apparatus">
                             </div>
                             <h4>Ladder 1</h4>
                         </div>
                         <div class="apparatus-card">
                             <div class="apparatus-photo-placeholder">
-                                <img src="squad2.jpg" alt="Squad 2">
+                                <img src="squad2.jpg" alt="Riverview Fire Department Squad 2 apparatus">
                             </div>
                             <h4>Squad 2</h4>
                         </div>
@@ -832,7 +800,6 @@
             </div>
         </section>
 
-        <!-- RESTORED SERVICES SECTION -->
         <section id="services" class="section">
             <h2 class="section-title">Our Services</h2>
             <div class="cards">
@@ -869,34 +836,27 @@
             </div>
         </section>
 
-        <!-- EVENTS SECTION IN CORRECT LOCATION -->
         <section id="events" class="section">
             <h2 class="section-title">Community Events</h2>
             <div class="cards">
-                <!-- Card 1: Fun with First Responders -->
                 <div class="event-card">
                     <div class="event-card-image event-img-1">
-                        <!-- Image set via CSS -->
                     </div>
                     <div class="event-card-content">
                         <h3>Fun with First Responders</h3>
                         <p>Join us for a day of fun! Meet your local firefighters, police officers, and EMS crews. Explore emergency vehicles, enjoy games, and learn about safety.</p>
                     </div>
                 </div>
-                <!-- Card 2: Baxter Spring Fling -->
                 <div class="event-card">
                     <div class="event-card-image event-img-2">
-                        <!-- Image set via CSS -->
                     </div>
                     <div class="event-card-content">
                         <h3>Baxter Spring Fling & Fall Festivals</h3>
                         <p>We're excited to be part of the annual Baxter Spring Fling and Fall Festivals! Come say hello and check out our apparatus on display.</p>
                     </div>
                 </div>
-                <!-- Card 3: Good Night Santa -->
                 <div class="event-card">
                     <div class="event-card-image event-img-3">
-                        <!-- Image set via CSS -->
                     </div>
                     <div class="event-card-content">
                         <h3>Good Night Santa</h3>
@@ -946,10 +906,8 @@
     </footer>
 
     <script>
-        // Set the logo image
         document.getElementById('logoImg').src = 'logo.jpg';
 
-        // Set the hero background image
         document.getElementById('heroBgImg').src = 'background.jpg';
 
         function toggleMenu() {
@@ -962,11 +920,9 @@
             nav.classList.remove('active');
         }
 
-        // Close menu when clicking outside
         document.addEventListener('click', function(event) {
             const nav = document.getElementById('mainNav');
             const toggle = document.querySelector('.mobile-menu-toggle');
-            // Check if the click is outside the nav and toggle button
             const isClickInsideNav = nav.contains(event.target);
             const isClickOnToggle = toggle.contains(event.target);
             
@@ -975,7 +931,6 @@
             }
         });
 
-        // Clean up image placeholders and use alt text if images fail to load
         document.addEventListener('DOMContentLoaded', function() {
             const images = document.querySelectorAll('.station-photo-placeholder img, .apparatus-photo-placeholder img');
             images.forEach(img => {
@@ -983,8 +938,8 @@
                     const altText = this.alt || 'Image';
                     const placeholder = this.parentElement;
                     if (placeholder) {
-                        placeholder.innerHTML = altText; // Replace image with alt text
-                        placeholder.style.padding = '1rem'; // Add some padding
+                        placeholder.innerHTML = altText;
+                        placeholder.style.padding = '1rem';
                     }
                     this.style.display='none';
                 }

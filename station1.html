@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Station 1 | Riverview Fire Department</title>
-    <!-- Copied styles from index.html for consistency -->
     <style>
         * {
             margin: 0;
@@ -17,7 +16,7 @@
             line-height: 1.6;
             color: #333;
             position: relative;
-            background-color: #f9fafb; /* Light bg for content page */
+            background-color: #f9fafb;
         }
 
         .header {
@@ -66,7 +65,7 @@
             display: flex;
             list-style: none;
             gap: 2rem;
-            align-items: center; /* Added for vertical alignment */
+            align-items: center;
         }
 
         nav a {
@@ -127,7 +126,7 @@
         .instagram-btn:hover {
             opacity: 0.9;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4); /* Re-used red shadow for consistency */
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
         }
 
         .insta-icon {
@@ -140,7 +139,7 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 4rem 2rem;
-            padding-top: 120px; /* Account for fixed header */
+            padding-top: 120px;
         }
 
         .section {
@@ -254,7 +253,7 @@
             font-size: 1.8rem;
             cursor: pointer;
             padding: 0.5rem;
-            z-index: 10; /* Ensure toggle is clickable */
+            z-index: 10;
         }
 
         @media (max-width: 768px) {
@@ -278,7 +277,7 @@
             }
 
             nav.active {
-                max-height: 500px; /* Increased max-height */
+                max-height: 500px;
                 border-top: 1px solid rgba(255,255,255,0.1);
             }
 
@@ -286,7 +285,7 @@
                 flex-direction: column;
                 gap: 0;
                 padding: 0;
-                align-items: stretch; /* Make list items full width */
+                align-items: stretch;
             }
 
             nav ul li {
@@ -303,22 +302,22 @@
                 justify-content: space-between;
             }
             .social-links {
-                padding: 1rem 2rem; /* Match the 'a' padding */
-                justify-content: center; /* Center the buttons */
-                flex-wrap: wrap; /* Wrap if needed */
+                padding: 1rem 2rem;
+                justify-content: center;
+                flex-wrap: wrap;
                 gap: 1rem;
             }
 
             .header {
-                position: fixed; /* Keep header fixed */
+                position: fixed;
             }
 
             .container {
-                padding-top: 100px; /* Adjust for header */
+                padding-top: 100px;
             }
 
             .apparatus-grid {
-                 grid-template-columns: 1fr; /* Stack on mobile */
+                 grid-template-columns: 1fr;
             }
         }
     </style>
@@ -337,7 +336,6 @@
             </button>
             <nav id="mainNav">
                 <ul>
-                    <!-- Updated links to point back to index.html sections -->
                     <li><a href="index.html#about" onclick="closeMenu()">About</a></li>
                     <li><a href="index.html#stations" onclick="closeMenu()">Stations</a></li>
                     <li><a href="index.html#apparatus" onclick="closeMenu()">Apparatus</a></li>
@@ -369,41 +367,39 @@
             <a href="index.html" class="cta-button" style="margin-bottom: 2.5rem; padding: 0.8rem 2rem; font-size: 1rem; background: #6b7280;">&larr; Back to Home</a>
 
             <div class="page-content">
-                <!-- Photo Grid -->
                 <div class="apparatus-grid">
                     <div class="apparatus-card">
                         <div class="apparatus-photo-placeholder">
-                            <img src="station1.jpg" alt="Station 1 Building">
+                            <img src="station1.jpg" alt="Exterior view of Riverview Fire Department Station 1">
                         </div>
                         <h4>Station 1</h4>
                     </div>
                     <div class="apparatus-card">
                         <div class="apparatus-photo-placeholder">
-                            <img src="engine1.jpg" alt="Engine 1">
+                            <img src="engine1.jpg" alt="Riverview Fire Department Engine 1 apparatus">
                         </div>
                         <h4>Engine 1</h4>
                     </div>
                     <div class="apparatus-card">
                         <div class="apparatus-photo-placeholder">
-                            <img src="rescue1.jpg" alt="Rescue 1">
+                            <img src="rescue1.jpg" alt="Riverview Fire Department Rescue 1 apparatus">
                         </div>
                         <h4>Rescue 1</h4>
                     </div>
                     <div class="apparatus-card">
                         <div class="apparatus-photo-placeholder">
-                            <img src="tanker1.jpeg" alt="Tanker 1">
+                            <img src="tanker1.jpeg" alt="Riverview Fire Department Tanker 1 apparatus at a fire scene">
                         </div>
                         <h4>Tanker 1</h4>
                     </div>
                      <div class="apparatus-card">
                         <div class="apparatus-photo-placeholder">
-                            <img src="atv1.jpeg" alt="ATV 1">
+                            <img src="atv1.jpeg" alt="Riverview Fire Department ATV utility vehicle in the station bay">
                         </div>
                         <h4>ATV 1</h4>
                     </div>
                 </div>
 
-                <!-- Blurb -->
                 <p>Station 1, located at 1899 Harris Road, serves as the primary hub for the Riverview Fire Department. This station houses a versatile fleet of apparatus designed to handle a wide variety of emergencies. Key units include Engine 1, our frontline pumper; Rescue 1, equipped for technical rescues and vehicle extrication; and Tanker 1, which provides crucial water supply in areas without hydrants.</p>
                 <p style="margin-top: 1rem;">This station's strategic location allows for rapid response to the surrounding residential and commercial areas. The dedicated crews at Station 1 train rigorously to maintain readiness for fire suppression, medical emergencies, and specialized rescue operations, ensuring the safety and protection of our community.</p>
             </div>
@@ -416,7 +412,6 @@
     </footer>
 
     <script>
-        // Set the logo image
         document.getElementById('logoImg').src = 'logo.jpg';
 
         function toggleMenu() {
@@ -429,11 +424,9 @@
             nav.classList.remove('active');
         }
 
-        // Close menu when clicking outside
         document.addEventListener('click', function(event) {
             const nav = document.getElementById('mainNav');
             const toggle = document.querySelector('.mobile-menu-toggle');
-            // Check if the click is outside the nav and toggle button
             const isClickInsideNav = nav.contains(event.target);
             const isClickOnToggle = toggle.contains(event.target);
             
@@ -442,7 +435,6 @@
             }
         });
 
-        // Clean up image placeholders and use alt text if images fail to load
         document.addEventListener('DOMContentLoaded', function() {
             const images = document.querySelectorAll('.apparatus-photo-placeholder img');
             images.forEach(img => {
@@ -450,8 +442,8 @@
                     const altText = this.alt || 'Image';
                     const placeholder = this.parentElement;
                     if (placeholder) {
-                        placeholder.innerHTML = altText; // Replace image with alt text
-                        placeholder.style.padding = '1rem'; // Add some padding
+                        placeholder.innerHTML = altText;
+                        placeholder.style.padding = '1rem';
                         placeholder.style.color = '#6b7280';
                         placeholder.style.display = 'flex';
                         placeholder.style.alignItems = 'center';
