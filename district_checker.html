@@ -374,7 +374,7 @@
             <h2 class="section-title">Fire District Locator</h2>
             <div class="page-content">
                 <p style="margin-bottom: 1.5rem; text-align: center;">
-                    Enter an address to determine which <b>York County, SC</b> fire district it is in. For best results, use a complete address including city, state, and ZIP code. <i>This application falls asleep after periods of inactivity, so the first request may take longer.</i>
+                    Enter an address to determine which <b>York County, SC</b> fire district it is in. For best results, use a complete address including city, state, and ZIP code.
                 </p>
 
                 <!-- Address Form -->
@@ -391,6 +391,9 @@
                 <div id="result">
                     <span style="color: #6b7280;">Results will appear here...</span>
                 </div>
+                <p style="margin-top: 1.5rem; text-align: center; font-size: 0.9rem; color: #6b7280;">
+                    This tool uses <a href="https://developers.arcgis.com/documentation/mapping-and-location-services/geocoding/" target="_blank" rel="noopener noreferrer">ArcGIS geocoding</a> services to convert addresses into GPS coordinates. These coordinates are then checked against a map of fire districts pulled from <a href="https://www.yorkcountygov.com/234/GIS" target="_blank" rel="noopener noreferrer">York County GIS data</a>. No address data is stored.
+                </p>
             </div>
         </section>
     </div>
