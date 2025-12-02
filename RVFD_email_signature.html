@@ -6,6 +6,10 @@
     <title>Riverview Fire Department - Email Signature Generator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
         /* Custom Styles for Email Client Compatibility */
         .signature-preview {
             font-family: Arial, Helvetica, sans-serif;
@@ -27,7 +31,7 @@
             font-size: 14px;
             font-weight: bold;
             color: #2c3e50;
-            margin: 0 0 8px 0;
+            margin: 0 0 4px 0;
             text-transform: uppercase;
         }
         .signature-dept {
@@ -41,51 +45,47 @@
             text-decoration: none;
             font-weight: bold;
         }
-        .confidentiality {
-            font-size: 10px;
-            color: #888888;
-            margin-top: 15px;
-            padding-top: 10px;
-            border-top: 1px solid #dddddd;
-            max-width: 500px;
-        }
     </style>
+    <link rel="icon" href="logo.jpg" type="image/jpeg">
 </head>
-<body class="bg-gray-100 min-h-screen p-6">
+<body class="bg-white min-h-screen p-4 sm:p-6">
 
     <div class="max-w-4xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
         
         <!-- Header -->
-        <div class="bg-slate-900 text-white p-6 border-b-4 border-red-600">
-            <h1 class="text-2xl font-bold">Riverview Fire Department</h1>
-            <p class="text-gray-400">Email Signature Generator</p>
+        <div class="bg-[#1a1a2e] text-white p-6 border-b-4 border-red-600 flex items-center gap-4">
+            <img src="logo.jpg" alt="Logo" class="h-12 w-12">
+            <div>
+                <h1 class="text-2xl font-bold">Riverview Fire Department</h1>
+                <p class="text-gray-400">Email Signature Generator</p>
+            </div>
         </div>
 
         <div class="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
             
             <!-- Input Form -->
-            <div class="bg-gray-50 p-6 rounded border border-gray-200">
+            <div class="bg-white p-6 rounded border border-gray-200">
                 <h2 class="text-lg font-semibold mb-4 text-gray-700">1. Enter Your Details</h2>
                 
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Full Name</label>
-                        <input type="text" id="inputName" value="John Doe" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-red-500 focus:border-red-500" oninput="updateSignature()">
+                        <input type="text" id="inputName" value="John Doe" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-red-600 focus:border-red-600" oninput="updateSignature()">
                     </div>
                     
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Rank / Title</label>
-                        <input type="text" id="inputTitle" value="Fire Chief" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-red-500 focus:border-red-500" oninput="updateSignature()">
+                        <input type="text" id="inputTitle" value="Fire Chief" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-red-600 focus:border-red-600" oninput="updateSignature()">
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Cell Phone</label>
-                        <input type="text" id="inputPhone" value="555-0123" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-red-500 focus:border-red-500" oninput="updateSignature()">
+                        <input type="text" id="inputPhone" value="555-0123" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-red-600 focus:border-red-600" oninput="updateSignature()">
                     </div>
                     
                      <div>
                         <label class="block text-sm font-medium text-gray-700">Email Address</label>
-                        <input type="text" id="inputEmail" value="jdoe@riverviewfire.org" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-red-500 focus:border-red-500" oninput="updateSignature()">
+                        <input type="text" id="inputEmail" value="jdoe@riverviewfire.org" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-red-600 focus:border-red-600" oninput="updateSignature()">
                     </div>
                 </div>
             </div>
@@ -94,62 +94,36 @@
             <div class="flex flex-col">
                 <h2 class="text-lg font-semibold mb-4 text-gray-700">2. Preview & Copy</h2>
                 
-                <div class="flex-grow flex items-center justify-center bg-white border-2 border-dashed border-gray-300 rounded p-8 mb-4">
+                <div class="flex-grow flex items-center justify-center bg-white border border-gray-200 rounded p-8 mb-4">
                     <!-- The Actual Signature Container -->
                     <div id="signature-container">
                         <!-- Standard HTML Table for Email Signatures -->
                         <table class="signature-table" border="0" cellpadding="0" cellspacing="0" style="font-family: Arial, sans-serif; max-width: 600px;">
                             <tr>
-                                <!-- Logo Column -->
-                                <td width="120" style="padding-right: 10px; vertical-align: top;">
-                                    <!-- Using a generic Maltese Cross icon as placeholder. Replace src with actual hosted logo URL if available -->
-                                    <img src="https://riverviewfire.org/logo.jpg" 
-                                         alt="Riverview Fire Dept Logo" 
-                                         width="120" 
-                                         height="120" 
-                                         style="display: block; width: 120px; height: 120px; border: 0;">
-                                </td>
-                                
                                 <!-- Text Info Column -->
-                                <td style="border-left: 2px solid #ce1126; padding-left: 10px; vertical-align: top;">
+                                <td style="vertical-align: top;">
                                     <h3 class="signature-name" id="sigName">John Doe</h3>
                                     <p class="signature-title" id="sigTitle">Fire Chief</p>
                                     
-                                    <div style="height: 10px;"></div> <!-- Spacer -->
-
                                     <p class="signature-dept">Riverview Fire Department</p>
                                     
-                                    <p style="margin: 4px 0 0 0; font-size: 13px; color: #555;">
-                                        <span style="color: #ce1126;">O:</span> 803-547-5921 &nbsp;|&nbsp; 
+                                    <p style="margin: 2px 0 0 0; font-size: 13px; color: #555;">
                                         <span style="color: #ce1126;">C:</span> <span id="sigPhone">555-0123</span>
                                     </p>
                                     
                                     <p style="margin: 2px 0 0 0; font-size: 13px; color: #555;">
                                         <a href="mailto:jdoe@riverviewfire.org" class="signature-link" id="sigEmailLink">jdoe@riverviewfire.org</a>
                                     </p>
-                                    
-                                    <p style="margin: 2px 0 0 0; font-size: 13px; color: #777;">
-                                        1899 Harris Rd<br>
-                                        Fort Mill, SC 29708
-                                    </p>
-                                    
-                                    <p style="margin: 10px 0 0 0; font-size: 13px;">
+                                    <p style="margin: 2px 0 0 0; font-size: 13px;">
                                         <a href="http://www.riverviewfire.org" style="color: #ce1126; text-decoration: none; font-weight: bold;">www.riverviewfire.org</a>
                                     </p>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td colspan="2">
-                                    <div class="confidentiality">
-                                        CONFIDENTIALITY NOTICE: The contents of this email message and any attachments are intended solely for the addressee(s) and may contain confidential and/or privileged information and may be legally protected from disclosure. If you are not the intended recipient of this message or their agent, or if this message has been addressed to you in error, please immediately alert the sender by reply email and then delete this message and any attachments.
-                                    </div>
                                 </td>
                             </tr>
                         </table>
                     </div>
                 </div>
 
-                <button onclick="copyToClipboard()" class="w-full bg-red-700 hover:bg-red-800 text-white font-bold py-3 px-4 rounded shadow-md transition duration-200 flex items-center justify-center gap-2">
+                <button onclick="copyToClipboard()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-full shadow-md transition duration-300 ease-in-out transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                     Copy Signature to Clipboard
                 </button>
