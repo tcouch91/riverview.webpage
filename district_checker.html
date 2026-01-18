@@ -6,7 +6,7 @@
     <meta name="robots" content="index, follow">
     <link rel="icon" href="img/logo.png" type="image/png">
     <title>Fire District Locator | Riverview Fire Department</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="css/styles.css">
     <style>
         /* Page-specific styles for district_checker.html */
         body {
@@ -174,30 +174,8 @@
         <p style="margin-top: 0.5rem;">Dedicated to Protecting Our Community</p>
     </footer>
 
+    <script src="js/main.js"></script>
     <script>
-        document.getElementById('logoImg').src = 'img/logo.png';
-
-        function toggleMenu() {
-            const nav = document.getElementById('mainNav');
-            nav.classList.toggle('active');
-        }
-
-        function closeMenu() {
-            const nav = document.getElementById('mainNav');
-            nav.classList.remove('active');
-        }
-
-        document.addEventListener('click', function(event) {
-            const nav = document.getElementById('mainNav');
-            const toggle = document.querySelector('.mobile-menu-toggle');
-            const isClickInsideNav = nav.contains(event.target);
-            const isClickOnToggle = toggle.contains(event.target);
-            
-            if (!isClickInsideNav && !isClickOnToggle && nav.classList.contains('active')) {
-                nav.classList.remove('active');
-            }
-        });
-
         const BACKEND_URL = "https://site--fire-district--pgmbgn28bmtf.code.run/";
         
         const addressInput = document.getElementById('address');

@@ -6,7 +6,7 @@
     <meta name="description" content="The official website for the Riverview Fire Department, serving eastern York County, South Carolina. Find information about our stations, services, and how to join.">
     <meta name="robots" content="index, follow">
     <link rel="icon" href="img/logo.png" type="image/png">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="css/styles.css">
     <title>Riverview Fire Department | York County, SC</title>
     <style>
         /* Page-specific styles for index.html */
@@ -613,7 +613,7 @@
             <p style="font-size: 1.2rem; margin-bottom: 1rem;">Riverview FD is always looking for dedicated individuals who want to make a difference.</p>
             <p>No experience necessary - we provide comprehensive training! Must be at least 16 years of age.</p>
             <p>Download an application and bring it to Station 1 during business hours (07:00-18:00) or Station 2 on Tuesday nights at 18:30.</p>
-            <a href="RVFD_membership_application_fillable_merged.pdf" download class="cta-button">Download Application</a>
+            <a href="assets/docs/RVFD_membership_application.pdf" download class="cta-button">Download Application</a>
             <div class="instagram-embed-container">
                 <iframe src="https://www.facebook.com/plugins/video.php?height=476&href=https%3A%2F%2Fwww.facebook.com%2F100064782363910%2Fvideos%2F819304420304622%2F&show_text=false&width=476&t=0" width="476" height="476" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share" allowFullScreen="true"></iframe>
             </div>
@@ -679,32 +679,8 @@
         <p style="margin-top: 0.5rem;">Dedicated to Protecting Our Community</p>
     </footer>
 
+    <script src="js/main.js"></script>
     <script>
-        document.getElementById('logoImg').src = 'img/logo.png';
-
-        document.getElementById('heroBgImg').src = 'img/background.jpg';
-
-        function toggleMenu() {
-            const nav = document.getElementById('mainNav');
-            nav.classList.toggle('active');
-        }
-
-        function closeMenu() {
-            const nav = document.getElementById('mainNav');
-            nav.classList.remove('active');
-        }
-
-        document.addEventListener('click', function(event) {
-            const nav = document.getElementById('mainNav');
-            const toggle = document.querySelector('.mobile-menu-toggle');
-            const isClickInsideNav = nav.contains(event.target);
-            const isClickOnToggle = toggle.contains(event.target);
-            
-            if (!isClickInsideNav && !isClickOnToggle && nav.classList.contains('active')) {
-                nav.classList.remove('active');
-            }
-        });
-
         document.addEventListener('DOMContentLoaded', function() {
             const images = document.querySelectorAll('.station-photo-placeholder img, .apparatus-photo-placeholder img');
             images.forEach(img => {
