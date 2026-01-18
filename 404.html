@@ -6,6 +6,7 @@
     <meta name="robots" content="noindex, nofollow">
     <link rel="icon" href="img/logo.jpg" type="image/jpeg">
     <title>Page Not Found | Riverview Fire Department</title>
+    <link rel="stylesheet" href="styles.css">
     <script>
         (function() {
             var path = window.location.pathname;
@@ -23,20 +24,12 @@
         })();
     </script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        /* Page-specific styles for 404.html */
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-dark-alt) 100%);
         }
 
         .error-container {
@@ -53,7 +46,7 @@
         .error-code {
             font-size: 8rem;
             font-weight: bold;
-            color: #ef4444;
+            color: var(--primary-red-light);
             line-height: 1;
             margin-bottom: 1rem;
         }
@@ -66,7 +59,7 @@
 
         .home-link {
             display: inline-block;
-            background: #ef4444;
+            background: var(--primary-red-light);
             color: white;
             padding: 1rem 2rem;
             border-radius: 8px;
@@ -76,15 +69,15 @@
         }
 
         .home-link:hover {
-            background: #dc2626;
+            background: var(--primary-red);
             transform: translateY(-2px);
         }
 
-        .logo {
+        .error-logo {
             margin-bottom: 2rem;
         }
 
-        .logo img {
+        .error-logo img {
             width: 100px;
             height: 100px;
             object-fit: contain;
@@ -93,7 +86,7 @@
 </head>
 <body>
     <div class="error-container">
-        <div class="logo">
+        <div class="error-logo">
             <img src="img/logo.jpg" alt="Riverview FD Logo">
         </div>
         <div class="error-code">404</div>
