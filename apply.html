@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Apply to join the Riverview Fire Department. Fill out our membership application online.">
+    <meta name="robots" content="index, follow">
+    <link rel="icon" href="img/logo.png" type="image/png">
+    <link rel="stylesheet" href="css/styles.css">
+    <title>Apply to Join | Riverview Fire Department</title>
+    <style>
+        body {
+            background-color: var(--bg-light);
+        }
+
+        .form-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: var(--shadow-card);
+            margin-top: 2rem;
+            min-height: 800px;
+        }
+
+        .form-container iframe {
+            min-height: 750px !important;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding-top: 100px;
+            }
+
+            .form-container {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="nav-container">
+            <div class="logo">
+                <div class="logo-icon">
+                    <img src="img/logo.png" alt="Riverview FD Logo" id="logoImg">
+                </div>
+                <span>Riverview FD</span>
+            </div>
+            <button class="mobile-menu-toggle" onclick="toggleMenu()" aria-label="Toggle menu">
+                ☰
+            </button>
+            <nav id="mainNav">
+                <ul>
+                    <li><a href="index.html#about" onclick="closeMenu()">About</a></li>
+                    <li><a href="index.html#stations" onclick="closeMenu()">Stations</a></li>
+                    <li><a href="index.html#apparatus" onclick="closeMenu()">Apparatus</a></li>
+                    <li><a href="index.html#services" onclick="closeMenu()">Services</a></li>
+                    <li><a href="index.html#events" onclick="closeMenu()">Events</a></li>
+                    <li><a href="index.html#volunteer" onclick="closeMenu()">Join Us</a></li>
+                    <li><a href="index.html#contact" onclick="closeMenu()">Contact</a></li>
+                    <li class="social-links">
+                        <a href="https://www.facebook.com/p/Riverview-Fire-Department-100064782363910/" target="_blank" rel="noopener noreferrer" class="facebook-btn" aria-label="Visit our Facebook page">
+                            <span class="facebook-icon">f</span>
+                            <span>Facebook</span>
+                        </a>
+                        <a href="https://www.instagram.com/riverview_fire_department/" target="_blank" rel="noopener noreferrer" class="instagram-btn" aria-label="Visit our Instagram page">
+                            <span class="insta-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                            </span>
+                            <span>Instagram</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container container--page">
+        <a href="index.html#volunteer" class="cta-button" style="margin-bottom: 2rem; padding: 0.8rem 2rem; font-size: 1rem; background: #6b7280;">&larr; Back</a>
+
+        <h2 class="section-title">Membership Application</h2>
+
+        <p style="text-align: center; margin-bottom: 1rem; color: var(--text-secondary);">
+            No experience necessary - we provide comprehensive training! Must be at least 16 years of age.
+        </p>
+
+        <div class="form-container">
+            <script type='text/javascript' language='JavaScript' src='https://na3.documents.adobe.com/public/embeddedWidget?wid=CBFCIBAA3AAABLblqZhA124kFR08HG1lOZig_3Y2b-37HobN-vRu8c4mw7XhEX6SkCGRfnzKZMy9N2vzK7J4*'></script>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 Riverview Fire Department | York County, South Carolina</p>
+        <p style="margin-top: 0.5rem;">Dedicated to Protecting Our Community</p>
+    </footer>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
