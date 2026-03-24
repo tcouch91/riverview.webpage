@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATV 1 | Riverview Fire Department</title>
+    <link rel="icon" href="img/logo.png" type="image/png">
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        body { background-color: var(--bg-light); }
+        .apparatus-detail-img {
+            width: 100%; max-width: 800px; border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1); margin-bottom: 2rem;
+            display: block; margin-left: auto; margin-right: auto;
+        }
+        .apparatus-description {
+            max-width: 800px; margin: 0 auto; font-size: 1.1rem; line-height: 1.6; color: #374151;
+        }
+        .apparatus-specs {
+            max-width: 800px; margin: 1.5rem auto 0; padding-left: 1.5rem; font-size: 1.1rem; color: #374151; line-height: 1.6;
+        }
+        .apparatus-specs li {
+            margin-bottom: 0.5rem;
+        }
+        @media (max-width: 768px) {
+            .container { padding-top: 100px; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="nav-container">
+            <div class="logo">
+                <div class="logo-icon">
+                    <img src="img/logo.png" alt="Riverview FD Logo" id="logoImg">
+                </div>
+                <span>Riverview FD</span>
+            </div>
+            <button class="mobile-menu-toggle" onclick="toggleMenu()" aria-label="Toggle menu">
+                ☰
+            </button>
+            <nav id="mainNav">
+                <ul>
+                    <li><a href="index.html#about" onclick="closeMenu()">About</a></li>
+                    <li><a href="index.html#stations" onclick="closeMenu()">Stations</a></li>
+                    <li><a href="index.html#apparatus" onclick="closeMenu()">Apparatus</a></li>
+                    <li><a href="index.html#services" onclick="closeMenu()">Services</a></li>
+                    <li><a href="index.html#events" onclick="closeMenu()">Events</a></li>
+                    <li><a href="index.html#volunteer" onclick="closeMenu()">Join Us</a></li>
+                    <li><a href="index.html#contact" onclick="closeMenu()">Contact</a></li>
+                    <li class="social-links">
+                        <a href="https://www.facebook.com/p/Riverview-Fire-Department-100064782363910/" target="_blank" rel="noopener noreferrer" class="facebook-btn" aria-label="Visit our Facebook page">
+                            <span class="facebook-icon">f</span>
+                            <span>Facebook</span>
+                        </a>
+                        <a href="https://www.instagram.com/riverview_fire_department/" target="_blank" rel="noopener noreferrer" class="instagram-btn" aria-label="Visit our Instagram page">
+                            <span class="insta-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                            </span>
+                            <span>Instagram</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <div class="container container--page">
+        <section class="section">
+            <a href="index.html#apparatus" class="cta-button" style="margin-bottom: 2.5rem; padding: 0.8rem 2rem; font-size: 1rem; background: #6b7280;">&larr; Back to Apparatus</a>
+            <h2 class="section-title">ATV 1</h2>
+            <div class="page-content">
+                <img src="img/atv1.gif" alt="Riverview Fire Department ATV 1 apparatus" class="apparatus-detail-img">
+                <p class="apparatus-description">The ATV utility vehicle provides rapid mobility for special events, large industrial sites, off-road medical rescues, and navigating tight trails or wooded areas where larger apparatus cannot fit safely.</p>
+                <ul class="apparatus-specs">
+                    <li>Off-Road Capability</li>
+                    <li>Patient Transport Stokes Basket Setup</li>
+                    <li>Water tank and hose for fighting off-road brush fires</li>
+                </ul>
+            </div>
+        </section>
+    </div>
+    <footer>
+        <p>&copy; 2025 Riverview Fire Department | York County, South Carolina</p>
+        <p style="margin-top: 0.5rem;">Dedicated to Protecting Our Community</p>
+    </footer>
+    <script src="js/main.js"></script>
+</body>
+</html>
