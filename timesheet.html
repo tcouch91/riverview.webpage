@@ -1,0 +1,3092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="icon" href="img/logo.png" type="image/png">
+    <title>Employee Timesheet &amp; Payroll Portal | Riverview Fire Department</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        body {
+            background-color: var(--bg-light);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container--page {
+            flex: 1;
+            padding-top: 115px;
+            max-width: 1240px;
+            width: 100%;
+        }
+
+        /* Top Bar & Connection Badge */
+        .portal-topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 0.4rem 0.9rem;
+            border-radius: 999px;
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .status-pill .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #9ca3af;
+        }
+
+        .status-pill.online {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-pill.online .dot {
+            background: #16a34a;
+        }
+
+        .status-pill.local {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-pill.local .dot {
+            background: #d97706;
+        }
+
+        /* Login Card */
+        .login-wrapper {
+            max-width: 460px;
+            margin: 1.5rem auto 3rem;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: var(--shadow-card);
+            padding: 2rem;
+            margin-bottom: 1.75rem;
+            border: 1px solid #f3f4f6;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.85rem;
+            border-bottom: 2px solid var(--bg-light);
+        }
+
+        .card-title {
+            font-size: 1.35rem;
+            color: var(--primary-dark);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Forms */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.15rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.15rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.4rem;
+            font-weight: 600;
+            font-size: 0.92rem;
+            color: #374151;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.7rem 0.9rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+            color: var(--text-primary);
+            background: #fff;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-red);
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.18);
+        }
+
+        /* Duration Live Preview Box */
+        .duration-preview {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-left: 4px solid var(--primary-red);
+            border-radius: 8px;
+            padding: 0.9rem 1.15rem;
+            margin-bottom: 1.15rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .duration-preview .calc-value {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: var(--primary-dark);
+        }
+
+        .duration-preview .calc-sub {
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+        }
+
+        .sunday-split-notice {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1e3a8a;
+            border-radius: 8px;
+            padding: 0.85rem 1rem;
+            margin-bottom: 1.15rem;
+            font-size: 0.92rem;
+            display: none;
+        }
+
+        .sunday-split-notice label {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.6rem;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .sunday-split-notice input[type="checkbox"] {
+            margin-top: 0.25rem;
+            width: 16px;
+            height: 16px;
+            accent-color: var(--primary-red);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+            padding: 0.68rem 1.35rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: var(--primary-red);
+            color: #fff;
+            box-shadow: 0 3px 10px rgba(220, 38, 38, 0.3);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--primary-red-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #1f2937;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #d1d5db;
+        }
+
+        .btn-dark {
+            background: var(--primary-dark);
+            color: #fff;
+        }
+
+        .btn-dark:hover:not(:disabled) {
+            background: var(--primary-dark-alt);
+        }
+
+        .btn-success {
+            background: #16a34a;
+            color: #fff;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background: #15803d;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            color: #fff;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: #b91c1c;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #d1d5db;
+            color: #374151;
+        }
+
+        .btn-outline:hover:not(:disabled) {
+            background: #f3f4f6;
+        }
+
+        .btn-sm {
+            padding: 0.38rem 0.75rem;
+            font-size: 0.82rem;
+            border-radius: 6px;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* User Session Bar */
+        .user-session-bar {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-dark-alt) 100%);
+            color: #fff;
+            padding: 1.1rem 1.5rem;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-card);
+        }
+
+        .user-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.9rem;
+        }
+
+        .dept-id-circle {
+            background: var(--primary-red);
+            color: #fff;
+            font-weight: 800;
+            font-size: 1.1rem;
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4);
+        }
+
+        .role-tag {
+            display: inline-block;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.15rem 0.55rem;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.18);
+            color: #f3f4f6;
+            margin-left: 0.5rem;
+            font-weight: 700;
+        }
+
+        /* Pay Period Navigator Bar */
+        .pay-period-bar {
+            background: #fff;
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-card);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            border-left: 5px solid var(--primary-red);
+        }
+
+        .pay-period-info h3 {
+            font-size: 1.15rem;
+            color: var(--primary-dark);
+            margin-bottom: 0.15rem;
+        }
+
+        .pay-period-info p {
+            font-size: 0.86rem;
+            color: var(--text-muted);
+        }
+
+        .pay-period-controls {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        /* Navigation Tabs */
+        .portal-tabs {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 0.5rem;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            padding: 0.65rem 1.25rem;
+            border-radius: 8px;
+            font-size: 0.96rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tab-btn:hover {
+            background: #e5e7eb;
+            color: var(--primary-dark);
+        }
+
+        .tab-btn.active {
+            background: var(--primary-red);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+        }
+
+        .tab-badge {
+            background: rgba(0, 0, 0, 0.2);
+            color: #fff;
+            font-size: 0.75rem;
+            padding: 0.1rem 0.45rem;
+            border-radius: 999px;
+        }
+
+        .tab-btn:not(.active) .tab-badge {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* Summary Metric Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 1.15rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: #fff;
+            border-radius: 10px;
+            padding: 1.25rem 1.4rem;
+            box-shadow: var(--shadow-card);
+            border-top: 4px solid var(--primary-dark);
+        }
+
+        .stat-card.stat-approved {
+            border-top-color: #16a34a;
+        }
+
+        .stat-card.stat-pending {
+            border-top-color: #d97706;
+        }
+
+        .stat-card.stat-primary {
+            border-top-color: var(--primary-red);
+        }
+
+        .stat-label {
+            font-size: 0.84rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--text-muted);
+            margin-bottom: 0.35rem;
+        }
+
+        .stat-value {
+            font-size: 1.9rem;
+            font-weight: 800;
+            color: var(--primary-dark);
+            line-height: 1.2;
+        }
+
+        .stat-sub {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        /* Tables */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table.data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.94rem;
+        }
+
+        table.data-table th,
+        table.data-table td {
+            padding: 0.85rem 0.9rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        table.data-table th {
+            background: #f8fafc;
+            color: #374151;
+            font-weight: 700;
+            font-size: 0.83rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            white-space: nowrap;
+        }
+
+        table.data-table tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        table.data-table tfoot td {
+            background: #f8fafc;
+            font-weight: 800;
+            border-top: 2px solid #cbd5e1;
+        }
+
+        /* Status Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.22rem 0.65rem;
+            border-radius: 999px;
+            font-size: 0.76rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .badge-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-approved {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-rejected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-overnight {
+            background: #e0e7ff;
+            color: #1e40af;
+            margin-left: 0.35rem;
+        }
+
+        .badge-role {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        /* Alerts / Toast */
+        .alert-box {
+            padding: 0.9rem 1.15rem;
+            border-radius: 8px;
+            margin-bottom: 1.15rem;
+            font-weight: 500;
+            font-size: 0.94rem;
+            display: none;
+        }
+
+        .alert-error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+        }
+
+        .alert-success {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+        }
+
+        /* Modals */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 1rem;
+        }
+
+        .modal-backdrop.open {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #fff;
+            border-radius: 12px;
+            max-width: 520px;
+            width: 100%;
+            padding: 1.75rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+        }
+
+        /* Print-Only CFO Payroll Sheet */
+        #printableReport {
+            display: none;
+        }
+
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            header, footer, .no-print {
+                display: none !important;
+            }
+            #printableReport, #printableReport * {
+                visibility: visible;
+            }
+            #printableReport {
+                display: block !important;
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                padding: 0;
+                background: #fff;
+                color: #000;
+            }
+            .print-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 1rem;
+                margin-bottom: 1.5rem;
+                font-size: 10pt;
+            }
+            .print-table th, .print-table td {
+                border: 1px solid #333;
+                padding: 6px 8px;
+                text-align: left;
+            }
+            .print-table th {
+                background: #eee !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container--page {
+                padding-top: 95px;
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            .card {
+                padding: 1.25rem;
+            }
+            .user-session-bar, .pay-period-bar {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header no-print">
+        <div class="nav-container">
+            <div class="logo">
+                <div class="logo-icon">
+                    <img src="img/logo.png" alt="Riverview FD Logo" id="logoImg">
+                </div>
+                <span>Riverview FD</span>
+            </div>
+            <button class="mobile-menu-toggle" onclick="toggleMenu()" aria-label="Toggle menu">
+                ☰
+            </button>
+            <nav id="mainNav">
+                <ul>
+                    <li><a href="index.html" onclick="closeMenu()">Home</a></li>
+                    <li><a href="index.html#about" onclick="closeMenu()">About</a></li>
+                    <li><a href="index.html#stations" onclick="closeMenu()">Stations</a></li>
+                    <li><a href="index.html#apparatus" onclick="closeMenu()">Apparatus</a></li>
+                    <li><a href="district_checker.html" onclick="closeMenu()">District Locator</a></li>
+                    <li><a href="timesheet.html" onclick="closeMenu()" style="color: var(--primary-red-light); font-weight: 700;">Timesheet</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container container--page no-print">
+        <div class="portal-topbar">
+            <div>
+                <h2 class="section-title" style="margin-bottom: 0; text-align: left; font-size: 2rem;">Employee Timesheet Portal</h2>
+            </div>
+            <div id="connectionBadge" class="status-pill">
+                <span class="dot"></span>
+                <span id="connectionText">Checking connection...</span>
+            </div>
+        </div>
+
+        <!-- Global Alert Banner -->
+        <div id="globalAlert" class="alert-box"></div>
+
+        <!-- ==================================================================
+             VIEW 1: LOGIN SCREEN (Department IDs 900 - 999)
+             ================================================================== -->
+        <div id="loginView" class="login-wrapper">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Member &amp; Officer Sign In</div>
+                </div>
+                <p style="color: var(--text-secondary); margin-bottom: 1.25rem; font-size: 0.95rem;">
+                    Sign in with your 3-digit Riverview FD Department ID (<b>900–999</b>) and PIN to log shift hours or access the Officer &amp; CFO portal.
+                </p>
+
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="loginDeptId">Department ID (900–999)</label>
+                        <input
+                            type="text"
+                            id="loginDeptId"
+                            class="form-control"
+                            placeholder="e.g., 902"
+                            pattern="9[0-9]{2}"
+                            maxlength="3"
+                            inputmode="numeric"
+                            required
+                            autocomplete="username"
+                        >
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPin">PIN / Password</label>
+                        <input
+                            type="password"
+                            id="loginPin"
+                            class="form-control"
+                            placeholder="Enter your PIN"
+                            required
+                            autocomplete="current-password"
+                        >
+                    </div>
+                    <button type="submit" id="loginSubmitBtn" class="btn btn-primary" style="width: 100%; padding: 0.85rem; font-size: 1.05rem;">
+                        Sign In to Timesheet
+                    </button>
+                </form>
+
+                <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px dashed #e5e7eb; font-size: 0.85rem; color: var(--text-muted);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                        <span style="font-weight: 700; color: #374151;">Quick Demo Accounts (Default PIN: <code>1234</code>):</span>
+                        <button type="button" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 0.2rem 0.55rem;" onclick="resetDemoDataset()">Reset Demo Data</button>
+                    </div>
+                    <div style="margin-bottom: 0.3rem; font-size: 0.78rem; color: #6b7280; font-weight: 600;">Officers &amp; Finance (Full Review + Export Access):</div>
+                    <div style="display: flex; gap: 0.45rem; flex-wrap: wrap; margin-bottom: 0.65rem;">
+                        <button type="button" class="btn btn-outline btn-sm" onclick="quickFillLogin('900', '1234')">#900 Chief Couch (Officer)</button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="quickFillLogin('901', '1234')">#901 M. Reynolds (CFO)</button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="quickFillLogin('902', '1234')">#902 Capt. Miller (Officer)</button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="quickFillLogin('903', '1234')">#903 Lt. Davis (Officer)</button>
+                    </div>
+                    <div style="margin-bottom: 0.3rem; font-size: 0.78rem; color: #6b7280; font-weight: 600;">Firefighters &amp; Engineers (Member View):</div>
+                    <div style="display: flex; gap: 0.45rem; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-outline btn-sm" onclick="quickFillLogin('904', '1234')">#904 Eng. Thompson</button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="quickFillLogin('905', '1234')">#905 FF/EMT Patel</button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="quickFillLogin('906', '1234')">#906 FF Henderson</button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="quickFillLogin('907', '1234')">#907 Medic Morales</button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="quickFillLogin('908', '1234')">#908 FF Brooks</button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="quickFillLogin('909', '1234')">#909 Prob. FF Wallace</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================================================================
+             VIEW 2: AUTHENTICATED PORTAL
+             ================================================================== -->
+        <div id="portalView" style="display: none;">
+            <!-- Active User Header Bar -->
+            <div class="user-session-bar">
+                <div class="user-badge">
+                    <div class="dept-id-circle" id="sessionDeptId">900</div>
+                    <div>
+                        <div style="font-weight: 700; font-size: 1.15rem;">
+                            <span id="sessionUserName">Member Name</span>
+                            <span class="role-tag" id="sessionUserRole">MEMBER</span>
+                        </div>
+                        <div style="font-size: 0.85rem; color: #cbd5e1;">
+                            Weekly Pay Period: Monday 00:00 &ndash; Sunday 24:00
+                        </div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="openPinModal()">Change PIN</button>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="logout()">Sign Out</button>
+                </div>
+            </div>
+
+            <!-- Shared Weekly Pay Period Navigator -->
+            <div class="pay-period-bar">
+                <div class="pay-period-info">
+                    <h3 id="payPeriodTitle">Pay Period: Loading...</h3>
+                    <p>Pay period runs <b>Monday 00:00</b> through <b>Sunday 24:00</b> (midnight between Sunday &amp; Monday)</p>
+                </div>
+                <div class="pay-period-controls">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="shiftPayPeriod(-7)">&larr; Prev Week</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="resetToCurrentWeek()">Current Week</button>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="shiftPayPeriod(7)">Next Week &rarr;</button>
+                    <input
+                        type="date"
+                        id="weekPickerInput"
+                        class="form-control"
+                        style="width: auto; padding: 0.35rem 0.65rem; font-size: 0.88rem;"
+                        title="Jump to the week containing this date"
+                        onchange="onWeekPickerChange(this.value)"
+                    >
+                </div>
+            </div>
+
+            <!-- Portal Navigation Tabs (Officer/CFO tabs shown only for reviewers) -->
+            <div class="portal-tabs" id="portalTabs">
+                <button type="button" class="tab-btn active" data-tab="tabLogHours" onclick="switchTab('tabLogHours')">
+                    Log Shift &amp; My Hours
+                </button>
+                <button type="button" class="tab-btn reviewer-only" data-tab="tabOfficerReview" onclick="switchTab('tabOfficerReview')" style="display: none;">
+                    Officer Review Portal
+                    <span class="tab-badge" id="pendingCountBadge">0</span>
+                </button>
+                <button type="button" class="tab-btn reviewer-only" data-tab="tabCfoExport" onclick="switchTab('tabCfoExport')" style="display: none;">
+                    CFO Payroll &amp; Exports
+                </button>
+                <button type="button" class="tab-btn reviewer-only" data-tab="tabRoster" onclick="switchTab('tabRoster')" style="display: none;">
+                    Roster &amp; IDs (900–999)
+                </button>
+                <button type="button" class="tab-btn reviewer-only" data-tab="tabAudit" onclick="switchTab('tabAudit')" style="display: none;">
+                    Audit Trail
+                </button>
+            </div>
+
+            <!-- ==============================================================
+                 TAB 1: RETRO SHIFT LOGGING & MY TIMESHEET
+                 ============================================================== -->
+            <div id="tabLogHours" class="tab-pane">
+                <!-- Member Weekly Summary Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card stat-approved">
+                        <div class="stat-label">My Approved Hours (Week)</div>
+                        <div class="stat-value" id="myApprovedHours">0.00</div>
+                        <div class="stat-sub">Ready for CFO payroll</div>
+                    </div>
+                    <div class="stat-card stat-pending">
+                        <div class="stat-label">My Pending Hours (Week)</div>
+                        <div class="stat-value" id="myPendingHours">0.00</div>
+                        <div class="stat-sub">Awaiting officer review</div>
+                    </div>
+                    <div class="stat-card stat-primary">
+                        <div class="stat-label">Total Logged (Week)</div>
+                        <div class="stat-value" id="myTotalHours">0.00</div>
+                        <div class="stat-sub"><span id="myShiftCount">0</span> shift(s) this pay period</div>
+                    </div>
+                </div>
+
+                <!-- Retro Shift Logging Form -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title" id="entryFormTitle">Submit Completed Hours (Retro Log)</div>
+                        <button type="button" id="cancelEditBtn" class="btn btn-outline btn-sm" style="display: none;" onclick="resetEntryForm()">
+                            Cancel Edit
+                        </button>
+                    </div>
+
+                    <form id="retroEntryForm">
+                        <input type="hidden" id="editEntryId" value="">
+                        <div class="form-grid">
+                            <div class="form-group" id="logForMemberGroup" style="display: none;">
+                                <label for="entryDeptId">Member (900–999)</label>
+                                <select id="entryDeptId" class="form-control"></select>
+                            </div>
+                            <div class="form-group">
+                                <label for="entryShiftDate">Shift Date</label>
+                                <input type="date" id="entryShiftDate" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="entryStartTime">Start Time</label>
+                                <input type="time" id="entryStartTime" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="entryEndTime">End Time</label>
+                                <input type="time" id="entryEndTime" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <!-- Live Auto-Calculated Duration Box -->
+                        <div class="duration-preview" id="durationPreviewBox">
+                            <div>
+                                <div style="font-weight: 700; color: var(--primary-dark);">Calculated Shift Duration</div>
+                                <div class="calc-sub" id="durationSubText">Select start and end times to auto-calculate hours.</div>
+                            </div>
+                            <div class="calc-value" id="durationValueText">0.00 hrs</div>
+                        </div>
+
+                        <!-- Sunday Midnight Split Notice -->
+                        <div class="sunday-split-notice" id="sundaySplitNotice">
+                            <label>
+                                <input type="checkbox" id="splitSundayMidnight" checked>
+                                <span>
+                                    <b>Sunday Midnight Pay Period Cutoff:</b> This Sunday shift crosses midnight into Monday.
+                                    Automatically split hours at <b>24:00 / 00:00</b> so Sunday's hours apply to the ending week and Monday's hours apply to the new week.
+                                </span>
+                            </label>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="entryNotes">Notes / Description (Optional)</label>
+                            <input
+                                type="text"
+                                id="entryNotes"
+                                class="form-control"
+                                placeholder="Optional shift details, apparatus, or remarks..."
+                                maxlength="300"
+                            >
+                        </div>
+
+                        <button type="submit" id="saveEntryBtn" class="btn btn-primary">
+                            Submit Hours for Review
+                        </button>
+                    </form>
+                </div>
+
+                <!-- My Timesheet Entries Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">My Logged Shifts (<span id="myTablePeriodLabel">Selected Week</span>)</div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <label style="font-size: 0.86rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                                <input type="checkbox" id="showAllMyWeeks" onchange="loadMyEntries()">
+                                Show all weeks
+                            </label>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Shift Date</th>
+                                    <th>Start &ndash; End</th>
+                                    <th>Hours</th>
+                                    <th>Pay Period (Mon&ndash;Sun)</th>
+                                    <th>Notes</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="myEntriesTbody">
+                                <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No shifts logged for this week yet.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==============================================================
+                 TAB 2: OFFICER REVIEW PORTAL
+                 ============================================================== -->
+            <div id="tabOfficerReview" class="tab-pane" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Officer Timesheet Review &amp; Approval</div>
+                        <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+                            <button type="button" class="btn btn-success btn-sm" onclick="bulkApproveWeek()">
+                                &#10003; Approve All Pending for Selected Week
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filters -->
+                    <div class="form-grid" style="margin-bottom: 1.25rem;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="reviewFilterMember">Filter by Member</label>
+                            <select id="reviewFilterMember" class="form-control" onchange="loadOfficerEntries()">
+                                <option value="">All Members (900–999)</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="reviewFilterStatus">Filter by Status</label>
+                            <select id="reviewFilterStatus" class="form-control" onchange="loadOfficerEntries()">
+                                <option value="all">All Statuses</option>
+                                <option value="pending">Pending Review Only</option>
+                                <option value="approved">Approved Only</option>
+                                <option value="rejected">Rejected Only</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0; display: flex; align-items: flex-end;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding-bottom: 0.65rem;">
+                                <input type="checkbox" id="reviewShowAllWeeks" onchange="loadOfficerEntries()">
+                                Show entries across all weeks
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Member</th>
+                                    <th>Shift Date</th>
+                                    <th>Start &ndash; End</th>
+                                    <th>Hours</th>
+                                    <th>Notes</th>
+                                    <th>Status / Reviewer</th>
+                                    <th>Review Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="officerEntriesTbody">
+                                <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Loading entries...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==============================================================
+                 TAB 3: CFO WEEKLY PAYROLL SUMMARY & EXPORTS
+                 ============================================================== -->
+            <div id="tabCfoExport" class="tab-pane" style="display: none;">
+                <!-- Department Totals for Selected Weekly Pay Period -->
+                <div class="stats-grid">
+                    <div class="stat-card stat-approved">
+                        <div class="stat-label">Approved Payroll Hours</div>
+                        <div class="stat-value" id="cfoApprovedHours">0.00</div>
+                        <div class="stat-sub"><span id="cfoApprovedShifts">0</span> approved shift(s)</div>
+                    </div>
+                    <div class="stat-card stat-pending">
+                        <div class="stat-label">Unreviewed Pending Hours</div>
+                        <div class="stat-value" id="cfoPendingHours">0.00</div>
+                        <div class="stat-sub">Needs officer sign-off</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Employees Logged</div>
+                        <div class="stat-value" id="cfoEmployeeCount">0</div>
+                        <div class="stat-sub"><span id="cfoTotalShifts">0</span> total shift(s) submitted</div>
+                    </div>
+                    <div class="stat-card stat-primary">
+                        <div class="stat-label">Total Submitted Hours</div>
+                        <div class="stat-value" id="cfoTotalHours">0.00</div>
+                        <div class="stat-sub">Approved + Pending + Rejected</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">CFO Weekly Payroll Summary</div>
+                            <div style="font-size: 0.88rem; color: var(--text-secondary);" id="cfoPeriodSubheader">
+                                Weekly Pay Period (Monday 00:00 &ndash; Sunday 24:00)
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+                            <button type="button" class="btn btn-primary btn-sm" onclick="exportCsv('summary', false)">
+                                &#8681; Export Payroll Summary (CSV)
+                            </button>
+                            <button type="button" class="btn btn-dark btn-sm" onclick="exportCsv('detailed', false)">
+                                &#8681; Export Detailed Shift Audit (CSV)
+                            </button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="printCfoReport()">
+                                &#128424; Print / Save PDF Payroll Report
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Dept ID</th>
+                                    <th>Employee Name</th>
+                                    <th>Role</th>
+                                    <th>Approved Shifts</th>
+                                    <th>Approved Hours (Payroll)</th>
+                                    <th>Pending Hours</th>
+                                    <th>Rejected Hours</th>
+                                    <th>Total Logged Hours</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cfoSummaryTbody">
+                                <tr><td colspan="8" style="text-align: center; color: var(--text-muted);">No hours logged for this pay period.</td></tr>
+                            </tbody>
+                            <tfoot id="cfoSummaryTfoot"></tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==============================================================
+                 TAB 4: ROSTER & DEPARTMENT ID MANAGEMENT (900-999)
+                 ============================================================== -->
+            <div id="tabRoster" class="tab-pane" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Add / Update Employee (IDs 900–999)</div>
+                    </div>
+                    <form id="rosterForm">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="rosterDeptId">Department ID (900–999)</label>
+                                <input
+                                    type="text"
+                                    id="rosterDeptId"
+                                    class="form-control"
+                                    placeholder="e.g., 904"
+                                    pattern="9[0-9]{2}"
+                                    maxlength="3"
+                                    required
+                                >
+                            </div>
+                            <div class="form-group">
+                                <label for="rosterName">Full Name / Rank</label>
+                                <input
+                                    type="text"
+                                    id="rosterName"
+                                    class="form-control"
+                                    placeholder="e.g., R. Thompson (Firefighter)"
+                                    required
+                                >
+                            </div>
+                            <div class="form-group">
+                                <label for="rosterRole">Portal Role</label>
+                                <select id="rosterRole" class="form-control">
+                                    <option value="member">Member (Log Hours)</option>
+                                    <option value="officer">Officer (Review &amp; Approve + Log)</option>
+                                    <option value="cfo">CFO / Finance (Payroll Exports &amp; Review)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="rosterPin">PIN / Password (min 4 chars)</label>
+                                <input
+                                    type="text"
+                                    id="rosterPin"
+                                    class="form-control"
+                                    placeholder="Set or reset PIN (e.g., 1234)"
+                                >
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 0.75rem; align-items: center;">
+                            <button type="submit" class="btn btn-primary">Save Member to Roster</button>
+                            <button type="button" class="btn btn-outline" onclick="clearRosterForm()">Clear Form</button>
+                            <span style="font-size: 0.85rem; color: var(--text-muted);">
+                                Tip: Click "Edit" on any member below to update their role, name, or reset their PIN.
+                            </span>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Active Department Roster (900–999)</div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Dept ID</th>
+                                    <th>Name</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rosterTbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==============================================================
+                 TAB 5: AUDIT TRAIL
+                 ============================================================== -->
+            <div id="tabAudit" class="tab-pane" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">System Audit Log</div>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="loadAuditLogs()">Refresh</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Actor</th>
+                                    <th>Action</th>
+                                    <th>Target</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="auditLogsTbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================================================
+         CHANGE PIN MODAL
+         ====================================================================== -->
+    <div id="pinModal" class="modal-backdrop no-print">
+        <div class="modal-content">
+            <div class="card-header">
+                <div class="card-title">Change My PIN / Password</div>
+                <button type="button" class="btn btn-outline btn-sm" onclick="closePinModal()">&#10005;</button>
+            </div>
+            <form id="changePinForm">
+                <div class="form-group">
+                    <label for="currentPinInput">Current PIN</label>
+                    <input type="password" id="currentPinInput" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="newPinInput">New PIN / Password (at least 4 characters)</label>
+                    <input type="password" id="newPinInput" class="form-control" minlength="4" required>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 0.6rem;">
+                    <button type="button" class="btn btn-outline" onclick="closePinModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update PIN</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ======================================================================
+         PRINTABLE / PDF CFO REPORT SHEET (Shown when printing/saving PDF)
+         ====================================================================== -->
+    <div id="printableReport">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #dc2626; padding-bottom: 12px; margin-bottom: 16px;">
+            <div>
+                <h1 style="font-size: 20pt; margin: 0; color: #1a1a2e;">RIVERVIEW FIRE DEPARTMENT</h1>
+                <div style="font-size: 12pt; font-weight: bold; color: #dc2626;">Weekly Payroll Timesheet Summary &amp; Audit Report</div>
+                <div style="font-size: 9.5pt; color: #4b5563; margin-top: 4px;">York County, South Carolina | Pay Period Cutoff: Sunday 24:00 (Midnight)</div>
+            </div>
+            <div style="text-align: right; font-size: 9.5pt;">
+                <div><b>Pay Period (Mon&ndash;Sun):</b> <span id="printPeriodRange"></span></div>
+                <div><b>Generated On:</b> <span id="printGeneratedAt"></span></div>
+                <div><b>Generated By:</b> <span id="printGeneratedBy"></span></div>
+            </div>
+        </div>
+
+        <h3 style="margin: 12px 0 6px; font-size: 12pt;">1. CFO Payroll Summary by Employee</h3>
+        <table class="print-table">
+            <thead>
+                <tr>
+                    <th>Dept ID</th>
+                    <th>Employee Name</th>
+                    <th>Role</th>
+                    <th>Approved Shifts</th>
+                    <th>Approved Hours (Payroll)</th>
+                    <th>Pending Hours</th>
+                    <th>Total Hours</th>
+                </tr>
+            </thead>
+            <tbody id="printSummaryTbody"></tbody>
+            <tfoot id="printSummaryTfoot"></tfoot>
+        </table>
+
+        <h3 style="margin: 18px 0 6px; font-size: 12pt;">2. Detailed Shift Log for Pay Period</h3>
+        <table class="print-table">
+            <thead>
+                <tr>
+                    <th>Dept ID</th>
+                    <th>Employee Name</th>
+                    <th>Shift Date</th>
+                    <th>Start &ndash; End</th>
+                    <th>Hours</th>
+                    <th>Status</th>
+                    <th>Reviewed By</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody id="printDetailedTbody"></tbody>
+        </table>
+
+        <div style="display: flex; justify-content: space-between; margin-top: 40px; padding-top: 20px; font-size: 10pt;">
+            <div style="width: 45%; border-top: 1px solid #000; padding-top: 6px;">
+                <b>Reviewing Fire Officer Signature &amp; Date</b>
+            </div>
+            <div style="width: 45%; border-top: 1px solid #000; padding-top: 6px;">
+                <b>Chief Financial Officer (CFO) Approval &amp; Date</b>
+            </div>
+        </div>
+    </div>
+
+    <footer class="no-print">
+        <p>&copy; 2026 Riverview Fire Department | York County, South Carolina</p>
+        <p style="margin-top: 0.5rem;">Dedicated to Protecting Our Community</p>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script>
+        /**
+         * Riverview Fire Department - Timesheet Portal Frontend
+         * Supports live Flask Backend API (SQLite/PostgreSQL) with automatic
+         * fallback to Local Browser Storage when testing offline.
+         */
+        const CONFIG = {
+            // Update PROD_BACKEND_URL once deployed to Northflank (e.g., "https://site--timesheet--xxxx.code.run")
+            PROD_BACKEND_URL: "http://127.0.0.1:5000",
+            LOCAL_BACKEND_URL: "http://127.0.0.1:5000"
+        };
+
+        let apiBaseUrl = CONFIG.LOCAL_BACKEND_URL;
+        let useLocalDemoStorage = false;
+        let authToken = localStorage.getItem("rvfd_ts_token") || null;
+        let currentUser = null;
+        let selectedPayPeriodStart = ""; // Monday YYYY-MM-DD
+        let selectedPayPeriodEnd = "";   // Sunday YYYY-MM-DD
+        let lastCfoSummaryData = null;
+
+        // =====================================================================
+        // Date & Weekly Pay Period Helpers (Monday 00:00 - Sunday 24:00)
+        // =====================================================================
+
+        function toIsoDate(d) {
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, "0");
+            const day = String(d.getDate()).padStart(2, "0");
+            return `${year}-${month}-${day}`;
+        }
+
+        function parseIsoDateLocal(isoStr) {
+            const [y, m, d] = isoStr.split("-").map(Number);
+            return new Date(y, m - 1, d);
+        }
+
+        function getMondaySundayPeriod(isoDateStr) {
+            const dt = isoDateStr ? parseIsoDateLocal(isoDateStr) : new Date();
+            const jsDay = dt.getDay(); // 0 = Sun, 1 = Mon ... 6 = Sat
+            const diffToMonday = jsDay === 0 ? -6 : 1 - jsDay;
+            const monday = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate() + diffToMonday);
+            const sunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6);
+            return {
+                start: toIsoDate(monday),
+                end: toIsoDate(sunday)
+            };
+        }
+
+        function formatHumanDate(isoStr) {
+            if (!isoStr) return "";
+            const dt = parseIsoDateLocal(isoStr);
+            return dt.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+        }
+
+        function calculateDurationClient(startTime, endTime) {
+            if (!startTime || !endTime) return null;
+            const parseMins = (t) => {
+                if (t === "24:00") return 1440;
+                const [h, m] = t.split(":").map(Number);
+                return h * 60 + m;
+            };
+            const sMins = parseMins(startTime);
+            const eMins = parseMins(endTime);
+            if (isNaN(sMins) || isNaN(eMins)) return null;
+
+            let isOvernight = false;
+            let diffMins = 0;
+            if (eMins <= sMins) {
+                isOvernight = true;
+                diffMins = (1440 - sMins) + eMins;
+            } else {
+                diffMins = eMins - sMins;
+            }
+            const hours = Math.round((diffMins / 60) * 100) / 100;
+            const wholeHours = Math.floor(diffMins / 60);
+            const remMins = diffMins % 60;
+            return {
+                hours,
+                wholeHours,
+                remMins,
+                isOvernight
+            };
+        }
+
+        // =====================================================================
+        // Local Fallback Storage Engine (Used if Flask server is offline)
+        // =====================================================================
+
+        const LocalDB = {
+            KEY_EMPLOYEES: "rvfd_demo_employees_v2",
+            KEY_ENTRIES: "rvfd_demo_entries_v2",
+            KEY_AUDIT: "rvfd_demo_audit_v2",
+
+            addDaysIso(baseIso, daysOffset) {
+                const dt = parseIsoDateLocal(baseIso);
+                dt.setDate(dt.getDate() + daysOffset);
+                return toIsoDate(dt);
+            },
+
+            reset() {
+                localStorage.removeItem(this.KEY_EMPLOYEES);
+                localStorage.removeItem(this.KEY_ENTRIES);
+                localStorage.removeItem(this.KEY_AUDIT);
+                this.init();
+            },
+
+            init() {
+                if (!localStorage.getItem(this.KEY_EMPLOYEES)) {
+                    const seedEmployees = [
+                        { dept_id: "900", name: "Chief T. Couch (Fire Chief)", role: "officer", pin: "1234", active: true },
+                        { dept_id: "901", name: "M. Reynolds (Department CFO)", role: "cfo", pin: "1234", active: true },
+                        { dept_id: "902", name: "Capt. J. Miller (Station 1 Captain)", role: "officer", pin: "1234", active: true },
+                        { dept_id: "903", name: "Lt. S. Davis (Station 2 Lieutenant)", role: "officer", pin: "1234", active: true },
+                        { dept_id: "904", name: "R. Thompson (Engineer / Operator)", role: "member", pin: "1234", active: true },
+                        { dept_id: "905", name: "K. Patel (Firefighter / EMT)", role: "member", pin: "1234", active: true },
+                        { dept_id: "906", name: "B. Henderson (Firefighter)", role: "member", pin: "1234", active: true },
+                        { dept_id: "907", name: "A. Morales (Firefighter / Paramedic)", role: "member", pin: "1234", active: true },
+                        { dept_id: "908", name: "D. Brooks (Firefighter)", role: "member", pin: "1234", active: true },
+                        { dept_id: "909", name: "C. Wallace (Probationary FF)", role: "member", pin: "1234", active: true },
+                        { dept_id: "910", name: "H. Nguyen (Reserve FF - Leave)", role: "member", pin: "1234", active: false }
+                    ];
+                    localStorage.setItem(this.KEY_EMPLOYEES, JSON.stringify(seedEmployees));
+                }
+
+                if (!localStorage.getItem(this.KEY_ENTRIES)) {
+                    const curr = getMondaySundayPeriod(toIsoDate(new Date()));
+                    const prevStart = this.addDaysIso(curr.start, -7);
+                    const prev = getMondaySundayPeriod(prevStart);
+                    const twoWeeksAgoStart = this.addDaysIso(curr.start, -14);
+                    const twoWeeksAgo = getMondaySundayPeriod(twoWeeksAgoStart);
+
+                    const nowIso = new Date().toISOString();
+
+                    const sampleEntries = [
+                        // =====================================================
+                        // CURRENT WEEK (Monday - Sunday) — Mix of Approved, Pending, Split & Rejected
+                        // =====================================================
+                        {
+                            id: 101,
+                            dept_id: "904",
+                            shift_date: curr.start, // Monday (Part 2 of Sunday overnight split)
+                            start_time: "00:00",
+                            end_time: "06:00",
+                            is_overnight: false,
+                            duration_hours: 6.0,
+                            pay_period_start: curr.start,
+                            pay_period_end: curr.end,
+                            notes: "Engine 1 overnight coverage [Part 2/2 - Split at Sun Midnight]",
+                            status: "approved",
+                            reviewed_by: "#900 Chief T. Couch (Fire Chief)",
+                            reviewed_at: nowIso,
+                            review_note: ""
+                        },
+                        {
+                            id: 102,
+                            dept_id: "902",
+                            shift_date: curr.start, // Monday
+                            start_time: "07:00",
+                            end_time: "19:00",
+                            is_overnight: false,
+                            duration_hours: 12.0,
+                            pay_period_start: curr.start,
+                            pay_period_end: curr.end,
+                            notes: "Station 1 A-Shift command & apparatus inspection",
+                            status: "approved",
+                            reviewed_by: "#900 Chief T. Couch (Fire Chief)",
+                            reviewed_at: nowIso,
+                            review_note: ""
+                        },
+                        {
+                            id: 103,
+                            dept_id: "905",
+                            shift_date: curr.start, // Monday
+                            start_time: "08:00",
+                            end_time: "16:30",
+                            is_overnight: false,
+                            duration_hours: 8.5,
+                            pay_period_start: curr.start,
+                            pay_period_end: curr.end,
+                            notes: "Station 1 day shift & medical inventory check (Squad 1)",
+                            status: "approved",
+                            reviewed_by: "#902 Capt. J. Miller (Station 1 Captain)",
+                            reviewed_at: nowIso,
+                            review_note: ""
+                        },
+                        {
+                            id: 104,
+                            dept_id: "906",
+                            shift_date: curr.start, // Monday night overnight into Tuesday
+                            start_time: "19:00",
+                            end_time: "07:00",
+                            is_overnight: true,
+                            duration_hours: 12.0,
+                            pay_period_start: curr.start,
+                            pay_period_end: curr.end,
+                            notes: "Station 2 overnight shift (Engine 2)",
+                            status: "approved",
+                            reviewed_by: "#903 Lt. S. Davis (Station 2 Lieutenant)",
+                            reviewed_at: nowIso,
+                            review_note: ""
+                        },
+                        {
+                            id: 105,
+                            dept_id: "907",
+                            shift_date: this.addDaysIso(curr.start, 1), // Tuesday
+                            start_time: "07:00",
+                            end_time: "19:00",
+                            is_overnight: false,
+                            duration_hours: 12.0,
+                            pay_period_start: curr.start,
+                            pay_period_end: curr.end,
+                            notes: "Rescue 1 ALS coverage & 3 medical calls",
+                            status: "approved",
+                            reviewed_by: "#902 Capt. J. Miller (Station 1 Captain)",
+                            reviewed_at: nowIso,
+                            review_note: ""
+                        },
+                        {
+                            id: 106,
+                            dept_id: "904",
+                            shift_date: this.addDaysIso(curr.start, 1), // Tuesday evening
+                            start_time: "18:00",
+                            end_time: "22:00",
+                            is_overnight: false,
+                            duration_hours: 4.0,
+                            pay_period_start: curr.start,
+                            pay_period_end: curr.end,
+                            notes: "Weekly department pump ops & drafting drill (Tanker 1)",
+                            status: "approved",
+                            reviewed_by: "#902 Capt. J. Miller (Station 1 Captain)",
+                            reviewed_at: nowIso,
+                            review_note: ""
+                        },
+                        {
+                            id: 107,
+                            dept_id: "908",
+                            shift_date: this.addDaysIso(curr.start, 1), // Tuesday evening
+                            start_time: "18:00",
+                            end_time: "22:00",
+                            is_overnight: false,
+                            duration_hours: 4.0,
+                            pay_period_start: curr.start,
+                            pay_period_end: curr.end,
+                            notes: "Weekly department pump ops & drafting drill",
+                            status: "approved",
+                            reviewed_by: "#902 Capt. J. Miller (Station 1 Captain)",
+                            reviewed_at: nowIso,
+                            review_note: ""
+                        },
+                        {
+                            id: 108,
+                            dept_id: "909",
+                            shift_date: this.addDaysIso(curr.start, 1), // Tuesday evening
+                            start_time: "18:00",
+                            end_time: "22:00",
+                            is_overnight: false,
+                            duration_hours: 4.0,
+                            pay_period_start: curr.start,
+                            pay_period_end: curr.end,
+                            notes: "Probationary firefighter SCBA & ladder evolution drill",
+                            status: "approved",
+                            reviewed_by: "#903 Lt. S. Davis (Station 2 Lieutenant)",
+                            reviewed_at: nowIso,
+                            review_note: ""
+                        },
+                        {
+                            id: 109,
+                            dept_id: "903",
+                            shift_date: this.addDaysIso(curr.start, 2), // Wednesday
+                            start_time: "08:00",
+                            end_time: "17:00",
+                            is_overnight: false,
+                            duration_hours: 9.0,
+                            pay_period_start: curr.start,
+                            pay_period_end: curr.end,
+                            notes: "Station 2 officer duty & pre-incident commercial inspections",
+                            status: "approved",
+                            reviewed_by: "#900 Chief T. Couch (Fire Chief)",
+                            reviewed_at: nowIso,
+                            review_note: ""
+                        },
+                        {
+                            id: 110,
+                            dept_id: "905",
+                            shift_date: this.addDaysIso(curr.start, 2), // Wednesday early AM call-back
+                            start_time: "02:15",
+                            end_time: "05:45",
+                            is_overnight: false,
+                            duration_hours: 3.5,
+                            pay_period_start: curr.start,
+                            pay_period_end: curr.end,
+                            notes: "Emergency call-back: Mutual aid structure fire standby",
+                            status: "pending",
+                            reviewed_by: null,
+                            reviewed_at: null,
+                            review_note: ""
+                        },
+                        {
+                            id: 111,
+                            dept_id: "904",
+                            shift_date: this.addDaysIso(curr.start, 3), // Thursday
+                            start_time: "07:00",
+                            end_time: "19:00",
+                            is_overnight: false,
+                            duration_hours: 12.0,
+                            pay_period_start: curr.start,
+                            pay_period_end: curr.end,
+                            notes: "Engine 1 operator day shift & hose testing",
+                            status: "pending",
+                            reviewed_by: null,
+                            reviewed_at: null,
+                            review_note: ""
+                        },
+                        {
+                            id: 112,
+                            dept_id: "906",
+                            shift_date: this.addDaysIso(curr.start, 3), // Thursday
+                            start_time: "13:00",
+                            end_time: "21:30",
+                            is_overnight: false,
+                            duration_hours: 8.5,
+                            pay_period_start: curr.start,
+                            pay_period_end: curr.end,
+                            notes: "Afternoon/evening station coverage & Brush/Grass 1 maintenance",
+                            status: "pending",
+                            reviewed_by: null,
+                            reviewed_at: null,
+                            review_note: ""
+                        },
+                        {
+                            id: 113,
+                            dept_id: "907",
+                            shift_date: this.addDaysIso(curr.start, 4), // Friday
+                            start_time: "19:00",
+                            end_time: "07:00",
+                            is_overnight: true,
+                            duration_hours: 12.0,
+                            pay_period_start: curr.start,
+                            pay_period_end: curr.end,
+                            notes: "Friday overnight ALS duty (Rescue 1)",
+                            status: "pending",
+                            reviewed_by: null,
+                            reviewed_at: null,
+                            review_note: ""
+                        },
+                        {
+                            id: 114,
+                            dept_id: "908",
+                            shift_date: this.addDaysIso(curr.start, 4), // Friday
+                            start_time: "08:00",
+                            end_time: "16:00",
+                            is_overnight: false,
+                            duration_hours: 8.0,
+                            pay_period_start: curr.start,
+                            pay_period_end: curr.end,
+                            notes: "Station 1 day shift & elementary school fire safety demo",
+                            status: "pending",
+                            reviewed_by: null,
+                            reviewed_at: null,
+                            review_note: ""
+                        },
+                        {
+                            id: 115,
+                            dept_id: "908",
+                            shift_date: this.addDaysIso(curr.start, 1), // Tuesday duplicate (Rejected example)
+                            start_time: "18:00",
+                            end_time: "22:00",
+                            is_overnight: false,
+                            duration_hours: 4.0,
+                            pay_period_start: curr.start,
+                            pay_period_end: curr.end,
+                            notes: "Pump ops drill (accidental second submission)",
+                            status: "rejected",
+                            reviewed_by: "#902 Capt. J. Miller (Station 1 Captain)",
+                            reviewed_at: nowIso,
+                            review_note: "Duplicate entry — already approved on entry #107."
+                        },
+
+                        // =====================================================
+                        // PREVIOUS WEEK (Last Monday - Last Sunday) — Fully Approved Payroll Week
+                        // =====================================================
+                        {
+                            id: 81,
+                            dept_id: "902",
+                            shift_date: prev.start, // Prev Mon
+                            start_time: "07:00",
+                            end_time: "19:00",
+                            is_overnight: false,
+                            duration_hours: 12.0,
+                            pay_period_start: prev.start,
+                            pay_period_end: prev.end,
+                            notes: "Station 1 A-Shift command",
+                            status: "approved",
+                            reviewed_by: "#900 Chief T. Couch (Fire Chief)",
+                            reviewed_at: nowIso,
+                            review_note: ""
+                        },
+                        {
+                            id: 82,
+                            dept_id: "904",
+                            shift_date: this.addDaysIso(prev.start, 1), // Prev Tue
+                            start_time: "07:00",
+                            end_time: "19:00",
+                            is_overnight: false,
+                            duration_hours: 12.0,
+                            pay_period_start: prev.start,
+                            pay_period_end: prev.end,
+                            notes: "Engine 1 operator shift & Ladder 1 aerial check",
+                            status: "approved",
+                            reviewed_by: "#902 Capt. J. Miller (Station 1 Captain)",
+                            reviewed_at: nowIso,
+                            review_note: ""
+                        },
+                        {
+                            id: 83,
+                            dept_id: "905",
+                            shift_date: this.addDaysIso(prev.start, 2), // Prev Wed
+                            start_time: "08:00",
+                            end_time: "18:00",
+                            is_overnight: false,
+                            duration_hours: 10.0,
+                            pay_period_start: prev.start,
+                            pay_period_end: prev.end,
+                            notes: "Station 1 day duty & EMS supply restock",
+                            status: "approved",
+                            reviewed_by: "#902 Capt. J. Miller (Station 1 Captain)",
+                            reviewed_at: nowIso,
+                            review_note: ""
+                        },
+                        {
+                            id: 84,
+                            dept_id: "906",
+                            shift_date: this.addDaysIso(prev.start, 4), // Prev Fri
+                            start_time: "19:00",
+                            end_time: "07:00",
+                            is_overnight: true,
+                            duration_hours: 12.0,
+                            pay_period_start: prev.start,
+                            pay_period_end: prev.end,
+                            notes: "Station 2 overnight shift",
+                            status: "approved",
+                            reviewed_by: "#903 Lt. S. Davis (Station 2 Lieutenant)",
+                            reviewed_at: nowIso,
+                            review_note: ""
+                        },
+                        {
+                            id: 85,
+                            dept_id: "907",
+                            shift_date: this.addDaysIso(prev.start, 5), // Prev Sat
+                            start_time: "08:00",
+                            end_time: "20:00",
+                            is_overnight: false,
+                            duration_hours: 12.0,
+                            pay_period_start: prev.start,
+                            pay_period_end: prev.end,
+                            notes: "Weekend ALS shift & community event medical standby (ATV 1)",
+                            status: "approved",
+                            reviewed_by: "#900 Chief T. Couch (Fire Chief)",
+                            reviewed_at: nowIso,
+                            review_note: ""
+                        },
+                        {
+                            id: 86,
+                            dept_id: "904",
+                            shift_date: prev.end, // Prev Sunday night (Part 1 of Sunday midnight split!)
+                            start_time: "20:00",
+                            end_time: "24:00",
+                            is_overnight: false,
+                            duration_hours: 4.0,
+                            pay_period_start: prev.start,
+                            pay_period_end: prev.end,
+                            notes: "Engine 1 overnight coverage [Part 1/2 - Split at Sun Midnight]",
+                            status: "approved",
+                            reviewed_by: "#900 Chief T. Couch (Fire Chief)",
+                            reviewed_at: nowIso,
+                            review_note: ""
+                        },
+
+                        // =====================================================
+                        // TWO WEEKS AGO — Historical Completed Pay Period
+                        // =====================================================
+                        {
+                            id: 61,
+                            dept_id: "904",
+                            shift_date: twoWeeksAgo.start,
+                            start_time: "07:00",
+                            end_time: "19:00",
+                            is_overnight: false,
+                            duration_hours: 12.0,
+                            pay_period_start: twoWeeksAgo.start,
+                            pay_period_end: twoWeeksAgo.end,
+                            notes: "Station 1 Engine 1 shift",
+                            status: "approved",
+                            reviewed_by: "#902 Capt. J. Miller (Station 1 Captain)",
+                            reviewed_at: nowIso,
+                            review_note: ""
+                        },
+                        {
+                            id: 62,
+                            dept_id: "905",
+                            shift_date: this.addDaysIso(twoWeeksAgo.start, 2),
+                            start_time: "08:00",
+                            end_time: "16:00",
+                            is_overnight: false,
+                            duration_hours: 8.0,
+                            pay_period_start: twoWeeksAgo.start,
+                            pay_period_end: twoWeeksAgo.end,
+                            notes: "Station 2 coverage",
+                            status: "approved",
+                            reviewed_by: "#903 Lt. S. Davis (Station 2 Lieutenant)",
+                            reviewed_at: nowIso,
+                            review_note: ""
+                        }
+                    ];
+                    localStorage.setItem(this.KEY_ENTRIES, JSON.stringify(sampleEntries));
+                }
+
+                if (!localStorage.getItem(this.KEY_AUDIT)) {
+                    const curr = getMondaySundayPeriod(toIsoDate(new Date()));
+                    const prev = getMondaySundayPeriod(this.addDaysIso(curr.start, -7));
+                    const now = Date.now();
+                    localStorage.setItem(this.KEY_AUDIT, JSON.stringify([
+                        {
+                            id: 8,
+                            timestamp: new Date(now - 1000 * 60 * 18).toISOString(),
+                            actor_id: "908",
+                            actor_name: "D. Brooks (Firefighter)",
+                            action: "ENTRY_CREATED",
+                            target_type: "time_entry",
+                            target_id: "114",
+                            details: "Logged 8.0h for #908 (08:00 - 16:00) — Station 1 day shift & school fire safety demo."
+                        },
+                        {
+                            id: 7,
+                            timestamp: new Date(now - 1000 * 60 * 45).toISOString(),
+                            actor_id: "907",
+                            actor_name: "A. Morales (Firefighter / Paramedic)",
+                            action: "ENTRY_CREATED",
+                            target_type: "time_entry",
+                            target_id: "113",
+                            details: "Logged 12.0h overnight shift for #907 (19:00 - 07:00) — Rescue 1 ALS duty."
+                        },
+                        {
+                            id: 6,
+                            timestamp: new Date(now - 1000 * 60 * 95).toISOString(),
+                            actor_id: "902",
+                            actor_name: "Capt. J. Miller (Station 1 Captain)",
+                            action: "ENTRY_REJECTED",
+                            target_type: "time_entry",
+                            target_id: "115",
+                            details: "Marked entry #115 (#908, 4.0h) as rejected. Note: Duplicate entry — already approved on entry #107."
+                        },
+                        {
+                            id: 5,
+                            timestamp: new Date(now - 1000 * 60 * 110).toISOString(),
+                            actor_id: "902",
+                            actor_name: "Capt. J. Miller (Station 1 Captain)",
+                            action: "ENTRY_APPROVED",
+                            target_type: "time_entry",
+                            target_id: "105, 106, 107",
+                            details: "Approved Tuesday day shift (#907, 12.0h) and evening pump ops drill entries (#904, #908)."
+                        },
+                        {
+                            id: 4,
+                            timestamp: new Date(now - 1000 * 60 * 240).toISOString(),
+                            actor_id: "904",
+                            actor_name: "R. Thompson (Engineer / Operator)",
+                            action: "ENTRY_CREATED_SPLIT",
+                            target_type: "time_entry",
+                            target_id: "86, 101",
+                            details: `Logged overnight Sunday shift for #904 (${prev.end} 20:00 - 06:00), automatically split at Sunday midnight into 4.0h (${prev.end}) and 6.0h (${curr.start}).`
+                        },
+                        {
+                            id: 3,
+                            timestamp: new Date(now - 1000 * 60 * 320).toISOString(),
+                            actor_id: "900",
+                            actor_name: "Chief T. Couch (Fire Chief)",
+                            action: "BULK_APPROVED",
+                            target_type: "time_entry",
+                            target_id: "6 entries",
+                            details: `Bulk approved all 6 pending entries for Pay Period ${prev.start} to ${prev.end} (62.00 total payroll hours).`
+                        },
+                        {
+                            id: 2,
+                            timestamp: new Date(now - 1000 * 60 * 500).toISOString(),
+                            actor_id: "900",
+                            actor_name: "Chief T. Couch (Fire Chief)",
+                            action: "EMPLOYEE_UPDATED",
+                            target_type: "employee",
+                            target_id: "910",
+                            details: "Updated #910 (H. Nguyen): active true -> false (Reserve military leave)."
+                        },
+                        {
+                            id: 1,
+                            timestamp: new Date(now - 1000 * 60 * 1440).toISOString(),
+                            actor_id: "SYSTEM",
+                            actor_name: "System Initializer",
+                            action: "INITIAL_SEED",
+                            target_type: "employee",
+                            target_id: "900-910",
+                            details: "Initialized Riverview FD roster accounts (#900 Chief, #901 CFO, #902-#903 Officers, #904-#910 Firefighters)."
+                        }
+                    ]));
+                }
+            },
+
+            getEmployees() {
+                this.init();
+                return JSON.parse(localStorage.getItem(this.KEY_EMPLOYEES) || "[]");
+            },
+
+            saveEmployees(list) {
+                localStorage.setItem(this.KEY_EMPLOYEES, JSON.stringify(list));
+            },
+
+            getEntries() {
+                this.init();
+                return JSON.parse(localStorage.getItem(this.KEY_ENTRIES) || "[]");
+            },
+
+            saveEntries(list) {
+                localStorage.setItem(this.KEY_ENTRIES, JSON.stringify(list));
+            },
+
+            getAudit() {
+                this.init();
+                return JSON.parse(localStorage.getItem(this.KEY_AUDIT) || "[]");
+            },
+
+            addAudit(actorId, actorName, action, targetType, targetId, details) {
+                const logs = this.getAudit();
+                logs.unshift({
+                    id: Date.now(),
+                    timestamp: new Date().toISOString(),
+                    actor_id: actorId,
+                    actor_name: actorName,
+                    action,
+                    target_type: targetType,
+                    target_id: String(targetId),
+                    details
+                });
+                localStorage.setItem(this.KEY_AUDIT, JSON.stringify(logs.slice(0, 300)));
+            }
+        };
+
+        // =====================================================================
+        // Unified API Client (Live Flask Server or Local Fallback)
+        // =====================================================================
+
+        async function detectBackend() {
+            const badge = document.getElementById("connectionBadge");
+            const text = document.getElementById("connectionText");
+            const candidates = [CONFIG.LOCAL_BACKEND_URL, CONFIG.PROD_BACKEND_URL];
+
+            for (const url of candidates) {
+                try {
+                    const controller = new AbortController();
+                    const timer = setTimeout(() => controller.abort(), 2000);
+                    const res = await fetch(`${url}/api/health`, { signal: controller.signal });
+                    clearTimeout(timer);
+                    if (res.ok) {
+                        apiBaseUrl = url;
+                        useLocalDemoStorage = false;
+                        badge.className = "status-pill online";
+                        text.textContent = "Connected to Timesheet Server";
+                        return;
+                    }
+                } catch (_) {
+                    // Try next or fallback
+                }
+            }
+
+            useLocalDemoStorage = true;
+            LocalDB.init();
+            badge.className = "status-pill local";
+            text.textContent = "Browser Storage Mode (Start Flask for SQLite/Postgres)";
+        }
+
+        async function apiRequest(path, options = {}) {
+            if (!useLocalDemoStorage) {
+                const headers = Object.assign({ "Content-Type": "application/json" }, options.headers || {});
+                if (authToken) {
+                    headers["Authorization"] = `Bearer ${authToken}`;
+                }
+                const response = await fetch(`${apiBaseUrl}${path}`, {
+                    ...options,
+                    headers
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(data.error || `Request failed (${response.status})`);
+                }
+                return data;
+            }
+
+            // Local fallback router
+            return handleLocalApiRequest(path, options);
+        }
+
+        function handleLocalApiRequest(path, options = {}) {
+            const method = (options.method || "GET").toUpperCase();
+            const body = options.body ? JSON.parse(options.body) : {};
+            const urlObj = new URL(path, "http://localhost");
+            const pathname = urlObj.pathname;
+            const params = urlObj.searchParams;
+
+            const employees = LocalDB.getEmployees();
+            const empMap = Object.fromEntries(employees.map(e => [e.dept_id, e]));
+
+            if (pathname === "/api/auth/login" && method === "POST") {
+                const dept_id = String(body.dept_id || "").trim();
+                const pin = String(body.pin || "").trim();
+                if (!/^9\d{2}$/.test(dept_id)) throw new Error("Department ID must be between 900 and 999.");
+                const emp = employees.find(e => e.dept_id === dept_id && e.pin === pin);
+                if (!emp) throw new Error("Invalid Department ID or PIN.");
+                if (!emp.active) throw new Error("This Department ID is inactive.");
+                const userObj = { ...emp, is_reviewer: emp.role === "officer" || emp.role === "cfo" };
+                return { token: `local-token-${emp.dept_id}`, user: userObj };
+            }
+
+            if (pathname === "/api/auth/me" && method === "GET") {
+                if (!authToken || !authToken.startsWith("local-token-")) throw new Error("Not logged in.");
+                const id = authToken.replace("local-token-", "");
+                const emp = empMap[id];
+                if (!emp || !emp.active) throw new Error("Session invalid.");
+                return { user: { ...emp, is_reviewer: emp.role === "officer" || emp.role === "cfo" } };
+            }
+
+            if (pathname === "/api/auth/change-pin" && method === "POST") {
+                const emp = employees.find(e => e.dept_id === currentUser.dept_id);
+                if (!emp || emp.pin !== body.current_pin) throw new Error("Current PIN is incorrect.");
+                if (!body.new_pin || body.new_pin.length < 4) throw new Error("New PIN must be at least 4 characters.");
+                emp.pin = body.new_pin;
+                LocalDB.saveEmployees(employees);
+                LocalDB.addAudit(emp.dept_id, emp.name, "PIN_CHANGED", "employee", emp.dept_id, "Updated own PIN.");
+                return { message: "PIN updated successfully." };
+            }
+
+            if (pathname === "/api/entries" && method === "GET") {
+                let entries = LocalDB.getEntries().map(e => ({
+                    ...e,
+                    employee_name: empMap[e.dept_id] ? empMap[e.dept_id].name : `ID #${e.dept_id}`
+                }));
+                const isReviewer = currentUser.role === "officer" || currentUser.role === "cfo";
+                if (!isReviewer || params.get("mine") === "true") {
+                    entries = entries.filter(e => e.dept_id === currentUser.dept_id);
+                } else if (params.get("dept_id")) {
+                    entries = entries.filter(e => e.dept_id === params.get("dept_id"));
+                }
+                if (params.get("pay_period_start")) {
+                    entries = entries.filter(e => e.pay_period_start === params.get("pay_period_start"));
+                }
+                if (params.get("status") && params.get("status") !== "all") {
+                    entries = entries.filter(e => e.status === params.get("status"));
+                }
+                entries.sort((a, b) => (b.shift_date + b.start_time).localeCompare(a.shift_date + a.start_time));
+                return { entries };
+            }
+
+            if (pathname === "/api/entries" && method === "POST") {
+                const entries = LocalDB.getEntries();
+                const targetId = String(body.dept_id || currentUser.dept_id).trim();
+                const calc = calculateDurationClient(body.start_time, body.end_time);
+                if (!calc || calc.hours <= 0) throw new Error("Invalid start or end time.");
+                const dt = parseIsoDateLocal(body.shift_date);
+                const isSunday = dt.getDay() === 0;
+
+                if (isSunday && calc.isOvernight && body.end_time !== "00:00" && body.split_sunday_midnight !== false) {
+                    const sunCalc = calculateDurationClient(body.start_time, "24:00");
+                    const sunPP = getMondaySundayPeriod(body.shift_date);
+                    const monDate = toIsoDate(new Date(dt.getFullYear(), dt.getMonth(), dt.getDate() + 1));
+                    const monCalc = calculateDurationClient("00:00", body.end_time);
+                    const monPP = getMondaySundayPeriod(monDate);
+
+                    const e1 = {
+                        id: Date.now(),
+                        dept_id: targetId,
+                        shift_date: body.shift_date,
+                        start_time: body.start_time,
+                        end_time: "24:00",
+                        is_overnight: false,
+                        duration_hours: sunCalc.hours,
+                        pay_period_start: sunPP.start,
+                        pay_period_end: sunPP.end,
+                        notes: `${body.notes || ""} [Part 1/2 - Split at Sun Midnight]`.trim(),
+                        status: "pending",
+                        reviewed_by: null,
+                        reviewed_at: null,
+                        review_note: ""
+                    };
+                    const e2 = {
+                        id: Date.now() + 1,
+                        dept_id: targetId,
+                        shift_date: monDate,
+                        start_time: "00:00",
+                        end_time: body.end_time,
+                        is_overnight: false,
+                        duration_hours: monCalc.hours,
+                        pay_period_start: monPP.start,
+                        pay_period_end: monPP.end,
+                        notes: `${body.notes || ""} [Part 2/2 - Split at Sun Midnight]`.trim(),
+                        status: "pending",
+                        reviewed_by: null,
+                        reviewed_at: null,
+                        review_note: ""
+                    };
+                    entries.push(e1, e2);
+                    LocalDB.saveEntries(entries);
+                    LocalDB.addAudit(currentUser.dept_id, currentUser.name, "ENTRY_CREATED_SPLIT", "time_entry", `${e1.id},${e2.id}`, `Split overnight Sunday shift into ${e1.duration_hours}h and ${e2.duration_hours}h.`);
+                    return { message: "Overnight Sunday shift logged & split at midnight.", entries: [e1, e2] };
+                }
+
+                const pp = getMondaySundayPeriod(body.shift_date);
+                const newEntry = {
+                    id: Date.now(),
+                    dept_id: targetId,
+                    shift_date: body.shift_date,
+                    start_time: body.start_time,
+                    end_time: body.end_time,
+                    is_overnight: calc.isOvernight,
+                    duration_hours: calc.hours,
+                    pay_period_start: pp.start,
+                    pay_period_end: pp.end,
+                    notes: body.notes || "",
+                    status: "pending",
+                    reviewed_by: null,
+                    reviewed_at: null,
+                    review_note: ""
+                };
+                entries.push(newEntry);
+                LocalDB.saveEntries(entries);
+                LocalDB.addAudit(currentUser.dept_id, currentUser.name, "ENTRY_CREATED", "time_entry", newEntry.id, `Logged ${newEntry.duration_hours}h on ${newEntry.shift_date}.`);
+                return { message: "Hours logged successfully.", entries: [newEntry] };
+            }
+
+            if (pathname.startsWith("/api/entries/") && pathname.endsWith("/review") && method === "POST") {
+                const id = Number(pathname.split("/")[3]);
+                const entries = LocalDB.getEntries();
+                const entry = entries.find(e => e.id === id);
+                if (!entry) throw new Error("Entry not found.");
+                entry.status = body.status;
+                entry.reviewed_by = `#${currentUser.dept_id} ${currentUser.name}`;
+                entry.reviewed_at = new Date().toISOString();
+                entry.review_note = body.review_note || "";
+                LocalDB.saveEntries(entries);
+                LocalDB.addAudit(currentUser.dept_id, currentUser.name, `ENTRY_${body.status.toUpperCase()}`, "time_entry", id, `Marked entry #${id} as ${body.status}.`);
+                return { message: `Entry ${body.status}.`, entry };
+            }
+
+            if (pathname === "/api/entries/bulk-approve" && method === "POST") {
+                const entries = LocalDB.getEntries();
+                let count = 0;
+                entries.forEach(e => {
+                    if (e.status === "pending" && (!body.pay_period_start || e.pay_period_start === body.pay_period_start)) {
+                        e.status = "approved";
+                        e.reviewed_by = `#${currentUser.dept_id} ${currentUser.name}`;
+                        e.reviewed_at = new Date().toISOString();
+                        count++;
+                    }
+                });
+                LocalDB.saveEntries(entries);
+                if (count > 0) {
+                    LocalDB.addAudit(currentUser.dept_id, currentUser.name, "BULK_APPROVED", "time_entry", `${count} entries`, `Bulk approved ${count} entries.`);
+                }
+                return { message: `Approved ${count} pending entries.`, approved_count: count };
+            }
+
+            if (pathname.startsWith("/api/entries/") && method === "PUT") {
+                const id = Number(pathname.split("/")[3]);
+                const entries = LocalDB.getEntries();
+                const entry = entries.find(e => e.id === id);
+                if (!entry) throw new Error("Entry not found.");
+                const calc = calculateDurationClient(body.start_time, body.end_time);
+                const pp = getMondaySundayPeriod(body.shift_date);
+                entry.shift_date = body.shift_date;
+                entry.start_time = body.start_time;
+                entry.end_time = body.end_time;
+                entry.is_overnight = calc.isOvernight;
+                entry.duration_hours = calc.hours;
+                entry.pay_period_start = pp.start;
+                entry.pay_period_end = pp.end;
+                entry.notes = body.notes || "";
+                LocalDB.saveEntries(entries);
+                LocalDB.addAudit(currentUser.dept_id, currentUser.name, "ENTRY_UPDATED", "time_entry", id, `Updated entry #${id}.`);
+                return { message: "Entry updated.", entry };
+            }
+
+            if (pathname.startsWith("/api/entries/") && method === "DELETE") {
+                const id = Number(pathname.split("/")[3]);
+                let entries = LocalDB.getEntries();
+                entries = entries.filter(e => e.id !== id);
+                LocalDB.saveEntries(entries);
+                LocalDB.addAudit(currentUser.dept_id, currentUser.name, "ENTRY_DELETED", "time_entry", id, `Deleted entry #${id}.`);
+                return { message: "Entry deleted." };
+            }
+
+            if (pathname === "/api/summary" && method === "GET") {
+                const ppStart = params.get("pay_period_start") || selectedPayPeriodStart;
+                const pp = getMondaySundayPeriod(ppStart);
+                const entries = LocalDB.getEntries()
+                    .filter(e => e.pay_period_start === pp.start)
+                    .map(e => ({ ...e, employee_name: empMap[e.dept_id] ? empMap[e.dept_id].name : `ID #${e.dept_id}` }));
+                const byEmp = {};
+                entries.forEach(e => {
+                    if (!byEmp[e.dept_id]) {
+                        const emp = empMap[e.dept_id];
+                        byEmp[e.dept_id] = {
+                            dept_id: e.dept_id,
+                            name: emp ? emp.name : `ID #${e.dept_id}`,
+                            role: emp ? emp.role : "member",
+                            approved_hours: 0,
+                            pending_hours: 0,
+                            rejected_hours: 0,
+                            total_submitted_hours: 0,
+                            shift_count: 0,
+                            approved_shift_count: 0
+                        };
+                    }
+                    const r = byEmp[e.dept_id];
+                    r.shift_count++;
+                    r.total_submitted_hours = Math.round((r.total_submitted_hours + e.duration_hours) * 100) / 100;
+                    if (e.status === "approved") {
+                        r.approved_hours = Math.round((r.approved_hours + e.duration_hours) * 100) / 100;
+                        r.approved_shift_count++;
+                    } else if (e.status === "pending") {
+                        r.pending_hours = Math.round((r.pending_hours + e.duration_hours) * 100) / 100;
+                    } else if (e.status === "rejected") {
+                        r.rejected_hours = Math.round((r.rejected_hours + e.duration_hours) * 100) / 100;
+                    }
+                });
+                const summary = Object.values(byEmp).sort((a, b) => a.dept_id.localeCompare(b.dept_id));
+                const totals = {
+                    employee_count: summary.length,
+                    total_shifts: summary.reduce((s, r) => s + r.shift_count, 0),
+                    approved_shifts: summary.reduce((s, r) => s + r.approved_shift_count, 0),
+                    approved_hours: Math.round(summary.reduce((s, r) => s + r.approved_hours, 0) * 100) / 100,
+                    pending_hours: Math.round(summary.reduce((s, r) => s + r.pending_hours, 0) * 100) / 100,
+                    rejected_hours: Math.round(summary.reduce((s, r) => s + r.rejected_hours, 0) * 100) / 100,
+                    total_submitted_hours: Math.round(summary.reduce((s, r) => s + r.total_submitted_hours, 0) * 100) / 100
+                };
+                return { pay_period_start: pp.start, pay_period_end: pp.end, summary, totals, entries };
+            }
+
+            if (pathname === "/api/employees" && method === "GET") {
+                return { employees: employees.sort((a, b) => a.dept_id.localeCompare(b.dept_id)) };
+            }
+
+            if (pathname === "/api/employees" && method === "POST") {
+                const { dept_id, name, role, pin } = body;
+                if (!/^9\d{2}$/.test(dept_id)) throw new Error("Department ID must be 900–999.");
+                if (employees.some(e => e.dept_id === dept_id)) throw new Error(`ID ${dept_id} already exists.`);
+                const newEmp = { dept_id, name, role: role || "member", pin: pin || "1234", active: true };
+                employees.push(newEmp);
+                LocalDB.saveEmployees(employees);
+                LocalDB.addAudit(currentUser.dept_id, currentUser.name, "EMPLOYEE_CREATED", "employee", dept_id, `Created #${dept_id} (${name}).`);
+                return { message: `Added #${dept_id}.`, employee: newEmp };
+            }
+
+            if (pathname.startsWith("/api/employees/") && method === "PUT") {
+                const id = pathname.split("/")[3];
+                const emp = employees.find(e => e.dept_id === id);
+                if (!emp) throw new Error("Member not found.");
+                if (body.name) emp.name = body.name;
+                if (body.role) emp.role = body.role;
+                if (typeof body.active === "boolean") emp.active = body.active;
+                if (body.pin) emp.pin = body.pin;
+                LocalDB.saveEmployees(employees);
+                LocalDB.addAudit(currentUser.dept_id, currentUser.name, "EMPLOYEE_UPDATED", "employee", id, `Updated #${id} (${emp.name}).`);
+                return { message: `Updated #${id}.`, employee: emp };
+            }
+
+            if (pathname === "/api/audit-logs" && method === "GET") {
+                return { logs: LocalDB.getAudit() };
+            }
+
+            throw new Error(`Unhandled endpoint: ${method} ${pathname}`);
+        }
+
+        // =====================================================================
+        // UI Feedback & Alert Helpers
+        // =====================================================================
+
+        let alertTimer = null;
+        function showAlert(message, type = "success") {
+            const box = document.getElementById("globalAlert");
+            box.textContent = message;
+            box.className = `alert-box ${type === "error" ? "alert-error" : "alert-success"}`;
+            box.style.display = "block";
+            if (alertTimer) clearTimeout(alertTimer);
+            alertTimer = setTimeout(() => {
+                box.style.display = "none";
+            }, 5000);
+        }
+
+        function quickFillLogin(deptId, pin) {
+            document.getElementById("loginDeptId").value = deptId;
+            document.getElementById("loginPin").value = pin;
+        }
+
+        function resetDemoDataset() {
+            LocalDB.reset();
+            showAlert("Demo dataset reset with fresh multi-week shifts, roster (900–910), and audit logs.");
+        }
+
+        // =====================================================================
+        // Authentication & Session Lifecycle
+        // =====================================================================
+
+        document.getElementById("loginForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const dept_id = document.getElementById("loginDeptId").value.trim();
+            const pin = document.getElementById("loginPin").value.trim();
+            const btn = document.getElementById("loginSubmitBtn");
+
+            btn.disabled = true;
+            btn.textContent = "Signing in...";
+            try {
+                const res = await apiRequest("/api/auth/login", {
+                    method: "POST",
+                    body: JSON.stringify({ dept_id, pin })
+                });
+                authToken = res.token;
+                localStorage.setItem("rvfd_ts_token", authToken);
+                currentUser = res.user;
+                document.getElementById("loginPin").value = "";
+                enterPortal();
+            } catch (err) {
+                showAlert(err.message, "error");
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "Sign In to Timesheet";
+            }
+        });
+
+        function logout() {
+            authToken = null;
+            currentUser = null;
+            localStorage.removeItem("rvfd_ts_token");
+            document.getElementById("portalView").style.display = "none";
+            document.getElementById("loginView").style.display = "block";
+        }
+
+        async function enterPortal() {
+            document.getElementById("loginView").style.display = "none";
+            document.getElementById("portalView").style.display = "block";
+
+            document.getElementById("sessionDeptId").textContent = currentUser.dept_id;
+            document.getElementById("sessionUserName").textContent = currentUser.name;
+            document.getElementById("sessionUserRole").textContent = currentUser.role.toUpperCase();
+
+            const isReviewer = currentUser.role === "officer" || currentUser.role === "cfo";
+            document.querySelectorAll(".reviewer-only").forEach(el => {
+                el.style.display = isReviewer ? "inline-flex" : "none";
+            });
+            document.getElementById("logForMemberGroup").style.display = isReviewer ? "block" : "none";
+
+            // Default shift date & current pay period
+            const todayIso = toIsoDate(new Date());
+            document.getElementById("entryShiftDate").value = todayIso;
+            setPayPeriodByDate(todayIso, false);
+
+            if (isReviewer) {
+                await populateMemberDropdowns();
+            }
+            switchTab("tabLogHours");
+            await refreshActiveViews();
+        }
+
+        async function populateMemberDropdowns() {
+            try {
+                const data = await apiRequest("/api/employees");
+                const entrySelect = document.getElementById("entryDeptId");
+                const filterSelect = document.getElementById("reviewFilterMember");
+
+                entrySelect.innerHTML = "";
+                filterSelect.innerHTML = '<option value="">All Members (900–999)</option>';
+
+                data.employees.forEach(emp => {
+                    if (emp.active) {
+                        const opt = document.createElement("option");
+                        opt.value = emp.dept_id;
+                        opt.textContent = `#${emp.dept_id} — ${emp.name}`;
+                        if (emp.dept_id === currentUser.dept_id) opt.selected = true;
+                        entrySelect.appendChild(opt);
+                    }
+                    const fOpt = document.createElement("option");
+                    fOpt.value = emp.dept_id;
+                    fOpt.textContent = `#${emp.dept_id} — ${emp.name}`;
+                    filterSelect.appendChild(fOpt);
+                });
+            } catch (err) {
+                console.error("Failed loading member dropdowns:", err);
+            }
+        }
+
+        // =====================================================================
+        // Weekly Pay Period Navigation (Monday 00:00 - Sunday 24:00)
+        // =====================================================================
+
+        function setPayPeriodByDate(isoDate, triggerRefresh = true) {
+            const pp = getMondaySundayPeriod(isoDate);
+            selectedPayPeriodStart = pp.start;
+            selectedPayPeriodEnd = pp.end;
+
+            document.getElementById("weekPickerInput").value = selectedPayPeriodStart;
+            document.getElementById("payPeriodTitle").textContent =
+                `Pay Period: ${formatHumanDate(selectedPayPeriodStart)} – ${formatHumanDate(selectedPayPeriodEnd)}`;
+            document.getElementById("myTablePeriodLabel").textContent =
+                `${selectedPayPeriodStart} to ${selectedPayPeriodEnd}`;
+
+            if (triggerRefresh) {
+                refreshActiveViews();
+            }
+        }
+
+        function shiftPayPeriod(daysDelta) {
+            const dt = parseIsoDateLocal(selectedPayPeriodStart);
+            dt.setDate(dt.getDate() + daysDelta);
+            setPayPeriodByDate(toIsoDate(dt), true);
+        }
+
+        function resetToCurrentWeek() {
+            setPayPeriodByDate(toIsoDate(new Date()), true);
+        }
+
+        function onWeekPickerChange(val) {
+            if (val) setPayPeriodByDate(val, true);
+        }
+
+        // =====================================================================
+        // Tabs & View Refreshing
+        // =====================================================================
+
+        function switchTab(tabId) {
+            document.querySelectorAll(".tab-pane").forEach(p => {
+                p.style.display = "none";
+            });
+            document.querySelectorAll(".tab-btn").forEach(b => {
+                b.classList.toggle("active", b.getAttribute("data-tab") === tabId);
+            });
+            const target = document.getElementById(tabId);
+            if (target) target.style.display = "block";
+            refreshActiveViews();
+        }
+
+        async function refreshActiveViews() {
+            if (!currentUser) return;
+            await loadMyEntries();
+            if (currentUser.role === "officer" || currentUser.role === "cfo") {
+                await loadOfficerEntries();
+                await loadCfoSummary();
+                await loadRoster();
+                await loadAuditLogs();
+            }
+        }
+
+        // =====================================================================
+        // Retro Shift Form & Live Duration Auto-Calculation
+        // =====================================================================
+
+        function updateDurationPreview() {
+            const shiftDate = document.getElementById("entryShiftDate").value;
+            const startTime = document.getElementById("entryStartTime").value;
+            const endTime = document.getElementById("entryEndTime").value;
+            const valEl = document.getElementById("durationValueText");
+            const subEl = document.getElementById("durationSubText");
+            const sunNotice = document.getElementById("sundaySplitNotice");
+            const editId = document.getElementById("editEntryId").value;
+
+            const calc = calculateDurationClient(startTime, endTime);
+            if (!calc) {
+                valEl.textContent = "0.00 hrs";
+                subEl.textContent = "Select start and end times to auto-calculate hours.";
+                sunNotice.style.display = "none";
+                return;
+            }
+
+            valEl.textContent = `${calc.hours.toFixed(2)} hrs`;
+            const hmLabel = `${calc.wholeHours}h ${calc.remMins}m`;
+            if (calc.isOvernight) {
+                subEl.innerHTML = `${hmLabel} &bull; <b style="color: #1e40af;">Overnight shift (ends next day at ${endTime})</b>`;
+            } else {
+                subEl.textContent = `${hmLabel} (${startTime} to ${endTime})`;
+            }
+
+            // Check if Shift Date is a Sunday and crosses midnight
+            if (shiftDate && !editId) {
+                const dt = parseIsoDateLocal(shiftDate);
+                if (dt.getDay() === 0 && calc.isOvernight && endTime !== "00:00") {
+                    sunNotice.style.display = "block";
+                } else {
+                    sunNotice.style.display = "none";
+                }
+            } else {
+                sunNotice.style.display = "none";
+            }
+        }
+
+        ["entryShiftDate", "entryStartTime", "entryEndTime"].forEach(id => {
+            document.getElementById(id).addEventListener("input", updateDurationPreview);
+            document.getElementById(id).addEventListener("change", updateDurationPreview);
+        });
+
+        document.getElementById("retroEntryForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const editId = document.getElementById("editEntryId").value;
+            const shift_date = document.getElementById("entryShiftDate").value;
+            const start_time = document.getElementById("entryStartTime").value;
+            const end_time = document.getElementById("entryEndTime").value;
+            const notes = document.getElementById("entryNotes").value.trim();
+            const split_sunday_midnight = document.getElementById("splitSundayMidnight").checked;
+            const dept_id = (currentUser.role === "officer" || currentUser.role === "cfo")
+                ? (document.getElementById("entryDeptId").value || currentUser.dept_id)
+                : currentUser.dept_id;
+
+            const btn = document.getElementById("saveEntryBtn");
+            btn.disabled = true;
+
+            try {
+                if (editId) {
+                    await apiRequest(`/api/entries/${editId}`, {
+                        method: "PUT",
+                        body: JSON.stringify({ shift_date, start_time, end_time, notes })
+                    });
+                    showAlert("Shift entry updated successfully.");
+                } else {
+                    const res = await apiRequest("/api/entries", {
+                        method: "POST",
+                        body: JSON.stringify({
+                            dept_id,
+                            shift_date,
+                            start_time,
+                            end_time,
+                            notes,
+                            split_sunday_midnight
+                        })
+                    });
+                    showAlert(res.message || "Shift hours submitted for review.");
+                }
+
+                // Jump pay period view to the logged shift's week so the user sees it immediately
+                setPayPeriodByDate(shift_date, false);
+                resetEntryForm();
+                await refreshActiveViews();
+            } catch (err) {
+                showAlert(err.message, "error");
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        function resetEntryForm() {
+            document.getElementById("editEntryId").value = "";
+            document.getElementById("entryFormTitle").textContent = "Submit Completed Hours (Retro Log)";
+            document.getElementById("saveEntryBtn").textContent = "Submit Hours for Review";
+            document.getElementById("cancelEditBtn").style.display = "none";
+            document.getElementById("entryStartTime").value = "";
+            document.getElementById("entryEndTime").value = "";
+            document.getElementById("entryNotes").value = "";
+            updateDurationPreview();
+        }
+
+        function startEditEntry(entry) {
+            switchTab("tabLogHours");
+            document.getElementById("editEntryId").value = entry.id;
+            document.getElementById("entryFormTitle").textContent = `Editing Shift Entry #${entry.id} (${entry.shift_date})`;
+            document.getElementById("saveEntryBtn").textContent = "Save Changes";
+            document.getElementById("cancelEditBtn").style.display = "inline-flex";
+            document.getElementById("entryShiftDate").value = entry.shift_date;
+            document.getElementById("entryStartTime").value = entry.start_time;
+            document.getElementById("entryEndTime").value = entry.end_time;
+            document.getElementById("entryNotes").value = entry.notes || "";
+            updateDurationPreview();
+            window.scrollTo({ top: 160, behavior: "smooth" });
+        }
+
+        async function deleteEntryById(entryId) {
+            if (!confirm("Are you sure you want to delete this shift entry?")) return;
+            try {
+                await apiRequest(`/api/entries/${entryId}`, { method: "DELETE" });
+                showAlert("Shift entry deleted.");
+                await refreshActiveViews();
+            } catch (err) {
+                showAlert(err.message, "error");
+            }
+        }
+
+        // =====================================================================
+        // Load My Entries & Personal Summary
+        // =====================================================================
+
+        async function loadMyEntries() {
+            const showAll = document.getElementById("showAllMyWeeks").checked;
+            const query = new URLSearchParams({ mine: "true" });
+            if (!showAll && selectedPayPeriodStart) {
+                query.set("pay_period_start", selectedPayPeriodStart);
+            }
+
+            try {
+                const data = await apiRequest(`/api/entries?${query.toString()}`);
+                const entries = data.entries || [];
+
+                // Always compute weekly stats for the selected week
+                const weekData = showAll
+                    ? entries.filter(e => e.pay_period_start === selectedPayPeriodStart)
+                    : entries;
+
+                const approved = weekData.filter(e => e.status === "approved").reduce((s, e) => s + e.duration_hours, 0);
+                const pending = weekData.filter(e => e.status === "pending").reduce((s, e) => s + e.duration_hours, 0);
+                const total = weekData.reduce((s, e) => s + e.duration_hours, 0);
+
+                document.getElementById("myApprovedHours").textContent = approved.toFixed(2);
+                document.getElementById("myPendingHours").textContent = pending.toFixed(2);
+                document.getElementById("myTotalHours").textContent = total.toFixed(2);
+                document.getElementById("myShiftCount").textContent = weekData.length;
+
+                const tbody = document.getElementById("myEntriesTbody");
+                if (entries.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No shifts logged for ${showAll ? "any week" : "this weekly pay period"} yet.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = entries.map(e => {
+                    const canModify = e.status === "pending" || currentUser.role === "officer" || currentUser.role === "cfo";
+                    const entryJson = JSON.stringify(e).replace(/'/g, "&#39;");
+                    return `
+                        <tr>
+                            <td><b>${escapeHtml(e.shift_date)}</b></td>
+                            <td>
+                                ${escapeHtml(e.start_time)} &ndash; ${escapeHtml(e.end_time)}
+                                ${e.is_overnight ? '<span class="badge badge-overnight">Overnight</span>' : ''}
+                            </td>
+                            <td><b>${Number(e.duration_hours).toFixed(2)} hrs</b></td>
+                            <td style="font-size: 0.85rem; color: var(--text-secondary);">${escapeHtml(e.pay_period_start)} &rarr; ${escapeHtml(e.pay_period_end)}</td>
+                            <td>
+                                ${escapeHtml(e.notes || "—")}
+                                ${e.review_note ? `<div style="font-size: 0.8rem; color: #991b1b; margin-top: 2px;">Officer Note: ${escapeHtml(e.review_note)}</div>` : ""}
+                            </td>
+                            <td><span class="badge badge-${e.status}">${escapeHtml(e.status)}</span></td>
+                            <td>
+                                ${canModify ? `
+                                    <button type="button" class="btn btn-outline btn-sm" onclick='startEditEntry(${entryJson})'>Edit</button>
+                                    <button type="button" class="btn btn-outline btn-sm" style="color: #dc2626;" onclick="deleteEntryById(${e.id})">Delete</button>
+                                ` : `<span style="font-size: 0.8rem; color: var(--text-muted);">Locked</span>`}
+                            </td>
+                        </tr>
+                    `;
+                }).join("");
+            } catch (err) {
+                console.error("Error loading personal entries:", err);
+            }
+        }
+
+        // =====================================================================
+        // Officer Review Portal
+        // =====================================================================
+
+        async function loadOfficerEntries() {
+            const deptId = document.getElementById("reviewFilterMember").value;
+            const status = document.getElementById("reviewFilterStatus").value;
+            const showAllWeeks = document.getElementById("reviewShowAllWeeks").checked;
+
+            const query = new URLSearchParams();
+            if (deptId) query.set("dept_id", deptId);
+            if (status && status !== "all") query.set("status", status);
+            if (!showAllWeeks && selectedPayPeriodStart) {
+                query.set("pay_period_start", selectedPayPeriodStart);
+            }
+
+            try {
+                const data = await apiRequest(`/api/entries?${query.toString()}`);
+                const entries = data.entries || [];
+
+                // Update pending badge count
+                const pendingCount = entries.filter(e => e.status === "pending").length;
+                document.getElementById("pendingCountBadge").textContent = pendingCount;
+
+                const tbody = document.getElementById("officerEntriesTbody");
+                if (entries.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No matching shift entries found.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = entries.map(e => {
+                    const entryJson = JSON.stringify(e).replace(/'/g, "&#39;");
+                    return `
+                        <tr>
+                            <td>
+                                <b>#${escapeHtml(e.dept_id)}</b> &mdash; ${escapeHtml(e.employee_name)}
+                            </td>
+                            <td><b>${escapeHtml(e.shift_date)}</b></td>
+                            <td>
+                                ${escapeHtml(e.start_time)} &ndash; ${escapeHtml(e.end_time)}
+                                ${e.is_overnight ? '<span class="badge badge-overnight">Overnight</span>' : ''}
+                            </td>
+                            <td><b>${Number(e.duration_hours).toFixed(2)} hrs</b></td>
+                            <td>
+                                ${escapeHtml(e.notes || "—")}
+                                ${e.review_note ? `<div style="font-size: 0.8rem; color: #4b5563;"><i>Review Note: ${escapeHtml(e.review_note)}</i></div>` : ""}
+                            </td>
+                            <td>
+                                <span class="badge badge-${e.status}">${escapeHtml(e.status)}</span>
+                                ${e.reviewed_by ? `<div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 3px;">By ${escapeHtml(e.reviewed_by)}</div>` : ""}
+                            </td>
+                            <td style="white-space: nowrap;">
+                                ${e.status !== "approved" ? `
+                                    <button type="button" class="btn btn-success btn-sm" onclick="reviewEntry(${e.id}, 'approved')">Approve</button>
+                                ` : ""}
+                                ${e.status !== "rejected" ? `
+                                    <button type="button" class="btn btn-danger btn-sm" onclick="promptRejectEntry(${e.id})">Reject</button>
+                                ` : ""}
+                                <button type="button" class="btn btn-outline btn-sm" onclick='startEditEntry(${entryJson})'>Edit</button>
+                                <button type="button" class="btn btn-outline btn-sm" onclick="deleteEntryById(${e.id})">Del</button>
+                            </td>
+                        </tr>
+                    `;
+                }).join("");
+            } catch (err) {
+                console.error("Failed loading officer entries:", err);
+            }
+        }
+
+        async function reviewEntry(entryId, status, reviewNote = "") {
+            try {
+                await apiRequest(`/api/entries/${entryId}/review`, {
+                    method: "POST",
+                    body: JSON.stringify({ status, review_note: reviewNote })
+                });
+                showAlert(`Entry #${entryId} marked as ${status}.`);
+                await refreshActiveViews();
+            } catch (err) {
+                showAlert(err.message, "error");
+            }
+        }
+
+        function promptRejectEntry(entryId) {
+            const reason = prompt("Optional reason for rejecting this entry (visible to member):", "");
+            if (reason === null) return;
+            reviewEntry(entryId, "rejected", reason.trim());
+        }
+
+        async function bulkApproveWeek() {
+            const deptId = document.getElementById("reviewFilterMember").value;
+            try {
+                const res = await apiRequest("/api/entries/bulk-approve", {
+                    method: "POST",
+                    body: JSON.stringify({
+                        pay_period_start: selectedPayPeriodStart,
+                        dept_id: deptId
+                    })
+                });
+                showAlert(res.message);
+                await refreshActiveViews();
+            } catch (err) {
+                showAlert(err.message, "error");
+            }
+        }
+
+        // =====================================================================
+        // CFO Weekly Payroll Summary & CSV / PDF Exports
+        // =====================================================================
+
+        async function loadCfoSummary() {
+            try {
+                const data = await apiRequest(`/api/summary?pay_period_start=${encodeURIComponent(selectedPayPeriodStart)}`);
+                lastCfoSummaryData = data;
+
+                const t = data.totals;
+                document.getElementById("cfoApprovedHours").textContent = Number(t.approved_hours).toFixed(2);
+                document.getElementById("cfoApprovedShifts").textContent = t.approved_shifts;
+                document.getElementById("cfoPendingHours").textContent = Number(t.pending_hours).toFixed(2);
+                document.getElementById("cfoEmployeeCount").textContent = t.employee_count;
+                document.getElementById("cfoTotalShifts").textContent = t.total_shifts;
+                document.getElementById("cfoTotalHours").textContent = Number(t.total_submitted_hours).toFixed(2);
+                document.getElementById("cfoPeriodSubheader").textContent =
+                    `Pay Period: ${data.pay_period_start} (Mon 00:00) through ${data.pay_period_end} (Sun 24:00)`;
+
+                const tbody = document.getElementById("cfoSummaryTbody");
+                const tfoot = document.getElementById("cfoSummaryTfoot");
+
+                if (!data.summary || data.summary.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted);">No shift hours logged for ${data.pay_period_start} to ${data.pay_period_end}.</td></tr>`;
+                    tfoot.innerHTML = "";
+                    return;
+                }
+
+                tbody.innerHTML = data.summary.map(r => `
+                    <tr>
+                        <td><b>#${escapeHtml(r.dept_id)}</b></td>
+                        <td>${escapeHtml(r.name)}</td>
+                        <td><span class="badge badge-role">${escapeHtml(r.role)}</span></td>
+                        <td>${r.approved_shift_count} / ${r.shift_count}</td>
+                        <td style="color: #166534; font-weight: 800; font-size: 1.02rem;">${Number(r.approved_hours).toFixed(2)} hrs</td>
+                        <td style="color: ${r.pending_hours > 0 ? '#92400e' : '#6b7280'};">${Number(r.pending_hours).toFixed(2)} hrs</td>
+                        <td style="color: ${r.rejected_hours > 0 ? '#991b1b' : '#6b7280'};">${Number(r.rejected_hours).toFixed(2)} hrs</td>
+                        <td><b>${Number(r.total_submitted_hours).toFixed(2)} hrs</b></td>
+                    </tr>
+                `).join("");
+
+                tfoot.innerHTML = `
+                    <tr>
+                        <td colspan="3">DEPARTMENT PAYROLL TOTALS (${t.employee_count} Employees)</td>
+                        <td>${t.approved_shifts} / ${t.total_shifts}</td>
+                        <td style="color: #166534;">${Number(t.approved_hours).toFixed(2)} hrs</td>
+                        <td>${Number(t.pending_hours).toFixed(2)} hrs</td>
+                        <td>${Number(t.rejected_hours).toFixed(2)} hrs</td>
+                        <td>${Number(t.total_submitted_hours).toFixed(2)} hrs</td>
+                    </tr>
+                `;
+            } catch (err) {
+                console.error("Error loading CFO summary:", err);
+            }
+        }
+
+        function exportCsv(type = "summary", approvedOnly = false) {
+            if (!useLocalDemoStorage) {
+                const params = new URLSearchParams({
+                    type,
+                    pay_period_start: selectedPayPeriodStart,
+                    approved_only: String(approvedOnly),
+                    token: authToken
+                });
+                window.location.href = `${apiBaseUrl}/api/export/csv?${params.toString()}`;
+                return;
+            }
+
+            // Client-side CSV generator when in Local Storage Demo Mode
+            if (!lastCfoSummaryData) {
+                showAlert("No summary data loaded to export.", "error");
+                return;
+            }
+
+            const pStart = lastCfoSummaryData.pay_period_start;
+            const pEnd = lastCfoSummaryData.pay_period_end;
+            const rows = [];
+
+            if (type === "detailed") {
+                rows.push([
+                    "Pay Period Start (Mon)", "Pay Period End (Sun)", "Department ID", "Employee Name",
+                    "Shift Date", "Start Time", "End Time", "Overnight", "Duration (Hours)",
+                    "Status", "Reviewed By", "Reviewed At", "Notes"
+                ]);
+                lastCfoSummaryData.entries.forEach(e => {
+                    if (approvedOnly && e.status !== "approved") return;
+                    rows.push([
+                        e.pay_period_start, e.pay_period_end, e.dept_id, e.employee_name,
+                        e.shift_date, e.start_time, e.end_time, e.is_overnight ? "Yes" : "No",
+                        Number(e.duration_hours).toFixed(2), e.status.toUpperCase(),
+                        e.reviewed_by || "", e.reviewed_at || "", e.notes || ""
+                    ]);
+                });
+            } else {
+                rows.push([
+                    "Pay Period Start (Mon)", "Pay Period End (Sun)", "Department ID", "Employee Name",
+                    "Role", "Approved Hours (Payroll)", "Pending Hours", "Rejected Hours",
+                    "Total Submitted Hours", "Approved Shifts", "Total Shifts"
+                ]);
+                lastCfoSummaryData.summary.forEach(r => {
+                    rows.push([
+                        pStart, pEnd, r.dept_id, r.name, r.role.toUpperCase(),
+                        Number(r.approved_hours).toFixed(2), Number(r.pending_hours).toFixed(2),
+                        Number(r.rejected_hours).toFixed(2), Number(r.total_submitted_hours).toFixed(2),
+                        r.approved_shift_count, r.shift_count
+                    ]);
+                });
+                const t = lastCfoSummaryData.totals;
+                rows.push([]);
+                rows.push([
+                    pStart, pEnd, "TOTAL", `${t.employee_count} Employees`, "",
+                    Number(t.approved_hours).toFixed(2), Number(t.pending_hours).toFixed(2),
+                    Number(t.rejected_hours).toFixed(2), Number(t.total_submitted_hours).toFixed(2),
+                    t.approved_shifts, t.total_shifts
+                ]);
+            }
+
+            const csvContent = rows.map(r => r.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\r\n");
+            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = type === "detailed"
+                ? `RVFD_Timesheet_Detailed_${pStart}_to_${pEnd}.csv`
+                : `RVFD_CFO_Payroll_Summary_${pStart}_to_${pEnd}.csv`;
+            link.click();
+        }
+
+        function printCfoReport() {
+            if (!lastCfoSummaryData) {
+                showAlert("Please load the CFO summary first.", "error");
+                return;
+            }
+            const d = lastCfoSummaryData;
+            document.getElementById("printPeriodRange").textContent = `${d.pay_period_start} to ${d.pay_period_end}`;
+            document.getElementById("printGeneratedAt").textContent = new Date().toLocaleString();
+            document.getElementById("printGeneratedBy").textContent = `#${currentUser.dept_id} ${currentUser.name}`;
+
+            document.getElementById("printSummaryTbody").innerHTML = (d.summary || []).map(r => `
+                <tr>
+                    <td>#${escapeHtml(r.dept_id)}</td>
+                    <td>${escapeHtml(r.name)}</td>
+                    <td>${escapeHtml(r.role.toUpperCase())}</td>
+                    <td>${r.approved_shift_count} / ${r.shift_count}</td>
+                    <td><b>${Number(r.approved_hours).toFixed(2)} hrs</b></td>
+                    <td>${Number(r.pending_hours).toFixed(2)} hrs</td>
+                    <td>${Number(r.total_submitted_hours).toFixed(2)} hrs</td>
+                </tr>
+            `).join("") || `<tr><td colspan="7">No records for this period.</td></tr>`;
+
+            const t = d.totals;
+            document.getElementById("printSummaryTfoot").innerHTML = `
+                <tr>
+                    <td colspan="3"><b>TOTAL (${t.employee_count} Employees)</b></td>
+                    <td><b>${t.approved_shifts} / ${t.total_shifts}</b></td>
+                    <td><b>${Number(t.approved_hours).toFixed(2)} hrs</b></td>
+                    <td><b>${Number(t.pending_hours).toFixed(2)} hrs</b></td>
+                    <td><b>${Number(t.total_submitted_hours).toFixed(2)} hrs</b></td>
+                </tr>
+            `;
+
+            document.getElementById("printDetailedTbody").innerHTML = (d.entries || []).map(e => `
+                <tr>
+                    <td>#${escapeHtml(e.dept_id)}</td>
+                    <td>${escapeHtml(e.employee_name)}</td>
+                    <td>${escapeHtml(e.shift_date)}</td>
+                    <td>${escapeHtml(e.start_time)}–${escapeHtml(e.end_time)}${e.is_overnight ? " (+1d)" : ""}</td>
+                    <td>${Number(e.duration_hours).toFixed(2)}</td>
+                    <td>${escapeHtml(e.status.toUpperCase())}</td>
+                    <td>${escapeHtml(e.reviewed_by || "—")}</td>
+                    <td>${escapeHtml(e.notes || "")}</td>
+                </tr>
+            `).join("") || `<tr><td colspan="8">No detailed shift entries.</td></tr>`;
+
+            window.print();
+        }
+
+        // =====================================================================
+        // Roster Management (Department IDs 900 - 999)
+        // =====================================================================
+
+        async function loadRoster() {
+            try {
+                const data = await apiRequest("/api/employees");
+                const tbody = document.getElementById("rosterTbody");
+                tbody.innerHTML = (data.employees || []).map(emp => {
+                    const empJson = JSON.stringify(emp).replace(/'/g, "&#39;");
+                    return `
+                        <tr>
+                            <td><b>#${escapeHtml(emp.dept_id)}</b></td>
+                            <td>${escapeHtml(emp.name)}</td>
+                            <td><span class="badge badge-role">${escapeHtml(emp.role)}</span></td>
+                            <td>
+                                <span class="badge ${emp.active ? 'badge-approved' : 'badge-rejected'}">
+                                    ${emp.active ? "Active" : "Inactive"}
+                                </span>
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-outline btn-sm" onclick='populateRosterForm(${empJson})'>Edit / Reset PIN</button>
+                                <button type="button" class="btn btn-outline btn-sm" onclick="toggleEmployeeActive('${emp.dept_id}', ${!emp.active})">
+                                    ${emp.active ? "Deactivate" : "Activate"}
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join("");
+            } catch (err) {
+                console.error("Failed loading roster:", err);
+            }
+        }
+
+        function populateRosterForm(emp) {
+            document.getElementById("rosterDeptId").value = emp.dept_id;
+            document.getElementById("rosterName").value = emp.name;
+            document.getElementById("rosterRole").value = emp.role;
+            document.getElementById("rosterPin").value = "";
+            document.getElementById("rosterPin").placeholder = "Leave blank to keep existing PIN, or enter new PIN";
+            window.scrollTo({ top: 160, behavior: "smooth" });
+        }
+
+        function clearRosterForm() {
+            document.getElementById("rosterDeptId").value = "";
+            document.getElementById("rosterName").value = "";
+            document.getElementById("rosterRole").value = "member";
+            document.getElementById("rosterPin").value = "";
+            document.getElementById("rosterPin").placeholder = "Set or reset PIN (e.g., 1234)";
+        }
+
+        document.getElementById("rosterForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const dept_id = document.getElementById("rosterDeptId").value.trim();
+            const name = document.getElementById("rosterName").value.trim();
+            const role = document.getElementById("rosterRole").value;
+            const pin = document.getElementById("rosterPin").value.trim();
+
+            try {
+                const rosterData = await apiRequest("/api/employees");
+                const exists = (rosterData.employees || []).some(emp => emp.dept_id === dept_id);
+
+                if (exists) {
+                    const payload = { name, role };
+                    if (pin) payload.pin = pin;
+                    await apiRequest(`/api/employees/${dept_id}`, {
+                        method: "PUT",
+                        body: JSON.stringify(payload)
+                    });
+                    showAlert(`Updated member #${dept_id} (${name}).`);
+                } else {
+                    if (!pin || pin.length < 4) {
+                        showAlert("Please set an initial PIN (at least 4 characters) for the new member.", "error");
+                        return;
+                    }
+                    await apiRequest("/api/employees", {
+                        method: "POST",
+                        body: JSON.stringify({ dept_id, name, role, pin })
+                    });
+                    showAlert(`Added member #${dept_id} (${name}) to roster.`);
+                }
+                clearRosterForm();
+                await populateMemberDropdowns();
+                await loadRoster();
+                await loadAuditLogs();
+            } catch (err) {
+                showAlert(err.message, "error");
+            }
+        });
+
+        async function toggleEmployeeActive(deptId, activeState) {
+            try {
+                await apiRequest(`/api/employees/${deptId}`, {
+                    method: "PUT",
+                    body: JSON.stringify({ active: activeState })
+                });
+                showAlert(`Member #${deptId} ${activeState ? "activated" : "deactivated"}.`);
+                await populateMemberDropdowns();
+                await loadRoster();
+            } catch (err) {
+                showAlert(err.message, "error");
+            }
+        }
+
+        // =====================================================================
+        // Audit Trail & Change Own PIN Modal
+        // =====================================================================
+
+        async function loadAuditLogs() {
+            try {
+                const data = await apiRequest("/api/audit-logs");
+                const tbody = document.getElementById("auditLogsTbody");
+                const logs = data.logs || [];
+                if (logs.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No audit records yet.</td></tr>`;
+                    return;
+                }
+                tbody.innerHTML = logs.map(l => `
+                    <tr>
+                        <td style="font-size: 0.82rem; color: var(--text-secondary); white-space: nowrap;">
+                            ${new Date(l.timestamp).toLocaleString()}
+                        </td>
+                        <td><b>#${escapeHtml(l.actor_id)}</b> ${escapeHtml(l.actor_name)}</td>
+                        <td><span class="badge badge-role">${escapeHtml(l.action)}</span></td>
+                        <td>${escapeHtml(l.target_type)} (${escapeHtml(l.target_id)})</td>
+                        <td>${escapeHtml(l.details)}</td>
+                    </tr>
+                `).join("");
+            } catch (err) {
+                console.error("Failed loading audit logs:", err);
+            }
+        }
+
+        function openPinModal() {
+            document.getElementById("currentPinInput").value = "";
+            document.getElementById("newPinInput").value = "";
+            document.getElementById("pinModal").classList.add("open");
+        }
+
+        function closePinModal() {
+            document.getElementById("pinModal").classList.remove("open");
+        }
+
+        document.getElementById("changePinForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const current_pin = document.getElementById("currentPinInput").value.trim();
+            const new_pin = document.getElementById("newPinInput").value.trim();
+            try {
+                await apiRequest("/api/auth/change-pin", {
+                    method: "POST",
+                    body: JSON.stringify({ current_pin, new_pin })
+                });
+                closePinModal();
+                showAlert("Your PIN has been updated.");
+            } catch (err) {
+                showAlert(err.message, "error");
+            }
+        });
+
+        function escapeHtml(str) {
+            return String(str ?? "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // =====================================================================
+        // App Bootstrap
+        // =====================================================================
+
+        (async function initApp() {
+            await detectBackend();
+            if (authToken) {
+                try {
+                    const res = await apiRequest("/api/auth/me");
+                    currentUser = res.user;
+                    await enterPortal();
+                } catch (_) {
+                    logout();
+                }
+            }
+        })();
+    </script>
+</body>
+</html>
