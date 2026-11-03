@@ -1520,7 +1520,7 @@
                         <div class="form-group" style="margin-bottom: 0;">
                             <label for="reviewFilterMember">Filter by Member</label>
                             <select id="reviewFilterMember" class="form-control" onchange="loadOfficerEntries()">
-                                <option value="">All Members (900–999)</option>
+                                <option value="">All Members</option>
                             </select>
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
@@ -1740,7 +1740,7 @@
         </div>
 
         <div style="text-align: center; margin-top: 1.5rem; font-size: 0.88rem; color: var(--text-muted); font-weight: 600;">
-            Timesheet Portal <span style="display: inline-block; background: #e5e7eb; color: #1f2937; padding: 0.2rem 0.65rem; border-radius: 999px; font-weight: 700; margin-left: 0.25rem;">Beta v0.3</span>
+            Timesheet Portal <span style="display: inline-block; background: #e5e7eb; color: #1f2937; padding: 0.2rem 0.65rem; border-radius: 999px; font-weight: 700; margin-left: 0.25rem;">Beta v0.4</span>
         </div>
     </div>
 
@@ -1834,7 +1834,7 @@
     <footer class="no-print">
         <p>&copy; 2026 Riverview Fire Department | York County, South Carolina</p>
         <p style="margin-top: 0.5rem;">Dedicated to Protecting Our Community</p>
-        <p style="margin-top: 0.5rem; font-size: 0.85rem; color: #9ca3af;">Timesheet Portal Build: <b>Beta v0.3</b></p>
+        <p style="margin-top: 0.5rem; font-size: 0.85rem; color: #9ca3af;">Timesheet Portal Build: <b>Beta v0.4</b></p>
     </footer>
 
     <script src="js/main.js"></script>
@@ -2693,7 +2693,7 @@
                 const entry = entries.find(e => e.id === id);
                 if (!entry) throw new Error("Entry not found.");
                 entry.status = body.status;
-                entry.reviewed_by = `${currentUser.dept_id} ${currentUser.name}`;
+                entry.reviewed_by = currentUser.name;
                 entry.reviewed_at = new Date().toISOString();
                 entry.review_note = body.review_note || "";
                 LocalDB.saveEntries(entries);
@@ -2707,7 +2707,7 @@
                 entries.forEach(e => {
                     if (e.status === "pending" && (!body.pay_period_start || e.pay_period_start === body.pay_period_start)) {
                         e.status = "approved";
-                        e.reviewed_by = `${currentUser.dept_id} ${currentUser.name}`;
+                        e.reviewed_by = currentUser.name;
                         e.reviewed_at = new Date().toISOString();
                         count++;
                     }
@@ -2930,7 +2930,7 @@
                 const filterSelect = document.getElementById("reviewFilterMember");
 
                 entrySelect.innerHTML = "";
-                filterSelect.innerHTML = '<option value="">All Members (900–999)</option>';
+                filterSelect.innerHTML = '<option value="">All Members</option>';
 
                 data.employees.forEach(emp => {
                     if (emp.active) {
@@ -2942,7 +2942,7 @@
                     }
                     const fOpt = document.createElement("option");
                     fOpt.value = emp.dept_id;
-                    fOpt.textContent = `${emp.dept_id} — ${emp.name}`;
+                    fOpt.textContent = emp.name;
                     filterSelect.appendChild(fOpt);
                 });
             } catch (err) {
@@ -3259,7 +3259,7 @@
                                         ${hasNote ? `<span id="${notePillId}" class="note-indicator-pill">Note &#9662;</span>` : ''}
                                     </span>
                                 </td>
-                                <td data-label="Hours"><b>${Number(e.duration_hours).toFixed(2)} hrs</b></td>
+                                <td data-label="Hours"><b>${Number(e.duration_hours).toFixed(2)}</b></td>
                                 <td data-label="Status"><span class="badge badge-${e.status}">${escapeHtml(e.status)}</span></td>
                                 <td data-label="Actions" class="actions-cell">
                                     ${canModify ? `
@@ -3345,10 +3345,12 @@
                         const noteSubrowId = `officer-note-subrow-${e.id}`;
                         const notePillId = `officer-note-pill-${e.id}`;
 
+                        const reviewerClean = e.reviewed_by ? String(e.reviewed_by).replace(/^#?9\d{2}\s+/, "") : "";
+
                         return `
                             <tr id="${entryRowId}" class="entry-row ${hasNote ? 'has-note' : ''}" ${hasNote ? `onclick="toggleEntryNoteRow('${entryRowId}', '${noteSubrowId}', '${notePillId}', event)" title="Click or tap entry to view note"` : ""}>
                                 <td data-label="Member">
-                                    <span><b>${escapeHtml(e.dept_id)}</b> &mdash; ${escapeHtml(e.employee_name)}</span>
+                                    <span><b>${escapeHtml(e.employee_name)}</b></span>
                                 </td>
                                 <td data-label="Start – End">
                                     <span>
@@ -3357,11 +3359,11 @@
                                         ${hasNote ? `<span id="${notePillId}" class="note-indicator-pill">Note &#9662;</span>` : ''}
                                     </span>
                                 </td>
-                                <td data-label="Hours"><b>${Number(e.duration_hours).toFixed(2)} hrs</b></td>
+                                <td data-label="Hours"><b>${Number(e.duration_hours).toFixed(2)}</b></td>
                                 <td data-label="Status">
                                     <div>
                                         <span class="badge badge-${e.status}">${escapeHtml(e.status)}</span>
-                                        ${e.reviewed_by ? `<div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 3px;">By ${escapeHtml(e.reviewed_by)}</div>` : ""}
+                                        ${reviewerClean ? `<div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 3px;">By ${escapeHtml(reviewerClean)}</div>` : ""}
                                     </div>
                                 </td>
                                 <td data-label="Review" class="actions-cell">
@@ -3467,10 +3469,10 @@
                         <td data-label="Employee">${escapeHtml(r.name)}</td>
                         <td data-label="Role"><span class="badge badge-role">${escapeHtml(r.role)}</span></td>
                         <td data-label="Approved Shifts">${r.approved_shift_count} / ${r.shift_count}</td>
-                        <td data-label="Approved (Payroll)" style="color: #166534; font-weight: 800; font-size: 1.02rem;">${Number(r.approved_hours).toFixed(2)} hrs</td>
-                        <td data-label="Pending" style="color: ${r.pending_hours > 0 ? '#92400e' : '#6b7280'};">${Number(r.pending_hours).toFixed(2)} hrs</td>
-                        <td data-label="Rejected" style="color: ${r.rejected_hours > 0 ? '#991b1b' : '#6b7280'};">${Number(r.rejected_hours).toFixed(2)} hrs</td>
-                        <td data-label="Total Logged"><b>${Number(r.total_submitted_hours).toFixed(2)} hrs</b></td>
+                        <td data-label="Approved (Payroll)" style="color: #166534; font-weight: 800; font-size: 1.02rem;">${Number(r.approved_hours).toFixed(2)}</td>
+                        <td data-label="Pending" style="color: ${r.pending_hours > 0 ? '#92400e' : '#6b7280'};">${Number(r.pending_hours).toFixed(2)}</td>
+                        <td data-label="Rejected" style="color: ${r.rejected_hours > 0 ? '#991b1b' : '#6b7280'};">${Number(r.rejected_hours).toFixed(2)}</td>
+                        <td data-label="Total Logged"><b>${Number(r.total_submitted_hours).toFixed(2)}</b></td>
                     </tr>
                 `).join("");
 
@@ -3478,10 +3480,10 @@
                     <tr>
                         <td colspan="3" data-label="Summary">DEPARTMENT PAYROLL TOTALS (${t.employee_count} Employees)</td>
                         <td data-label="Approved Shifts">${t.approved_shifts} / ${t.total_shifts}</td>
-                        <td data-label="Approved (Payroll)" style="color: #166534;">${Number(t.approved_hours).toFixed(2)} hrs</td>
-                        <td data-label="Pending">${Number(t.pending_hours).toFixed(2)} hrs</td>
-                        <td data-label="Rejected">${Number(t.rejected_hours).toFixed(2)} hrs</td>
-                        <td data-label="Total Logged">${Number(t.total_submitted_hours).toFixed(2)} hrs</td>
+                        <td data-label="Approved (Payroll)" style="color: #166534;">${Number(t.approved_hours).toFixed(2)}</td>
+                        <td data-label="Pending">${Number(t.pending_hours).toFixed(2)}</td>
+                        <td data-label="Rejected">${Number(t.rejected_hours).toFixed(2)}</td>
+                        <td data-label="Total Logged">${Number(t.total_submitted_hours).toFixed(2)}</td>
                     </tr>
                 `;
             } catch (err) {
@@ -3576,9 +3578,9 @@
                     <td>${escapeHtml(r.name)}</td>
                     <td>${escapeHtml(r.role.toUpperCase())}</td>
                     <td>${r.approved_shift_count} / ${r.shift_count}</td>
-                    <td><b>${Number(r.approved_hours).toFixed(2)} hrs</b></td>
-                    <td>${Number(r.pending_hours).toFixed(2)} hrs</td>
-                    <td>${Number(r.total_submitted_hours).toFixed(2)} hrs</td>
+                    <td><b>${Number(r.approved_hours).toFixed(2)}</b></td>
+                    <td>${Number(r.pending_hours).toFixed(2)}</td>
+                    <td>${Number(r.total_submitted_hours).toFixed(2)}</td>
                 </tr>
             `).join("") || `<tr><td colspan="7">No records for this period.</td></tr>`;
 
@@ -3587,9 +3589,9 @@
                 <tr>
                     <td colspan="3"><b>TOTAL (${t.employee_count} Employees)</b></td>
                     <td><b>${t.approved_shifts} / ${t.total_shifts}</b></td>
-                    <td><b>${Number(t.approved_hours).toFixed(2)} hrs</b></td>
-                    <td><b>${Number(t.pending_hours).toFixed(2)} hrs</b></td>
-                    <td><b>${Number(t.total_submitted_hours).toFixed(2)} hrs</b></td>
+                    <td><b>${Number(t.approved_hours).toFixed(2)}</b></td>
+                    <td><b>${Number(t.pending_hours).toFixed(2)}</b></td>
+                    <td><b>${Number(t.total_submitted_hours).toFixed(2)}</b></td>
                 </tr>
             `;
 
