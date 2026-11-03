@@ -1760,6 +1760,9 @@
                             </label>
                         </div>
 
+                        <!-- Live Duplicate / Overlap Conflict Warning -->
+                        <div id="overlapConflictNotice" class="alert-box alert-error" style="display: none; margin-bottom: 1rem;"></div>
+
                         <div class="form-group">
                             <label for="entryNotes">Notes / Description (Optional)</label>
                             <input
@@ -2120,7 +2123,7 @@
         </div>
 
         <div style="text-align: center; margin-top: 1.5rem; font-size: 0.88rem; color: var(--text-muted); font-weight: 600;">
-            Timesheet Portal <span style="display: inline-block; background: #e5e7eb; color: #1f2937; padding: 0.2rem 0.65rem; border-radius: 999px; font-weight: 700; margin-left: 0.25rem;">Beta v0.7</span>
+            Timesheet Portal <span style="display: inline-block; background: #e5e7eb; color: #1f2937; padding: 0.2rem 0.65rem; border-radius: 999px; font-weight: 700; margin-left: 0.25rem;">Beta v0.8</span>
         </div>
     </div>
 
@@ -2215,7 +2218,7 @@
     <footer class="no-print">
         <p>&copy; 2026 Riverview Fire Department | York County, South Carolina</p>
         <p style="margin-top: 0.5rem;">Dedicated to Protecting Our Community</p>
-        <p style="margin-top: 0.5rem; font-size: 0.85rem; color: #9ca3af;">Timesheet Portal Build: <b>Beta v0.7</b></p>
+        <p style="margin-top: 0.5rem; font-size: 0.85rem; color: #9ca3af;">Timesheet Portal Build: <b>Beta v0.8</b></p>
     </footer>
 
     <script src="js/main.js"></script>
@@ -2241,6 +2244,7 @@
         let calendarMode = "month";      // "month" or "week"
         let calendarCursorDate = "";     // YYYY-MM-DD cursor for calendar navigation
         let calendarSelectedDate = "";   // YYYY-MM-DD selected date in calendar
+        let cachedEntriesForConflictCheck = []; // Cached entries for live overlap/duplicate checking
 
         // =====================================================================
         // Date & Weekly Pay Period Helpers (Monday 00:00 - Sunday 24:00)
@@ -2312,21 +2316,77 @@
             };
         }
 
+        function getShiftIntervalMinutes(shiftDate, startTime, endTime) {
+            if (!shiftDate || !startTime || !endTime) return null;
+            const [y, m, d] = String(shiftDate).split("-").map(Number);
+            if (!y || !m || !d) return null;
+            const parseMins = (t) => {
+                if (t === "24:00") return 1440;
+                const [hh, mm] = String(t).split(":").map(Number);
+                return hh * 60 + mm;
+            };
+            const sMins = parseMins(startTime);
+            const eMins = parseMins(endTime);
+            if (isNaN(sMins) || isNaN(eMins)) return null;
+            const baseDayMins = Math.round(Date.UTC(y, m - 1, d) / 60000);
+            const startAbs = baseDayMins + sMins;
+            const endAbs = eMins <= sMins ? baseDayMins + 1440 + eMins : baseDayMins + eMins;
+            return {
+                startAbs,
+                endAbs,
+                isOvernight: eMins <= sMins
+            };
+        }
+
+        function findConflictingEntries(entriesList, deptId, shiftDate, startTime, endTime, excludeEntryId = null) {
+            const candidate = getShiftIntervalMinutes(shiftDate, startTime, endTime);
+            if (!candidate) return [];
+            const targetDept = String(deptId || "").trim();
+            const excludeId = excludeEntryId ? Number(excludeEntryId) : null;
+
+            return (entriesList || [])
+                .filter(existing => {
+                    if (String(existing.dept_id) !== targetDept) return false;
+                    if (excludeId && Number(existing.id) === excludeId) return false;
+                    if (existing.status === "rejected") return false;
+                    const exInterval = getShiftIntervalMinutes(existing.shift_date, existing.start_time, existing.end_time);
+                    if (!exInterval) return false;
+                    return candidate.startAbs < exInterval.endAbs && exInterval.startAbs < candidate.endAbs;
+                })
+                .map(existing => {
+                    const exInterval = getShiftIntervalMinutes(existing.shift_date, existing.start_time, existing.end_time);
+                    const isDuplicate = exInterval.startAbs === candidate.startAbs && exInterval.endAbs === candidate.endAbs;
+                    return { ...existing, isDuplicate };
+                });
+        }
+
+        function formatConflictErrorMessage(conflicts, shiftDate, startTime, endTime) {
+            if (!conflicts || conflicts.length === 0) return "";
+            const hasExactDuplicate = conflicts.some(c => c.isDuplicate);
+            const conflictListText = conflicts.map(c => {
+                const overnightLabel = c.is_overnight ? " (overnight +1d)" : "";
+                return `${c.shift_date} from ${c.start_time} to ${c.end_time}${overnightLabel} (${Number(c.duration_hours).toFixed(2)} hrs, ${c.status})`;
+            }).join("; ");
+
+            if (hasExactDuplicate && conflicts.length === 1) {
+                return `Duplicate time entry already submitted: ${conflictListText}.`;
+            }
+            return `Overlapping time entry already submitted: Your shift on ${shiftDate} (${startTime}–${endTime}) overlaps with ${conflictListText}.`;
+        }
+
         // =====================================================================
         // Local Fallback Storage Engine (Used if Flask server is offline)
         // =====================================================================
 
         const LocalDB = {
-            KEY_EMPLOYEES: "rvfd_demo_employees_v5",
-            KEY_ENTRIES: "rvfd_demo_entries_v5",
-            KEY_AUDIT: "rvfd_demo_audit_v5",
+            KEY_EMPLOYEES: "rvfd_demo_employees_v6",
+            KEY_ENTRIES: "rvfd_demo_entries_v6",
+            KEY_AUDIT: "rvfd_demo_audit_v6",
 
             addDaysIso(baseIso, daysOffset) {
                 const dt = parseIsoDateLocal(baseIso);
                 dt.setDate(dt.getDate() + daysOffset);
-                const iso = toIsoDate(dt);
-                const maxIso = getMaxAllowedShiftDateIso();
-                return iso > maxIso ? maxIso : iso;
+                return toIsoDate(dt);
             },
 
             reset() {
@@ -2360,10 +2420,11 @@
                     const prev = getMondaySundayPeriod(prevStart);
                     const twoWeeksAgoStart = this.addDaysIso(curr.start, -14);
                     const twoWeeksAgo = getMondaySundayPeriod(twoWeeksAgoStart);
+                    const maxAllowedIso = getMaxAllowedShiftDateIso();
 
                     const nowIso = new Date().toISOString();
 
-                    const sampleEntries = [
+                    const rawSampleEntries = [
                         // =====================================================
                         // CURRENT WEEK (Monday - Sunday) — Half with notes, half without notes
                         // =====================================================
@@ -2450,7 +2511,7 @@
                         {
                             id: 106,
                             dept_id: "904",
-                            shift_date: this.addDaysIso(curr.start, 1), // Tuesday evening
+                            shift_date: this.addDaysIso(curr.start, 1), // Tuesday evening (pending)
                             start_time: "18:00",
                             end_time: "22:00",
                             is_overnight: false,
@@ -2458,15 +2519,31 @@
                             pay_period_start: curr.start,
                             pay_period_end: curr.end,
                             notes: "Weekly department pump ops & drafting drill (Tanker 1)",
-                            status: "approved",
-                            reviewed_by: "902 J. Miller",
-                            reviewed_at: nowIso,
+                            status: "pending",
+                            reviewed_by: null,
+                            reviewed_at: null,
                             review_note: ""
                         },
                         {
                             id: 107,
                             dept_id: "908",
-                            shift_date: this.addDaysIso(curr.start, 1), // Tuesday evening
+                            shift_date: this.addDaysIso(curr.start, 1), // Tuesday day shift (pending)
+                            start_time: "07:00",
+                            end_time: "17:00",
+                            is_overnight: false,
+                            duration_hours: 10.0,
+                            pay_period_start: curr.start,
+                            pay_period_end: curr.end,
+                            notes: "Elementary school fire safety demo",
+                            status: "pending",
+                            reviewed_by: null,
+                            reviewed_at: null,
+                            review_note: ""
+                        },
+                        {
+                            id: 108,
+                            dept_id: "909",
+                            shift_date: this.addDaysIso(curr.start, 1), // Tuesday evening (pending)
                             start_time: "18:00",
                             end_time: "22:00",
                             is_overnight: false,
@@ -2474,25 +2551,9 @@
                             pay_period_start: curr.start,
                             pay_period_end: curr.end,
                             notes: "",
-                            status: "approved",
-                            reviewed_by: "902 J. Miller",
-                            reviewed_at: nowIso,
-                            review_note: ""
-                        },
-                        {
-                            id: 108,
-                            dept_id: "909",
-                            shift_date: this.addDaysIso(curr.start, 1), // Tuesday evening
-                            start_time: "18:00",
-                            end_time: "22:00",
-                            is_overnight: false,
-                            duration_hours: 4.0,
-                            pay_period_start: curr.start,
-                            pay_period_end: curr.end,
-                            notes: "SCBA & ladder evolution drill",
-                            status: "approved",
-                            reviewed_by: "903 S. Davis",
-                            reviewed_at: nowIso,
+                            status: "pending",
+                            reviewed_by: null,
+                            reviewed_at: null,
                             review_note: ""
                         },
                         {
@@ -2574,40 +2635,9 @@
                             reviewed_by: null,
                             reviewed_at: null,
                             review_note: ""
-                        },
-                        {
-                            id: 114,
-                            dept_id: "908",
-                            shift_date: this.addDaysIso(curr.start, 4), // Friday
-                            start_time: "07:00",
-                            end_time: "17:00",
-                            is_overnight: false,
-                            duration_hours: 10.0,
-                            pay_period_start: curr.start,
-                            pay_period_end: curr.end,
-                            notes: "Elementary school fire safety demo",
-                            status: "pending",
-                            reviewed_by: null,
-                            reviewed_at: null,
-                            review_note: ""
-                        },
-                        {
-                            id: 115,
-                            dept_id: "908",
-                            shift_date: this.addDaysIso(curr.start, 1), // Tuesday duplicate (Rejected example)
-                            start_time: "18:00",
-                            end_time: "22:00",
-                            is_overnight: false,
-                            duration_hours: 4.0,
-                            pay_period_start: curr.start,
-                            pay_period_end: curr.end,
-                            notes: "",
-                            status: "rejected",
-                            reviewed_by: "902 J. Miller",
-                            reviewed_at: nowIso,
-                            review_note: "Duplicate entry — already approved on entry 107."
-                        },
-
+                        }
+                    ];
+                    const prevAndHistEntries = [
                         // =====================================================
                         // PREVIOUS WEEK (Last Monday - Last Sunday) — Demonstrates 53h (24/48) & 40h Overtime
                         // =====================================================
@@ -2823,6 +2853,10 @@
                             reviewed_at: nowIso,
                             review_note: ""
                         }
+                    ];
+                    const sampleEntries = [
+                        ...rawSampleEntries.filter(e => e.shift_date <= maxAllowedIso),
+                        ...prevAndHistEntries
                     ];
                     localStorage.setItem(this.KEY_ENTRIES, JSON.stringify(sampleEntries));
                 }
@@ -3091,6 +3125,12 @@
                 }
                 const calc = calculateDurationClient(body.start_time, body.end_time);
                 if (!calc || calc.hours <= 0) throw new Error("Invalid start or end time.");
+
+                const conflicts = findConflictingEntries(entries, targetId, body.shift_date, body.start_time, body.end_time, null);
+                if (conflicts.length > 0) {
+                    throw new Error(formatConflictErrorMessage(conflicts, body.shift_date, body.start_time, body.end_time));
+                }
+
                 const dt = parseIsoDateLocal(body.shift_date);
                 const isSunday = dt.getDay() === 0;
 
@@ -3167,6 +3207,12 @@
                 const entries = LocalDB.getEntries();
                 const entry = entries.find(e => e.id === id);
                 if (!entry) throw new Error("Entry not found.");
+                if (body.status === "approved" || body.status === "pending") {
+                    const conflicts = findConflictingEntries(entries, entry.dept_id, entry.shift_date, entry.start_time, entry.end_time, id);
+                    if (conflicts.length > 0) {
+                        throw new Error(formatConflictErrorMessage(conflicts, entry.shift_date, entry.start_time, entry.end_time));
+                    }
+                }
                 entry.status = body.status;
                 entry.reviewed_by = currentUser.name;
                 entry.reviewed_at = new Date().toISOString();
@@ -3203,6 +3249,13 @@
                     throw new Error("Shift date cannot be more than 1 day in the future.");
                 }
                 const calc = calculateDurationClient(body.start_time, body.end_time);
+                if (!calc || calc.hours <= 0) throw new Error("Invalid start or end time.");
+
+                const conflicts = findConflictingEntries(entries, entry.dept_id, body.shift_date, body.start_time, body.end_time, id);
+                if (conflicts.length > 0) {
+                    throw new Error(formatConflictErrorMessage(conflicts, body.shift_date, body.start_time, body.end_time));
+                }
+
                 const pp = getMondaySundayPeriod(body.shift_date);
                 entry.shift_date = body.shift_date;
                 entry.start_time = body.start_time;
@@ -3331,10 +3384,13 @@
             box.textContent = message;
             box.className = `alert-box ${type === "error" ? "alert-error" : "alert-success"}`;
             box.style.display = "block";
+            if (type === "error") {
+                box.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            }
             if (alertTimer) clearTimeout(alertTimer);
             alertTimer = setTimeout(() => {
                 box.style.display = "none";
-            }, 5000);
+            }, type === "error" ? 9000 : 5000);
         }
 
         function quickFillLogin(deptId, pin) {
@@ -3571,6 +3627,7 @@
             const valEl = document.getElementById("durationValueText");
             const subEl = document.getElementById("durationSubText");
             const sunNotice = document.getElementById("sundaySplitNotice");
+            const conflictNotice = document.getElementById("overlapConflictNotice");
             const editId = document.getElementById("editEntryId").value;
 
             const calc = calculateDurationClient(startTime, endTime);
@@ -3578,6 +3635,7 @@
                 valEl.textContent = "0.00 hrs";
                 subEl.textContent = "Select start and end times to auto-calculate hours.";
                 sunNotice.style.display = "none";
+                if (conflictNotice) conflictNotice.style.display = "none";
                 return;
             }
 
@@ -3600,11 +3658,33 @@
             } else {
                 sunNotice.style.display = "none";
             }
+
+            // Live check for duplicate / overlapping shift entries
+            if (conflictNotice && currentUser && shiftDate) {
+                let targetDeptId = (currentUser.role === "officer" || currentUser.role === "cfo")
+                    ? (document.getElementById("entryDeptId").value || currentUser.dept_id)
+                    : currentUser.dept_id;
+                const sourceEntries = useLocalDemoStorage ? LocalDB.getEntries() : cachedEntriesForConflictCheck;
+                if (editId) {
+                    const editingEntry = sourceEntries.find(e => Number(e.id) === Number(editId));
+                    if (editingEntry) targetDeptId = editingEntry.dept_id;
+                }
+                const conflicts = findConflictingEntries(sourceEntries, targetDeptId, shiftDate, startTime, endTime, editId || null);
+                if (conflicts.length > 0) {
+                    conflictNotice.textContent = formatConflictErrorMessage(conflicts, shiftDate, startTime, endTime);
+                    conflictNotice.style.display = "block";
+                } else {
+                    conflictNotice.style.display = "none";
+                }
+            }
         }
 
-        ["entryShiftDate", "entryStartTime", "entryEndTime"].forEach(id => {
-            document.getElementById(id).addEventListener("input", updateDurationPreview);
-            document.getElementById(id).addEventListener("change", updateDurationPreview);
+        ["entryShiftDate", "entryStartTime", "entryEndTime", "entryDeptId"].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener("input", updateDurationPreview);
+                el.addEventListener("change", updateDurationPreview);
+            }
         });
 
         document.getElementById("retroEntryForm").addEventListener("submit", async (e) => {
@@ -3933,6 +4013,10 @@
             try {
                 const data = await apiRequest(`/api/entries?${query.toString()}`);
                 const entries = data.entries || [];
+                if (!query.get("dept_id")) {
+                    cachedEntriesForConflictCheck = entries;
+                    updateDurationPreview();
+                }
                 const byDate = new Map();
                 entries.forEach(e => {
                     if (!byDate.has(e.shift_date)) {

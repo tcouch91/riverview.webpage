@@ -255,6 +255,69 @@ def calculate_duration(start_time: str, end_time: str) -> tuple[float, bool]:
     return duration_hours, is_overnight
 
 
+def get_shift_interval_minutes(shift_date_str: str, start_time_str: str, end_time_str: str) -> tuple[int, int]:
+    """
+    Returns (start_abs_minutes, end_abs_minutes) from ordinal day 0 so same-day
+    and overnight shifts can be compared accurately for overlaps or duplicates.
+    """
+    dt = parse_shift_date(shift_date_str)
+    base_mins = dt.toordinal() * 1440
+    s_mins = time_to_minutes(start_time_str)
+    e_mins = time_to_minutes(end_time_str)
+    start_abs = base_mins + s_mins
+    end_abs = (base_mins + 1440 + e_mins) if e_mins <= s_mins else (base_mins + e_mins)
+    return start_abs, end_abs
+
+
+def check_overlapping_entries(
+    session,
+    dept_id: str,
+    shift_date_str: str,
+    start_time_str: str,
+    end_time_str: str,
+    exclude_entry_id: int | None = None,
+) -> str | None:
+    """
+    Checks if the candidate shift duplicates or overlaps any existing non-rejected
+    shift for the same employee. Returns a formatted error message if a conflict
+    exists, or None if valid.
+    """
+    cand_start, cand_end = get_shift_interval_minutes(shift_date_str, start_time_str, end_time_str)
+    query = session.query(TimeEntry).filter(
+        TimeEntry.dept_id == dept_id,
+        TimeEntry.status != "rejected",
+    )
+    if exclude_entry_id is not None:
+        query = query.filter(TimeEntry.id != exclude_entry_id)
+
+    conflicts = []
+    has_exact_duplicate = False
+    for existing in query.all():
+        try:
+            ex_start, ex_end = get_shift_interval_minutes(existing.shift_date, existing.start_time, existing.end_time)
+        except ValueError:
+            continue
+        if cand_start < ex_end and ex_start < cand_end:
+            if ex_start == cand_start and ex_end == cand_end:
+                has_exact_duplicate = True
+            overnight_tag = " (overnight +1d)" if existing.is_overnight else ""
+            conflicts.append(
+                f"{existing.shift_date} from {existing.start_time} to {existing.end_time}{overnight_tag} "
+                f"({existing.duration_hours:.2f} hrs, {existing.status})"
+            )
+
+    if not conflicts:
+        return None
+
+    joined = "; ".join(conflicts)
+    if has_exact_duplicate and len(conflicts) == 1:
+        return f"Duplicate time entry already submitted: {joined}."
+    return (
+        f"Overlapping time entry already submitted: Your shift on {shift_date_str} "
+        f"({start_time_str}–{end_time_str}) overlaps with {joined}."
+    )
+
+
 def log_audit(session, actor_id: str, actor_name: str, action: str, target_type: str, target_id: str, details: str = ""):
     entry = AuditLog(
         actor_id=str(actor_id),
@@ -818,6 +881,17 @@ def create_entry():
     if shift_dt > date.today() + timedelta(days=1):
         return jsonify({"error": "Shift date cannot be more than 1 day in the future."}), 400
 
+    conflict_err = check_overlapping_entries(
+        g.db,
+        dept_id=target_dept_id,
+        shift_date_str=shift_dt.isoformat(),
+        start_time_str=start_time_str,
+        end_time_str=end_time_str,
+        exclude_entry_id=None,
+    )
+    if conflict_err:
+        return jsonify({"error": conflict_err}), 409
+
     created_entries = []
 
     # Pay period ends at midnight between Sunday and Monday.
@@ -942,6 +1016,17 @@ def update_entry(entry_id: int):
     if shift_dt > date.today() + timedelta(days=1):
         return jsonify({"error": "Shift date cannot be more than 1 day in the future."}), 400
 
+    conflict_err = check_overlapping_entries(
+        g.db,
+        dept_id=entry.dept_id,
+        shift_date_str=shift_dt.isoformat(),
+        start_time_str=start_time_str,
+        end_time_str=end_time_str,
+        exclude_entry_id=entry.id,
+    )
+    if conflict_err:
+        return jsonify({"error": conflict_err}), 409
+
     pp_start, pp_end = get_weekly_pay_period(shift_dt)
 
     old_summary = f"{entry.shift_date} {entry.start_time}-{entry.end_time} ({entry.duration_hours}h)"
@@ -1014,6 +1099,18 @@ def review_entry(entry_id: int):
     entry = g.db.query(TimeEntry).filter_by(id=entry_id).first()
     if not entry:
         return jsonify({"error": "Time entry not found."}), 404
+
+    if new_status in ("approved", "pending"):
+        conflict_err = check_overlapping_entries(
+            g.db,
+            dept_id=entry.dept_id,
+            shift_date_str=entry.shift_date,
+            start_time_str=entry.start_time,
+            end_time_str=entry.end_time,
+            exclude_entry_id=entry.id,
+        )
+        if conflict_err:
+            return jsonify({"error": conflict_err}), 409
 
     entry.status = new_status
     entry.reviewed_by = f"{emp.dept_id} {emp.name}"
