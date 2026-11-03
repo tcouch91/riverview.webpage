@@ -152,26 +152,27 @@
         .preset-bar {
             display: flex;
             align-items: center;
-            gap: 0.45rem;
+            gap: 0.55rem;
             flex-wrap: wrap;
-            margin-bottom: 1rem;
+            margin-bottom: 1.1rem;
         }
 
         .preset-label {
-            font-size: 0.82rem;
+            font-size: 0.88rem;
             font-weight: 700;
             color: var(--text-secondary);
-            margin-right: 0.15rem;
+            margin-right: 0.2rem;
         }
 
         .preset-chip {
             background: #f3f4f6;
-            border: 1px solid #d1d5db;
+            border: 1px solid #cbd5e1;
             color: #1f2937;
-            padding: 0.42rem 0.75rem;
-            border-radius: 999px;
-            font-size: 0.82rem;
-            font-weight: 600;
+            min-height: 44px;
+            padding: 0.55rem 0.95rem;
+            border-radius: 10px;
+            font-size: 0.92rem;
+            font-weight: 700;
             cursor: pointer;
             transition: all 0.15s;
             font-family: inherit;
@@ -240,11 +241,12 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 0.45rem;
-            padding: 0.68rem 1.35rem;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.95rem;
+            gap: 0.5rem;
+            min-height: 48px;
+            padding: 0.78rem 1.4rem;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 1rem;
             border: none;
             cursor: pointer;
             transition: all 0.2s;
@@ -300,9 +302,9 @@
         }
 
         .btn-outline {
-            background: transparent;
-            border: 1px solid #d1d5db;
-            color: #374151;
+            background: #ffffff;
+            border: 1.5px solid #cbd5e1;
+            color: #1f2937;
         }
 
         .btn-outline:hover:not(:disabled) {
@@ -310,9 +312,11 @@
         }
 
         .btn-sm {
-            padding: 0.38rem 0.75rem;
-            font-size: 0.82rem;
-            border-radius: 6px;
+            min-height: 44px;
+            padding: 0.6rem 1.05rem;
+            font-size: 0.94rem;
+            border-radius: 9px;
+            font-weight: 700;
         }
 
         .btn:disabled {
@@ -704,43 +708,36 @@
                 font-size: 1.18rem;
             }
 
-            /* Make ALL buttons on mobile large, bold, and thumb-friendly */
-            .btn {
-                min-height: 52px;
-                padding: 0.8rem 1.2rem;
-                font-size: 1.04rem;
-                font-weight: 700;
-                border-radius: 10px;
-            }
-
+            /* Make ALL buttons on mobile extra-large, bold, and thumb-friendly */
+            .btn,
             .btn-sm {
-                min-height: 48px;
-                padding: 0.7rem 1rem;
-                font-size: 0.96rem;
-                font-weight: 700;
-                border-radius: 10px;
+                min-height: 54px !important;
+                padding: 0.85rem 1.15rem !important;
+                font-size: 1.05rem !important;
+                font-weight: 700 !important;
+                border-radius: 12px !important;
             }
 
             #loginSubmitBtn,
             #saveEntryBtn {
-                width: 100%;
-                min-height: 58px !important;
-                font-size: 1.15rem !important;
-                border-radius: 12px;
+                width: 100% !important;
+                min-height: 60px !important;
+                font-size: 1.18rem !important;
+                border-radius: 12px !important;
             }
 
             /* Demo Account Buttons on Login View */
             .demo-account-grid {
                 display: grid !important;
-                grid-template-columns: 1fr 1fr;
-                gap: 0.55rem !important;
+                grid-template-columns: 1fr !important;
+                gap: 0.6rem !important;
             }
 
             .demo-account-grid .btn {
-                width: 100%;
-                min-height: 48px;
-                font-size: 0.9rem;
-                padding: 0.6rem 0.5rem;
+                width: 100% !important;
+                min-height: 52px !important;
+                font-size: 1.02rem !important;
+                padding: 0.75rem 1rem !important;
                 text-align: center;
             }
 
@@ -760,13 +757,13 @@
                 width: 100%;
                 display: grid !important;
                 grid-template-columns: 1fr 1fr;
-                gap: 0.6rem !important;
+                gap: 0.65rem !important;
             }
 
             .session-actions .btn {
-                width: 100%;
-                min-height: 48px;
-                font-size: 0.98rem;
+                width: 100% !important;
+                min-height: 52px !important;
+                font-size: 1.02rem !important;
             }
 
             /* Pay Period Bar on Mobile */
@@ -789,68 +786,69 @@
                 width: 100%;
                 display: grid;
                 grid-template-columns: 1fr 1fr 1fr;
-                gap: 0.5rem;
+                gap: 0.55rem;
             }
 
             .pay-period-controls .btn {
-                width: 100%;
-                min-height: 50px;
-                padding: 0.6rem 0.4rem;
-                font-size: 0.94rem;
+                width: 100% !important;
+                min-height: 52px !important;
+                padding: 0.65rem 0.4rem !important;
+                font-size: 0.96rem !important;
             }
 
             .pay-period-controls input[type="date"] {
                 grid-column: 1 / -1;
                 width: 100% !important;
-                min-height: 50px;
+                min-height: 52px !important;
                 font-size: 1rem !important;
             }
 
-            /* Horizontal Touch-Scrollable Tabs on Mobile */
+            /* Full-Width 2-Column Portal Tabs on Mobile */
             .portal-tabs {
-                flex-wrap: nowrap;
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-                scrollbar-width: none;
-                gap: 0.5rem;
-                margin-bottom: 1rem;
-                padding-bottom: 0.4rem;
-            }
-
-            .portal-tabs::-webkit-scrollbar {
-                display: none;
+                display: grid !important;
+                grid-template-columns: 1fr 1fr;
+                gap: 0.55rem;
+                margin-bottom: 1.1rem;
+                padding-bottom: 0.5rem;
             }
 
             .tab-btn {
-                white-space: nowrap;
-                flex-shrink: 0;
-                padding: 0.75rem 1.15rem;
-                font-size: 1rem;
-                min-height: 50px;
-                border-radius: 10px;
+                width: 100%;
+                justify-content: center;
+                padding: 0.85rem 0.75rem !important;
+                font-size: 0.98rem !important;
+                min-height: 52px !important;
+                border-radius: 12px !important;
+                background: #e5e7eb;
+                color: #1f2937;
+                text-align: center;
+            }
+
+            .tab-btn:first-child {
+                grid-column: 1 / -1;
             }
 
             /* Quick-Tap Shift Presets as 2x2 Big Touch Grid on Mobile */
             .preset-bar {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
-                gap: 0.55rem;
-                margin-bottom: 1.1rem;
+                gap: 0.6rem;
+                margin-bottom: 1.15rem;
             }
 
             .preset-label {
                 grid-column: 1 / -1;
-                font-size: 0.88rem;
+                font-size: 0.92rem;
                 margin-bottom: 0.1rem;
             }
 
             .preset-chip {
                 width: 100%;
-                min-height: 48px;
-                padding: 0.65rem 0.6rem;
-                font-size: 0.92rem;
-                font-weight: 700;
-                border-radius: 10px;
+                min-height: 52px !important;
+                padding: 0.75rem 0.6rem !important;
+                font-size: 0.96rem !important;
+                font-weight: 700 !important;
+                border-radius: 12px !important;
                 text-align: center;
                 display: flex;
                 align-items: center;
@@ -1233,20 +1231,20 @@
                         <!-- Quick-Tap Shift Time Presets for Mobile Convenience -->
                         <div class="preset-bar">
                             <span class="preset-label">Quick Fill:</span>
+                            <button type="button" class="preset-chip" onclick="applyShiftPreset('07:00', '17:00')">Day Shift 10h (07:00–17:00)</button>
                             <button type="button" class="preset-chip" onclick="applyShiftPreset('07:00', '19:00')">Day 12h (07:00–19:00)</button>
                             <button type="button" class="preset-chip" onclick="applyShiftPreset('19:00', '07:00')">Night 12h (19:00–07:00)</button>
-                            <button type="button" class="preset-chip" onclick="applyShiftPreset('08:00', '16:00')">Day 8h (08:00–16:00)</button>
                             <button type="button" class="preset-chip" onclick="applyShiftPreset('18:00', '22:00')">Drill 4h (18:00–22:00)</button>
                         </div>
 
                         <div class="time-pair-grid">
                             <div class="form-group">
                                 <label for="entryStartTime">Start Time</label>
-                                <input type="time" id="entryStartTime" class="form-control" required>
+                                <input type="time" id="entryStartTime" class="form-control" value="07:00" required>
                             </div>
                             <div class="form-group">
                                 <label for="entryEndTime">End Time</label>
-                                <input type="time" id="entryEndTime" class="form-control" required>
+                                <input type="time" id="entryEndTime" class="form-control" value="17:00" required>
                             </div>
                         </div>
 
@@ -1254,9 +1252,9 @@
                         <div class="duration-preview" id="durationPreviewBox">
                             <div>
                                 <div style="font-weight: 700; color: var(--primary-dark);">Calculated Shift Duration</div>
-                                <div class="calc-sub" id="durationSubText">Select start and end times to auto-calculate hours.</div>
+                                <div class="calc-sub" id="durationSubText">10h 0m (07:00 to 17:00)</div>
                             </div>
-                            <div class="calc-value" id="durationValueText">0.00 hrs</div>
+                            <div class="calc-value" id="durationValueText">10.00 hrs</div>
                         </div>
 
                         <!-- Sunday Midnight Split Notice -->
@@ -1558,6 +1556,10 @@
                 </div>
             </div>
         </div>
+
+        <div style="text-align: center; margin-top: 1.5rem; font-size: 0.88rem; color: var(--text-muted); font-weight: 600;">
+            Timesheet Portal <span style="display: inline-block; background: #e5e7eb; color: #1f2937; padding: 0.2rem 0.65rem; border-radius: 999px; font-weight: 700; margin-left: 0.25rem;">Beta v0.1</span>
+        </div>
     </div>
 
     <!-- ======================================================================
@@ -1650,6 +1652,7 @@
     <footer class="no-print">
         <p>&copy; 2026 Riverview Fire Department | York County, South Carolina</p>
         <p style="margin-top: 0.5rem;">Dedicated to Protecting Our Community</p>
+        <p style="margin-top: 0.5rem; font-size: 0.85rem; color: #9ca3af;">Timesheet Portal Build: <b>Beta v0.1</b></p>
     </footer>
 
     <script src="js/main.js"></script>
@@ -2723,9 +2726,12 @@
             });
             document.getElementById("logForMemberGroup").style.display = isReviewer ? "block" : "none";
 
-            // Default shift date & current pay period
+            // Default shift date, normal day shift (07:00 - 17:00), & current pay period
             const todayIso = toIsoDate(new Date());
             document.getElementById("entryShiftDate").value = todayIso;
+            document.getElementById("entryStartTime").value = "07:00";
+            document.getElementById("entryEndTime").value = "17:00";
+            updateDurationPreview();
             setPayPeriodByDate(todayIso, false);
 
             if (isReviewer) {
@@ -2929,8 +2935,8 @@
             document.getElementById("entryFormTitle").textContent = "Submit Completed Hours (Retro Log)";
             document.getElementById("saveEntryBtn").textContent = "Submit Hours for Review";
             document.getElementById("cancelEditBtn").style.display = "none";
-            document.getElementById("entryStartTime").value = "";
-            document.getElementById("entryEndTime").value = "";
+            document.getElementById("entryStartTime").value = "07:00";
+            document.getElementById("entryEndTime").value = "17:00";
             document.getElementById("entryNotes").value = "";
             updateDurationPreview();
         }
