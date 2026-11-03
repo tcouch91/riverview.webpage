@@ -1409,9 +1409,7 @@
                         <div class="preset-bar">
                             <span class="preset-label">Quick Fill:</span>
                             <button type="button" class="preset-chip" onclick="applyShiftPreset('07:00', '17:00')">Day Shift 10h (07:00–17:00)</button>
-                            <button type="button" class="preset-chip" onclick="applyShiftPreset('07:00', '19:00')">Day 12h (07:00–19:00)</button>
                             <button type="button" class="preset-chip" onclick="applyShiftPreset('19:00', '07:00')">Night 12h (19:00–07:00)</button>
-                            <button type="button" class="preset-chip" onclick="applyShiftPreset('18:00', '22:00')">Drill 4h (18:00–22:00)</button>
                         </div>
 
                         <div class="time-pair-grid">
@@ -1740,7 +1738,7 @@
         </div>
 
         <div style="text-align: center; margin-top: 1.5rem; font-size: 0.88rem; color: var(--text-muted); font-weight: 600;">
-            Timesheet Portal <span style="display: inline-block; background: #e5e7eb; color: #1f2937; padding: 0.2rem 0.65rem; border-radius: 999px; font-weight: 700; margin-left: 0.25rem;">Beta v0.4</span>
+            Timesheet Portal <span style="display: inline-block; background: #e5e7eb; color: #1f2937; padding: 0.2rem 0.65rem; border-radius: 999px; font-weight: 700; margin-left: 0.25rem;">Beta v0.5</span>
         </div>
     </div>
 
@@ -1834,7 +1832,7 @@
     <footer class="no-print">
         <p>&copy; 2026 Riverview Fire Department | York County, South Carolina</p>
         <p style="margin-top: 0.5rem;">Dedicated to Protecting Our Community</p>
-        <p style="margin-top: 0.5rem; font-size: 0.85rem; color: #9ca3af;">Timesheet Portal Build: <b>Beta v0.4</b></p>
+        <p style="margin-top: 0.5rem; font-size: 0.85rem; color: #9ca3af;">Timesheet Portal Build: <b>Beta v0.5</b></p>
     </footer>
 
     <script src="js/main.js"></script>
@@ -1867,6 +1865,12 @@
             const month = String(d.getMonth() + 1).padStart(2, "0");
             const day = String(d.getDate()).padStart(2, "0");
             return `${year}-${month}-${day}`;
+        }
+
+        function getMaxAllowedShiftDateIso() {
+            const dt = new Date();
+            dt.setDate(dt.getDate() + 1);
+            return toIsoDate(dt);
         }
 
         function parseIsoDateLocal(isoStr) {
@@ -1927,14 +1931,16 @@
         // =====================================================================
 
         const LocalDB = {
-            KEY_EMPLOYEES: "rvfd_demo_employees_v3",
-            KEY_ENTRIES: "rvfd_demo_entries_v3",
-            KEY_AUDIT: "rvfd_demo_audit_v3",
+            KEY_EMPLOYEES: "rvfd_demo_employees_v4",
+            KEY_ENTRIES: "rvfd_demo_entries_v4",
+            KEY_AUDIT: "rvfd_demo_audit_v4",
 
             addDaysIso(baseIso, daysOffset) {
                 const dt = parseIsoDateLocal(baseIso);
                 dt.setDate(dt.getDate() + daysOffset);
-                return toIsoDate(dt);
+                const iso = toIsoDate(dt);
+                const maxIso = getMaxAllowedShiftDateIso();
+                return iso > maxIso ? maxIso : iso;
             },
 
             reset() {
@@ -2614,6 +2620,9 @@
             if (pathname === "/api/entries" && method === "POST") {
                 const entries = LocalDB.getEntries();
                 const targetId = String(body.dept_id || currentUser.dept_id).trim();
+                if (body.shift_date > getMaxAllowedShiftDateIso()) {
+                    throw new Error("Shift date cannot be more than 1 day in the future.");
+                }
                 const calc = calculateDurationClient(body.start_time, body.end_time);
                 if (!calc || calc.hours <= 0) throw new Error("Invalid start or end time.");
                 const dt = parseIsoDateLocal(body.shift_date);
@@ -2724,6 +2733,9 @@
                 const entries = LocalDB.getEntries();
                 const entry = entries.find(e => e.id === id);
                 if (!entry) throw new Error("Entry not found.");
+                if (body.shift_date > getMaxAllowedShiftDateIso()) {
+                    throw new Error("Shift date cannot be more than 1 day in the future.");
+                }
                 const calc = calculateDurationClient(body.start_time, body.end_time);
                 const pp = getMondaySundayPeriod(body.shift_date);
                 entry.shift_date = body.shift_date;
@@ -2910,7 +2922,9 @@
 
             // Default shift date, normal day shift (07:00 - 17:00), & current pay period
             const todayIso = toIsoDate(new Date());
-            document.getElementById("entryShiftDate").value = todayIso;
+            const shiftDateInput = document.getElementById("entryShiftDate");
+            shiftDateInput.max = getMaxAllowedShiftDateIso();
+            shiftDateInput.value = todayIso;
             document.getElementById("entryStartTime").value = "07:00";
             document.getElementById("entryEndTime").value = "17:00";
             updateDurationPreview();
@@ -3069,6 +3083,11 @@
             const dept_id = (currentUser.role === "officer" || currentUser.role === "cfo")
                 ? (document.getElementById("entryDeptId").value || currentUser.dept_id)
                 : currentUser.dept_id;
+
+            if (shift_date > getMaxAllowedShiftDateIso()) {
+                showAlert("Shift date cannot be more than 1 day in the future.", "error");
+                return;
+            }
 
             const btn = document.getElementById("saveEntryBtn");
             btn.disabled = true;

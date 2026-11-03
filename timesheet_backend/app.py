@@ -802,6 +802,9 @@ def create_entry():
     except ValueError as err:
         return jsonify({"error": str(err)}), 400
 
+    if shift_dt > date.today() + timedelta(days=1):
+        return jsonify({"error": "Shift date cannot be more than 1 day in the future."}), 400
+
     created_entries = []
 
     # Pay period ends at midnight between Sunday and Monday.
@@ -922,6 +925,9 @@ def update_entry(entry_id: int):
         duration_hours, is_overnight = calculate_duration(start_time_str, end_time_str)
     except ValueError as err:
         return jsonify({"error": str(err)}), 400
+
+    if shift_dt > date.today() + timedelta(days=1):
+        return jsonify({"error": "Shift date cannot be more than 1 day in the future."}), 400
 
     pp_start, pp_end = get_weekly_pay_period(shift_dt)
 
