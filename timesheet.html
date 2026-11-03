@@ -1529,7 +1529,7 @@
     <div class="container container--page no-print">
         <div class="portal-topbar">
             <div>
-                <h2 class="section-title" style="margin-bottom: 0; text-align: left; font-size: 2rem;">Employee Timesheet Portal</h2>
+                <h2 class="section-title" style="margin-bottom: 0; text-align: left; font-size: 2rem;">Timesheet</h2>
             </div>
             <div id="connectionBadge" class="status-pill">
                 <span class="dot"></span>
@@ -1546,15 +1546,12 @@
         <div id="loginView" class="login-wrapper">
             <div class="card">
                 <div class="card-header">
-                    <div class="card-title">Member &amp; Officer Sign In</div>
+                    <div class="card-title">Sign In</div>
                 </div>
-                <p style="color: var(--text-secondary); margin-bottom: 1.25rem; font-size: 0.95rem;">
-                    Sign in with your 3-digit Riverview FD Department ID (<b>900–999</b>) and PIN to log shift hours or access the Officer &amp; CFO portal.
-                </p>
 
                 <form id="loginForm">
                     <div class="form-group">
-                        <label for="loginDeptId">Department ID (900–999)</label>
+                        <label for="loginDeptId">Department ID</label>
                         <input
                             type="text"
                             id="loginDeptId"
@@ -1568,34 +1565,34 @@
                         >
                     </div>
                     <div class="form-group">
-                        <label for="loginPin">PIN / Password</label>
+                        <label for="loginPin">PIN</label>
                         <input
                             type="password"
                             id="loginPin"
                             class="form-control"
-                            placeholder="Enter your PIN"
+                            placeholder="Enter PIN"
                             required
                             autocomplete="current-password"
                         >
                     </div>
                     <button type="submit" id="loginSubmitBtn" class="btn btn-primary" style="width: 100%; padding: 0.85rem; font-size: 1.05rem;">
-                        Sign In to Timesheet
+                        Sign In
                     </button>
                 </form>
 
                 <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px dashed #e5e7eb; font-size: 0.85rem; color: var(--text-muted);">
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.6rem;">
-                        <span style="font-weight: 700; color: #374151;">Quick Demo Accounts (Default PIN: <code>1234</code>):</span>
-                        <button type="button" class="btn btn-outline btn-sm" onclick="resetDemoDataset()">Reset Demo Data</button>
+                        <span style="font-weight: 700; color: #374151;">Demo Accounts (PIN: <code>1234</code>)</span>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="resetDemoDataset()">Reset Data</button>
                     </div>
-                    <div style="margin-bottom: 0.35rem; font-size: 0.8rem; color: #6b7280; font-weight: 600;">Officers &amp; Finance (Full Review + Export Access):</div>
+                    <div style="margin-bottom: 0.35rem; font-size: 0.8rem; color: #6b7280; font-weight: 600;">Officers &amp; Finance</div>
                     <div class="demo-account-grid" style="display: flex; gap: 0.45rem; flex-wrap: wrap; margin-bottom: 0.75rem;">
                         <button type="button" class="btn btn-outline btn-sm" onclick="quickFillLogin('900', '1234')">900 T. Couch (Officer)</button>
                         <button type="button" class="btn btn-outline btn-sm" onclick="quickFillLogin('901', '1234')">901 M. Reynolds (CFO)</button>
                         <button type="button" class="btn btn-outline btn-sm" onclick="quickFillLogin('902', '1234')">902 J. Miller (Officer)</button>
                         <button type="button" class="btn btn-outline btn-sm" onclick="quickFillLogin('903', '1234')">903 S. Davis (Officer)</button>
                     </div>
-                    <div style="margin-bottom: 0.35rem; font-size: 0.8rem; color: #6b7280; font-weight: 600;">Firefighters (Member View):</div>
+                    <div style="margin-bottom: 0.35rem; font-size: 0.8rem; color: #6b7280; font-weight: 600;">Firefighters</div>
                     <div class="demo-account-grid" style="display: flex; gap: 0.45rem; flex-wrap: wrap;">
                         <button type="button" class="btn btn-outline btn-sm" onclick="quickFillLogin('904', '1234')">904 R. Thompson</button>
                         <button type="button" class="btn btn-outline btn-sm" onclick="quickFillLogin('905', '1234')">905 K. Patel</button>
@@ -1616,14 +1613,9 @@
             <div class="user-session-bar">
                 <div class="user-badge">
                     <div class="dept-id-circle" id="sessionDeptId">900</div>
-                    <div>
-                        <div style="font-weight: 700; font-size: 1.15rem;">
-                            <span id="sessionUserName">Member Name</span>
-                            <span class="role-tag" id="sessionUserRole">MEMBER</span>
-                        </div>
-                        <div style="font-size: 0.85rem; color: #cbd5e1;">
-                            Weekly Pay Period: Monday 00:00 &ndash; Sunday 24:00
-                        </div>
+                    <div style="font-weight: 700; font-size: 1.15rem;">
+                        <span id="sessionUserName">Member Name</span>
+                        <span class="role-tag" id="sessionUserRole">MEMBER</span>
                     </div>
                 </div>
                 <div class="session-actions" style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
@@ -1636,7 +1628,7 @@
             <div class="pay-period-bar">
                 <div class="pay-period-info">
                     <h3 id="payPeriodTitle">Pay Period: Loading...</h3>
-                    <p>Pay period runs <b>Monday 00:00</b> through <b>Sunday 24:00</b> (midnight between Sunday &amp; Monday)</p>
+                    <p>Monday 00:00 &ndash; Sunday 24:00</p>
                 </div>
                 <div class="pay-period-controls">
                     <button type="button" class="btn btn-outline btn-sm" onclick="shiftPayPeriod(-7)">&larr; Prev Week</button>
@@ -1647,7 +1639,7 @@
                         id="weekPickerInput"
                         class="form-control"
                         style="width: auto; padding: 0.35rem 0.65rem; font-size: 0.88rem;"
-                        title="Jump to the week containing this date"
+                        title="Jump to week"
                         onchange="onWeekPickerChange(this.value)"
                     >
                 </div>
@@ -1656,23 +1648,23 @@
             <!-- Portal Navigation Tabs (Officer/CFO tabs shown only for reviewers) -->
             <div class="portal-tabs" id="portalTabs">
                 <button type="button" class="tab-btn active" data-tab="tabLogHours" onclick="switchTab('tabLogHours')">
-                    Log Shift &amp; My Hours
+                    Log Shift
                 </button>
                 <button type="button" class="tab-btn" data-tab="tabCalendar" onclick="switchTab('tabCalendar')">
-                    &#128197; Calendar View
+                    &#128197; Calendar
                 </button>
                 <button type="button" class="tab-btn reviewer-only" data-tab="tabOfficerReview" onclick="switchTab('tabOfficerReview')" style="display: none;">
-                    Officer Review Portal
+                    Review
                     <span class="tab-badge" id="pendingCountBadge">0</span>
                 </button>
                 <button type="button" class="tab-btn reviewer-only" data-tab="tabCfoExport" onclick="switchTab('tabCfoExport')" style="display: none;">
-                    CFO Payroll &amp; Exports
+                    Payroll
                 </button>
                 <button type="button" class="tab-btn reviewer-only" data-tab="tabRoster" onclick="switchTab('tabRoster')" style="display: none;">
-                    Roster &amp; IDs (900–999)
+                    Roster
                 </button>
                 <button type="button" class="tab-btn reviewer-only" data-tab="tabAudit" onclick="switchTab('tabAudit')" style="display: none;">
-                    Audit Trail
+                    Audit Log
                 </button>
             </div>
 
@@ -1683,28 +1675,28 @@
                 <!-- Member Weekly Summary Stats -->
                 <div class="stats-grid">
                     <div class="stat-card stat-approved">
-                        <div class="stat-label">My Approved Hours (Week)</div>
+                        <div class="stat-label">Approved Hours</div>
                         <div class="stat-value" id="myApprovedHours">0.00</div>
                         <div class="stat-sub" id="myOvertimeSub">Reg: 0.00 &bull; OT: 0.00</div>
                     </div>
                     <div class="stat-card stat-pending">
-                        <div class="stat-label">My Pending Hours (Week)</div>
+                        <div class="stat-label">Pending Hours</div>
                         <div class="stat-value" id="myPendingHours">0.00</div>
-                        <div class="stat-sub">Awaiting officer review</div>
+                        <div class="stat-sub">Awaiting review</div>
                     </div>
                     <div class="stat-card stat-primary">
-                        <div class="stat-label">Total Logged (Week)</div>
+                        <div class="stat-label">Total Logged</div>
                         <div class="stat-value" id="myTotalHours">0.00</div>
-                        <div class="stat-sub"><span id="myShiftCount">0</span> shift(s) this pay period</div>
+                        <div class="stat-sub"><span id="myShiftCount">0</span> shifts</div>
                     </div>
                 </div>
 
                 <!-- Retro Shift Logging Form -->
                 <div class="card">
                     <div class="card-header">
-                        <div class="card-title" id="entryFormTitle">Submit Completed Hours (Retro Log)</div>
+                        <div class="card-title" id="entryFormTitle">Log Shift</div>
                         <button type="button" id="cancelEditBtn" class="btn btn-outline btn-sm" style="display: none;" onclick="resetEntryForm()">
-                            Cancel Edit
+                            Cancel
                         </button>
                     </div>
 
@@ -1712,7 +1704,7 @@
                         <input type="hidden" id="editEntryId" value="">
                         <div class="form-grid">
                             <div class="form-group" id="logForMemberGroup" style="display: none;">
-                                <label for="entryDeptId">Member (900–999)</label>
+                                <label for="entryDeptId">Member</label>
                                 <select id="entryDeptId" class="form-control"></select>
                             </div>
                             <div class="form-group">
@@ -1723,19 +1715,19 @@
 
                         <!-- Quick-Tap Shift Time Presets for Mobile Convenience -->
                         <div class="preset-bar">
-                            <span class="preset-label">Quick Fill:</span>
-                            <button type="button" class="preset-chip" onclick="applyShiftPreset('07:00', '17:00')">Day Shift 10h (07:00–17:00)</button>
-                            <button type="button" class="preset-chip" onclick="applyShiftPreset('19:00', '07:00')">Night 12h (19:00–07:00)</button>
-                            <button type="button" class="preset-chip" onclick="applyShiftPreset('07:00', '07:00')">24h Shift (07:00–07:00)</button>
+                            <span class="preset-label">Presets:</span>
+                            <button type="button" class="preset-chip" onclick="applyShiftPreset('07:00', '17:00')">Day (07:00–17:00)</button>
+                            <button type="button" class="preset-chip" onclick="applyShiftPreset('19:00', '07:00')">Night (19:00–07:00)</button>
+                            <button type="button" class="preset-chip" onclick="applyShiftPreset('07:00', '07:00')">24h (07:00–07:00)</button>
                         </div>
 
                         <div class="time-pair-grid">
                             <div class="form-group">
-                                <label for="entryStartTime">Start Time (15-min intervals)</label>
+                                <label for="entryStartTime">Start Time</label>
                                 <select id="entryStartTime" class="form-control" required></select>
                             </div>
                             <div class="form-group">
-                                <label for="entryEndTime">End Time (15-min intervals)</label>
+                                <label for="entryEndTime">End Time</label>
                                 <select id="entryEndTime" class="form-control" required></select>
                             </div>
                         </div>
@@ -1743,8 +1735,8 @@
                         <!-- Live Auto-Calculated Duration Box -->
                         <div class="duration-preview" id="durationPreviewBox">
                             <div>
-                                <div style="font-weight: 700; color: var(--primary-dark);">Calculated Shift Duration</div>
-                                <div class="calc-sub" id="durationSubText">10h 0m (07:00 to 17:00)</div>
+                                <div style="font-weight: 700; color: var(--primary-dark);">Duration</div>
+                                <div class="calc-sub" id="durationSubText">10h 0m</div>
                             </div>
                             <div class="calc-value" id="durationValueText">10.00 hrs</div>
                         </div>
@@ -1754,8 +1746,7 @@
                             <label>
                                 <input type="checkbox" id="splitSundayMidnight" checked>
                                 <span>
-                                    <b>Sunday Midnight Pay Period Cutoff:</b> This Sunday shift crosses midnight into Monday.
-                                    Automatically split hours at <b>24:00 / 00:00</b> so Sunday's hours apply to the ending week and Monday's hours apply to the new week.
+                                    <b>Sunday Midnight Split:</b> Split shift at 24:00 across both weekly pay periods.
                                 </span>
                             </label>
                         </div>
@@ -1764,18 +1755,18 @@
                         <div id="overlapConflictNotice" class="alert-box alert-error" style="display: none; margin-bottom: 1rem;"></div>
 
                         <div class="form-group">
-                            <label for="entryNotes">Notes / Description (Optional)</label>
+                            <label for="entryNotes">Notes</label>
                             <input
                                 type="text"
                                 id="entryNotes"
                                 class="form-control"
-                                placeholder="Optional shift details, apparatus, or remarks..."
+                                placeholder="Optional notes..."
                                 maxlength="300"
                             >
                         </div>
 
                         <button type="submit" id="saveEntryBtn" class="btn btn-primary">
-                            Submit Hours for Review
+                            Submit Shift
                         </button>
                     </form>
                 </div>
@@ -1783,16 +1774,11 @@
                 <!-- My Timesheet Entries Table -->
                 <div class="card">
                     <div class="card-header">
-                        <div>
-                            <div class="card-title">My Logged Shifts (<span id="myTablePeriodLabel">Selected Week</span>)</div>
-                            <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;">
-                                Grouped by shift date &bull; Tap/click any entry with a <b>Note &#9662;</b> badge to view notes below it
-                            </div>
-                        </div>
+                        <div class="card-title">My Shifts</div>
                         <div style="display: flex; align-items: center; gap: 0.5rem;">
                             <label style="font-size: 0.86rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
                                 <input type="checkbox" id="showAllMyWeeks" onchange="loadMyEntries()">
-                                Show all weeks
+                                All weeks
                             </label>
                         </div>
                     </div>
@@ -1807,7 +1793,7 @@
                                 </tr>
                             </thead>
                             <tbody id="myEntriesTbody">
-                                <tr><td colspan="4" style="text-align: center; color: var(--text-muted);">No shifts logged for this week yet.</td></tr>
+                                <tr><td colspan="4" style="text-align: center; color: var(--text-muted);">No shifts logged for this week.</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -1821,8 +1807,8 @@
                 <div class="card">
                     <div class="calendar-toolbar">
                         <div class="calendar-mode-toggle">
-                            <button type="button" class="cal-mode-btn active" id="calModeMonthBtn" onclick="setCalendarMode('month')">Month View</button>
-                            <button type="button" class="cal-mode-btn" id="calModeWeekBtn" onclick="setCalendarMode('week')">Week View</button>
+                            <button type="button" class="cal-mode-btn active" id="calModeMonthBtn" onclick="setCalendarMode('month')">Month</button>
+                            <button type="button" class="cal-mode-btn" id="calModeWeekBtn" onclick="setCalendarMode('week')">Week</button>
                         </div>
 
                         <div class="calendar-nav-group">
@@ -1863,7 +1849,7 @@
                                 <span style="font-size: 0.85rem; color: var(--text-muted); margin-left: 0.4rem;" id="calSelectedDateTotal"></span>
                             </div>
                             <button type="button" class="btn btn-primary btn-sm" id="calQuickLogBtn" onclick="quickLogForCalendarDate()">
-                                + Log Shift on This Date
+                                + Log Shift
                             </button>
                         </div>
                         <div id="calSelectedDayShifts"></div>
@@ -1877,15 +1863,10 @@
             <div id="tabOfficerReview" class="tab-pane" style="display: none;">
                 <div class="card">
                     <div class="card-header">
-                        <div>
-                            <div class="card-title">Officer Timesheet Review &amp; Approval</div>
-                            <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;">
-                                Grouped by shift date &bull; Tap/click any entry with a <b>Note &#9662;</b> badge to view notes below it
-                            </div>
-                        </div>
+                        <div class="card-title">Shift Review</div>
                         <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
                             <button type="button" class="btn btn-success btn-sm" onclick="bulkApproveWeek()">
-                                &#10003; Approve All Pending for Selected Week
+                                &#10003; Approve All Pending
                             </button>
                         </div>
                     </div>
@@ -1893,24 +1874,24 @@
                     <!-- Filters -->
                     <div class="form-grid" style="margin-bottom: 1.25rem;">
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label for="reviewFilterMember">Filter by Member</label>
+                            <label for="reviewFilterMember">Member</label>
                             <select id="reviewFilterMember" class="form-control" onchange="loadOfficerEntries()">
                                 <option value="">All Members</option>
                             </select>
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label for="reviewFilterStatus">Filter by Status</label>
+                            <label for="reviewFilterStatus">Status</label>
                             <select id="reviewFilterStatus" class="form-control" onchange="loadOfficerEntries()">
                                 <option value="all">All Statuses</option>
-                                <option value="pending">Pending Review Only</option>
-                                <option value="approved">Approved Only</option>
-                                <option value="rejected">Rejected Only</option>
+                                <option value="pending">Pending</option>
+                                <option value="approved">Approved</option>
+                                <option value="rejected">Rejected</option>
                             </select>
                         </div>
                         <div class="form-group" style="margin-bottom: 0; display: flex; align-items: flex-end;">
                             <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding-bottom: 0.65rem;">
                                 <input type="checkbox" id="reviewShowAllWeeks" onchange="loadOfficerEntries()">
-                                Show entries across all weeks
+                                All weeks
                             </label>
                         </div>
                     </div>
@@ -1922,12 +1903,12 @@
                                     <th>Member</th>
                                     <th>Start &ndash; End</th>
                                     <th>Hours</th>
-                                    <th>Status / Reviewer</th>
-                                    <th>Review Actions</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="officerEntriesTbody">
-                                <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Loading entries...</td></tr>
+                                <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Loading...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -1941,22 +1922,22 @@
                 <!-- Department Totals for Selected Weekly Pay Period -->
                 <div class="stats-grid">
                     <div class="stat-card stat-approved">
-                        <div class="stat-label">Regular Approved Hours</div>
+                        <div class="stat-label">Regular Hours</div>
                         <div class="stat-value" id="cfoRegularHours">0.00</div>
-                        <div class="stat-sub"><span id="cfoApprovedShifts">0</span> approved shift(s)</div>
+                        <div class="stat-sub"><span id="cfoApprovedShifts">0</span> approved shifts</div>
                     </div>
                     <div class="stat-card stat-primary">
-                        <div class="stat-label">Overtime Approved Hours</div>
+                        <div class="stat-label">Overtime Hours</div>
                         <div class="stat-value" id="cfoOvertimeHours">0.00</div>
-                        <div class="stat-sub">&gt;53h (24/48) or &gt;40h (Std)</div>
+                        <div class="stat-sub">&gt;53h (24/48) &bull; &gt;40h (Std)</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">Total Approved (Payroll)</div>
+                        <div class="stat-label">Total Approved</div>
                         <div class="stat-value" id="cfoApprovedHours">0.00</div>
-                        <div class="stat-sub"><span id="cfoEmployeeCount">0</span> employee(s) (<span id="cfoTotalShifts">0</span> shifts)</div>
+                        <div class="stat-sub"><span id="cfoEmployeeCount">0</span> staff (<span id="cfoTotalShifts">0</span> shifts)</div>
                     </div>
                     <div class="stat-card stat-pending">
-                        <div class="stat-label">Unreviewed Pending Hours</div>
+                        <div class="stat-label">Pending Hours</div>
                         <div class="stat-value" id="cfoPendingHours">0.00</div>
                         <div class="stat-sub">Total logged: <span id="cfoTotalHours">0.00</span></div>
                     </div>
@@ -1964,21 +1945,16 @@
 
                 <div class="card">
                     <div class="card-header">
-                        <div>
-                            <div class="card-title">CFO Weekly Payroll Summary (Regular &amp; Overtime)</div>
-                            <div style="font-size: 0.88rem; color: var(--text-secondary);" id="cfoPeriodSubheader">
-                                Weekly Pay Period (Monday 00:00 &ndash; Sunday 24:00) &bull; OT: &gt;53 hrs for Full-Time 24/48, &gt;40 hrs for all other staff
-                            </div>
-                        </div>
+                        <div class="card-title">Payroll Summary</div>
                         <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
                             <button type="button" class="btn btn-primary btn-sm" onclick="exportCsv('summary', false)">
-                                &#8681; Export Payroll Summary (CSV)
+                                &#8681; Summary CSV
                             </button>
                             <button type="button" class="btn btn-dark btn-sm" onclick="exportCsv('detailed', false)">
-                                &#8681; Export Detailed Shift Audit (CSV)
+                                &#8681; Detailed CSV
                             </button>
                             <button type="button" class="btn btn-secondary btn-sm" onclick="printCfoReport()">
-                                &#128424; Print / Save PDF Payroll Report
+                                &#128424; Print / PDF
                             </button>
                         </div>
                     </div>
@@ -1987,18 +1963,18 @@
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>Dept ID</th>
-                                    <th>Employee Name</th>
-                                    <th>Schedule / OT Rule</th>
-                                    <th>Approved Shifts</th>
-                                    <th>Regular Hours</th>
-                                    <th>Overtime Hours</th>
-                                    <th>Total Approved</th>
-                                    <th>Pending Hours</th>
+                                    <th>ID</th>
+                                    <th>Employee</th>
+                                    <th>Schedule</th>
+                                    <th>Shifts</th>
+                                    <th>Regular</th>
+                                    <th>Overtime</th>
+                                    <th>Approved</th>
+                                    <th>Pending</th>
                                 </tr>
                             </thead>
                             <tbody id="cfoSummaryTbody">
-                                <tr><td colspan="8" style="text-align: center; color: var(--text-muted);">No hours logged for this pay period.</td></tr>
+                                <tr><td colspan="8" style="text-align: center; color: var(--text-muted);">No hours logged for this period.</td></tr>
                             </tbody>
                             <tfoot id="cfoSummaryTfoot"></tfoot>
                         </table>
@@ -2012,12 +1988,12 @@
             <div id="tabRoster" class="tab-pane" style="display: none;">
                 <div class="card">
                     <div class="card-header">
-                        <div class="card-title">Add / Update Employee (IDs 900–999)</div>
+                        <div class="card-title">Add / Update Member</div>
                     </div>
                     <form id="rosterForm">
                         <div class="form-grid">
                             <div class="form-group">
-                                <label for="rosterDeptId">Department ID (900–999)</label>
+                                <label for="rosterDeptId">Department ID</label>
                                 <input
                                     type="text"
                                     id="rosterDeptId"
@@ -2029,7 +2005,7 @@
                                 >
                             </div>
                             <div class="form-group">
-                                <label for="rosterName">Full Name</label>
+                                <label for="rosterName">Name</label>
                                 <input
                                     type="text"
                                     id="rosterName"
@@ -2039,51 +2015,48 @@
                                 >
                             </div>
                             <div class="form-group">
-                                <label for="rosterRole">Portal Role</label>
+                                <label for="rosterRole">Role</label>
                                 <select id="rosterRole" class="form-control">
-                                    <option value="member">Member (Log Hours)</option>
-                                    <option value="officer">Officer (Review &amp; Approve + Log)</option>
-                                    <option value="cfo">CFO / Finance (Payroll Exports &amp; Review)</option>
+                                    <option value="member">Member</option>
+                                    <option value="officer">Officer</option>
+                                    <option value="cfo">CFO</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="rosterOtThreshold">Work Schedule / Overtime Threshold</label>
+                                <label for="rosterOtThreshold">Schedule</label>
                                 <select id="rosterOtThreshold" class="form-control">
-                                    <option value="40">Standard Staff (OT after 40 hrs/wk)</option>
-                                    <option value="53">Full-Time 24/48 (OT after 53 hrs/wk)</option>
+                                    <option value="40">Standard (40h OT)</option>
+                                    <option value="53">24/48 (53h OT)</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="rosterPin">PIN / Password (min 4 chars)</label>
+                                <label for="rosterPin">PIN</label>
                                 <input
                                     type="text"
                                     id="rosterPin"
                                     class="form-control"
-                                    placeholder="Set or reset PIN (e.g., 1234)"
+                                    placeholder="Min 4 characters"
                                 >
                             </div>
                         </div>
                         <div style="display: flex; gap: 0.75rem; align-items: center;">
-                            <button type="submit" class="btn btn-primary">Save Member to Roster</button>
-                            <button type="button" class="btn btn-outline" onclick="clearRosterForm()">Clear Form</button>
-                            <span style="font-size: 0.85rem; color: var(--text-muted);">
-                                Tip: Click "Edit" on any member below to update their schedule/OT threshold, role, name, or PIN.
-                            </span>
+                            <button type="submit" class="btn btn-primary">Save Member</button>
+                            <button type="button" class="btn btn-outline" onclick="clearRosterForm()">Clear</button>
                         </div>
                     </form>
                 </div>
 
                 <div class="card">
                     <div class="card-header">
-                        <div class="card-title">Active Department Roster (900–999)</div>
+                        <div class="card-title">Roster</div>
                     </div>
                     <div class="table-responsive">
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>Dept ID</th>
+                                    <th>ID</th>
                                     <th>Name</th>
-                                    <th>Schedule / OT Rule</th>
+                                    <th>Schedule</th>
                                     <th>Role</th>
                                     <th>Status</th>
                                     <th>Actions</th>
@@ -2101,7 +2074,7 @@
             <div id="tabAudit" class="tab-pane" style="display: none;">
                 <div class="card">
                     <div class="card-header">
-                        <div class="card-title">System Audit Log</div>
+                        <div class="card-title">Audit Log</div>
                         <button type="button" class="btn btn-outline btn-sm" onclick="loadAuditLogs()">Refresh</button>
                     </div>
                     <div class="table-responsive">
@@ -2121,10 +2094,6 @@
                 </div>
             </div>
         </div>
-
-        <div style="text-align: center; margin-top: 1.5rem; font-size: 0.88rem; color: var(--text-muted); font-weight: 600;">
-            Timesheet Portal <span style="display: inline-block; background: #e5e7eb; color: #1f2937; padding: 0.2rem 0.65rem; border-radius: 999px; font-weight: 700; margin-left: 0.25rem;">Beta v0.8</span>
-        </div>
     </div>
 
     <!-- ======================================================================
@@ -2133,7 +2102,7 @@
     <div id="pinModal" class="modal-backdrop no-print">
         <div class="modal-content">
             <div class="card-header">
-                <div class="card-title">Change My PIN / Password</div>
+                <div class="card-title">Change PIN</div>
                 <button type="button" class="btn btn-outline btn-sm" onclick="closePinModal()">&#10005;</button>
             </div>
             <form id="changePinForm">
@@ -2142,8 +2111,8 @@
                     <input type="password" id="currentPinInput" class="form-control" required>
                 </div>
                 <div class="form-group">
-                    <label for="newPinInput">New PIN / Password (at least 4 characters)</label>
-                    <input type="password" id="newPinInput" class="form-control" minlength="4" required>
+                    <label for="newPinInput">New PIN</label>
+                    <input type="password" id="newPinInput" class="form-control" minlength="4" placeholder="Min 4 characters" required>
                 </div>
                 <div style="display: flex; justify-content: flex-end; gap: 0.6rem;">
                     <button type="button" class="btn btn-outline" onclick="closePinModal()">Cancel</button>
@@ -2218,7 +2187,7 @@
     <footer class="no-print">
         <p>&copy; 2026 Riverview Fire Department | York County, South Carolina</p>
         <p style="margin-top: 0.5rem;">Dedicated to Protecting Our Community</p>
-        <p style="margin-top: 0.5rem; font-size: 0.85rem; color: #9ca3af;">Timesheet Portal Build: <b>Beta v0.8</b></p>
+        <p style="margin-top: 0.5rem; font-size: 0.85rem; color: #9ca3af;">Timesheet Portal <b>Beta v0.8</b></p>
     </footer>
 
     <script src="js/main.js"></script>
@@ -3022,7 +2991,7 @@
                         apiBaseUrl = url;
                         useLocalDemoStorage = false;
                         badge.className = "status-pill online";
-                        text.textContent = "Connected to Timesheet Server";
+                        text.textContent = "Server Connected";
                         return;
                     }
                 } catch (_) {
@@ -3033,7 +3002,7 @@
             useLocalDemoStorage = true;
             LocalDB.init();
             badge.className = "status-pill local";
-            text.textContent = "Interactive Demo Mode (Browser Storage)";
+            text.textContent = "Demo Mode";
         }
 
         async function apiRequest(path, options = {}) {
@@ -3429,7 +3398,7 @@
                 showAlert(err.message, "error");
             } finally {
                 btn.disabled = false;
-                btn.textContent = "Sign In to Timesheet";
+                btn.textContent = "Sign In";
             }
         });
 
@@ -3459,7 +3428,7 @@
                     }
                 }
                 if (includeMidnightEnd) {
-                    items.push(`<option value="24:00">24:00 (Midnight End)</option>`);
+                    items.push(`<option value="24:00">24:00 (Midnight)</option>`);
                 }
                 return items.join("");
             };
@@ -3558,9 +3527,7 @@
 
             document.getElementById("weekPickerInput").value = selectedPayPeriodStart;
             document.getElementById("payPeriodTitle").textContent =
-                `Pay Period: ${formatHumanDate(selectedPayPeriodStart)} – ${formatHumanDate(selectedPayPeriodEnd)}`;
-            document.getElementById("myTablePeriodLabel").textContent =
-                `${selectedPayPeriodStart} to ${selectedPayPeriodEnd}`;
+                `${formatHumanDate(selectedPayPeriodStart)} – ${formatHumanDate(selectedPayPeriodEnd)}`;
 
             if (triggerRefresh) {
                 refreshActiveViews();
@@ -3633,7 +3600,7 @@
             const calc = calculateDurationClient(startTime, endTime);
             if (!calc) {
                 valEl.textContent = "0.00 hrs";
-                subEl.textContent = "Select start and end times to auto-calculate hours.";
+                subEl.textContent = "Select start and end times.";
                 sunNotice.style.display = "none";
                 if (conflictNotice) conflictNotice.style.display = "none";
                 return;
@@ -3642,9 +3609,9 @@
             valEl.textContent = `${calc.hours.toFixed(2)} hrs`;
             const hmLabel = `${calc.wholeHours}h ${calc.remMins}m`;
             if (calc.isOvernight) {
-                subEl.innerHTML = `${hmLabel} &bull; <b style="color: #1e40af;">Overnight shift (ends next day at ${endTime})</b>`;
+                subEl.innerHTML = `${hmLabel} &bull; <b style="color: #1e40af;">Overnight (+1d)</b>`;
             } else {
-                subEl.textContent = `${hmLabel} (${startTime} to ${endTime})`;
+                subEl.textContent = hmLabel;
             }
 
             // Check if Shift Date is a Sunday and crosses midnight
@@ -3713,7 +3680,7 @@
                         method: "PUT",
                         body: JSON.stringify({ shift_date, start_time, end_time, notes })
                     });
-                    showAlert("Shift entry updated successfully.");
+                    showAlert("Shift entry updated.");
                 } else {
                     const res = await apiRequest("/api/entries", {
                         method: "POST",
@@ -3726,7 +3693,7 @@
                             split_sunday_midnight
                         })
                     });
-                    showAlert(res.message || "Shift hours submitted for review.");
+                    showAlert(res.message || "Shift submitted.");
                 }
 
                 // Jump pay period view to the logged shift's week so the user sees it immediately
@@ -3748,8 +3715,8 @@
 
         function resetEntryForm() {
             document.getElementById("editEntryId").value = "";
-            document.getElementById("entryFormTitle").textContent = "Submit Completed Hours (Retro Log)";
-            document.getElementById("saveEntryBtn").textContent = "Submit Hours for Review";
+            document.getElementById("entryFormTitle").textContent = "Log Shift";
+            document.getElementById("saveEntryBtn").textContent = "Submit Shift";
             document.getElementById("cancelEditBtn").style.display = "none";
             document.getElementById("entryStartTime").value = "07:00";
             document.getElementById("entryEndTime").value = "17:00";
@@ -3760,7 +3727,7 @@
         function startEditEntry(entry) {
             switchTab("tabLogHours");
             document.getElementById("editEntryId").value = entry.id;
-            document.getElementById("entryFormTitle").textContent = `Editing Shift Entry (${entry.shift_date})`;
+            document.getElementById("entryFormTitle").textContent = `Edit Shift (${entry.shift_date})`;
             document.getElementById("saveEntryBtn").textContent = "Save Changes";
             document.getElementById("cancelEditBtn").style.display = "inline-flex";
             document.getElementById("entryShiftDate").value = entry.shift_date;
@@ -3857,15 +3824,14 @@
                 const myOt = Math.max(0, approved - otThreshold);
                 const myOtSub = document.getElementById("myOvertimeSub");
                 if (myOtSub) {
-                    const ruleLabel = otThreshold === 53 ? "24/48 53h rule" : "40h rule";
                     myOtSub.innerHTML = myOt > 0
-                        ? `Reg: <b>${myReg.toFixed(2)}</b> &bull; <b style="color: #9a3412;">OT: ${myOt.toFixed(2)}</b> (${ruleLabel})`
-                        : `Reg: ${myReg.toFixed(2)} &bull; OT: 0.00 (${ruleLabel})`;
+                        ? `Reg: <b>${myReg.toFixed(2)}</b> &bull; <b style="color: #9a3412;">OT: ${myOt.toFixed(2)}</b>`
+                        : `Reg: ${myReg.toFixed(2)} &bull; OT: 0.00`;
                 }
 
                 const tbody = document.getElementById("myEntriesTbody");
                 if (entries.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="4" class="empty-row-cell" style="text-align: center; color: var(--text-muted);">No shifts logged for ${showAll ? "any week" : "this weekly pay period"} yet.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="4" class="empty-row-cell" style="text-align: center; color: var(--text-muted);">No shifts logged${showAll ? "" : " for this week"}.</td></tr>`;
                     return;
                 }
 
@@ -3877,7 +3843,6 @@
                                 <div class="date-group-bar">
                                     <span class="date-group-title">
                                         &#128197; ${escapeHtml(group.humanDate)}
-                                        <span class="date-group-iso">(${escapeHtml(group.shiftDate)})</span>
                                     </span>
                                     <span class="date-group-meta">
                                         ${group.items.length} ${group.items.length === 1 ? "shift" : "shifts"} &bull; ${group.totalHours.toFixed(2)} hrs
@@ -4135,11 +4100,11 @@
                 const selectedEntries = byDate.get(calendarSelectedDate) || [];
                 const selectedHours = selectedEntries.reduce((s, e) => s + Number(e.duration_hours || 0), 0);
                 document.getElementById("calSelectedDateTitle").textContent =
-                    `${formatHumanDate(calendarSelectedDate)} (${calendarSelectedDate})`;
+                    formatHumanDate(calendarSelectedDate);
                 document.getElementById("calSelectedDateTotal").textContent =
                     selectedEntries.length > 0
-                        ? `• ${selectedEntries.length} ${selectedEntries.length === 1 ? "shift" : "shifts"} (${selectedHours.toFixed(2)} hrs total)`
-                        : "• No shifts logged";
+                        ? `• ${selectedEntries.length} ${selectedEntries.length === 1 ? "shift" : "shifts"} (${selectedHours.toFixed(2)} hrs)`
+                        : "• No shifts";
 
                 const quickLogBtn = document.getElementById("calQuickLogBtn");
                 if (quickLogBtn) {
@@ -4150,7 +4115,7 @@
 
                 const detailContainer = document.getElementById("calSelectedDayShifts");
                 if (selectedEntries.length === 0) {
-                    detailContainer.innerHTML = `<div style="font-size: 0.88rem; color: var(--text-muted); padding: 0.35rem 0;">No shifts recorded on this date. Tap "+ Log Shift on This Date" to add one.</div>`;
+                    detailContainer.innerHTML = `<div style="font-size: 0.88rem; color: var(--text-muted); padding: 0.35rem 0;">No shifts on this date.</div>`;
                 } else {
                     detailContainer.innerHTML = selectedEntries.map(e => {
                         const canModify = e.status === "pending" || isReviewer;
@@ -4204,7 +4169,7 @@
 
                 const tbody = document.getElementById("officerEntriesTbody");
                 if (entries.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="5" class="empty-row-cell" style="text-align: center; color: var(--text-muted);">No matching shift entries found.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="5" class="empty-row-cell" style="text-align: center; color: var(--text-muted);">No matching entries.</td></tr>`;
                     return;
                 }
 
@@ -4216,7 +4181,6 @@
                                 <div class="date-group-bar">
                                     <span class="date-group-title">
                                         &#128197; ${escapeHtml(group.humanDate)}
-                                        <span class="date-group-iso">(${escapeHtml(group.shiftDate)})</span>
                                     </span>
                                     <span class="date-group-meta">
                                         ${group.items.length} ${group.items.length === 1 ? "shift" : "shifts"} &bull; ${group.totalHours.toFixed(2)} hrs
@@ -4254,7 +4218,7 @@
                                         ${reviewerClean ? `<div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 3px;">By ${escapeHtml(reviewerClean)}</div>` : ""}
                                     </div>
                                 </td>
-                                <td data-label="Review" class="actions-cell">
+                                <td data-label="Actions" class="actions-cell">
                                     <div class="actions-btn-group">
                                         ${e.status !== "approved" ? `
                                             <button type="button" class="btn btn-success btn-sm" onclick="reviewEntry(${e.id}, 'approved')">Approve</button>
@@ -4301,7 +4265,7 @@
         }
 
         function promptRejectEntry(entryId) {
-            const reason = prompt("Optional reason for rejecting this entry (visible to member):", "");
+            const reason = prompt("Reason for rejection (optional):", "");
             if (reason === null) return;
             reviewEntry(entryId, "rejected", reason.trim());
         }
@@ -4344,14 +4308,12 @@
                 document.getElementById("cfoEmployeeCount").textContent = t.employee_count;
                 document.getElementById("cfoTotalShifts").textContent = t.total_shifts;
                 document.getElementById("cfoTotalHours").textContent = Number(t.total_submitted_hours).toFixed(2);
-                document.getElementById("cfoPeriodSubheader").textContent =
-                    `Pay Period: ${data.pay_period_start} (Mon 00:00) through ${data.pay_period_end} (Sun 24:00) • OT: >53 hrs (24/48 Full-Time) / >40 hrs (Standard)`;
 
                 const tbody = document.getElementById("cfoSummaryTbody");
                 const tfoot = document.getElementById("cfoSummaryTfoot");
 
                 if (!data.summary || data.summary.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="8" class="empty-row-cell" style="text-align: center; color: var(--text-muted);">No shift hours logged for ${data.pay_period_start} to ${data.pay_period_end}.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="8" class="empty-row-cell" style="text-align: center; color: var(--text-muted);">No hours logged for this period.</td></tr>`;
                     tfoot.innerHTML = "";
                     return;
                 }
@@ -4361,30 +4323,30 @@
                     const regHrs = r.regular_hours !== undefined ? Number(r.regular_hours) : Math.min(Number(r.approved_hours), thresh);
                     const otHrs = r.overtime_hours !== undefined ? Number(r.overtime_hours) : Math.max(0, Number(r.approved_hours) - thresh);
                     const schedBadge = thresh === 53
-                        ? `<span class="badge badge-2448">24/48 FT (&gt;53h OT)</span>`
-                        : `<span class="badge badge-role">Standard (&gt;40h OT)</span>`;
+                        ? `<span class="badge badge-2448">24/48 (&gt;53h)</span>`
+                        : `<span class="badge badge-role">Standard (&gt;40h)</span>`;
                     return `
                         <tr>
-                            <td data-label="Dept ID"><b>${escapeHtml(r.dept_id)}</b></td>
+                            <td data-label="ID"><b>${escapeHtml(r.dept_id)}</b></td>
                             <td data-label="Employee"><b>${escapeHtml(r.name)}</b></td>
-                            <td data-label="Schedule / OT Rule">${schedBadge}</td>
-                            <td data-label="Approved Shifts">${r.approved_shift_count} / ${r.shift_count}</td>
-                            <td data-label="Regular Hours"><b>${regHrs.toFixed(2)}</b></td>
-                            <td data-label="Overtime Hours">${otHrs > 0 ? `<span class="badge badge-ot">${otHrs.toFixed(2)} OT</span>` : `<span style="color: #6b7280;">0.00</span>`}</td>
-                            <td data-label="Total Approved" style="color: #166534; font-weight: 800; font-size: 1.02rem;">${Number(r.approved_hours).toFixed(2)}</td>
-                            <td data-label="Pending Hours" style="color: ${r.pending_hours > 0 ? '#92400e' : '#6b7280'};">${Number(r.pending_hours).toFixed(2)}</td>
+                            <td data-label="Schedule">${schedBadge}</td>
+                            <td data-label="Shifts">${r.approved_shift_count} / ${r.shift_count}</td>
+                            <td data-label="Regular"><b>${regHrs.toFixed(2)}</b></td>
+                            <td data-label="Overtime">${otHrs > 0 ? `<span class="badge badge-ot">${otHrs.toFixed(2)} OT</span>` : `<span style="color: #6b7280;">0.00</span>`}</td>
+                            <td data-label="Approved" style="color: #166534; font-weight: 800; font-size: 1.02rem;">${Number(r.approved_hours).toFixed(2)}</td>
+                            <td data-label="Pending" style="color: ${r.pending_hours > 0 ? '#92400e' : '#6b7280'};">${Number(r.pending_hours).toFixed(2)}</td>
                         </tr>
                     `;
                 }).join("");
 
                 tfoot.innerHTML = `
                     <tr>
-                        <td colspan="3" data-label="Summary">DEPARTMENT PAYROLL TOTALS (${t.employee_count} Employees)</td>
-                        <td data-label="Approved Shifts">${t.approved_shifts} / ${t.total_shifts}</td>
-                        <td data-label="Regular Hours">${regTotal.toFixed(2)}</td>
-                        <td data-label="Overtime Hours" style="color: ${otTotal > 0 ? '#9a3412' : 'inherit'};">${otTotal.toFixed(2)}</td>
-                        <td data-label="Total Approved" style="color: #166534;">${Number(t.approved_hours).toFixed(2)}</td>
-                        <td data-label="Pending Hours">${Number(t.pending_hours).toFixed(2)}</td>
+                        <td colspan="3" data-label="Total">Total (${t.employee_count} Staff)</td>
+                        <td data-label="Shifts">${t.approved_shifts} / ${t.total_shifts}</td>
+                        <td data-label="Regular">${regTotal.toFixed(2)}</td>
+                        <td data-label="Overtime" style="color: ${otTotal > 0 ? '#9a3412' : 'inherit'};">${otTotal.toFixed(2)}</td>
+                        <td data-label="Approved" style="color: #166534;">${Number(t.approved_hours).toFixed(2)}</td>
+                        <td data-label="Pending">${Number(t.pending_hours).toFixed(2)}</td>
                     </tr>
                 `;
             } catch (err) {
@@ -4541,13 +4503,13 @@
                     const empJson = JSON.stringify(emp).replace(/'/g, "&#39;");
                     const thresh = Number(emp.ot_threshold) === 53 ? 53 : 40;
                     const schedBadge = thresh === 53
-                        ? `<span class="badge badge-2448">Full-Time 24/48 (&gt;53h OT)</span>`
-                        : `<span class="badge badge-role">Standard (&gt;40h OT)</span>`;
+                        ? `<span class="badge badge-2448">24/48 (&gt;53h)</span>`
+                        : `<span class="badge badge-role">Standard (&gt;40h)</span>`;
                     return `
                         <tr>
-                            <td data-label="Dept ID"><b>${escapeHtml(emp.dept_id)}</b></td>
+                            <td data-label="ID"><b>${escapeHtml(emp.dept_id)}</b></td>
                             <td data-label="Name"><b>${escapeHtml(emp.name)}</b></td>
-                            <td data-label="Schedule / OT Rule">${schedBadge}</td>
+                            <td data-label="Schedule">${schedBadge}</td>
                             <td data-label="Role"><span class="badge badge-role">${escapeHtml(emp.role)}</span></td>
                             <td data-label="Status">
                                 <span class="badge ${emp.active ? 'badge-approved' : 'badge-rejected'}">
@@ -4556,7 +4518,7 @@
                             </td>
                             <td data-label="Actions" class="actions-cell">
                                 <div class="actions-btn-group">
-                                    <button type="button" class="btn btn-outline btn-sm" onclick='populateRosterForm(${empJson})'>Edit / Reset PIN</button>
+                                    <button type="button" class="btn btn-outline btn-sm" onclick='populateRosterForm(${empJson})'>Edit</button>
                                     <button type="button" class="btn btn-outline btn-sm" onclick="toggleEmployeeActive('${emp.dept_id}', ${!emp.active})">
                                         ${emp.active ? "Deactivate" : "Activate"}
                                     </button>
@@ -4576,7 +4538,7 @@
             document.getElementById("rosterRole").value = emp.role;
             document.getElementById("rosterOtThreshold").value = String(Number(emp.ot_threshold) === 53 ? 53 : 40);
             document.getElementById("rosterPin").value = "";
-            document.getElementById("rosterPin").placeholder = "Leave blank to keep existing PIN, or enter new PIN";
+            document.getElementById("rosterPin").placeholder = "Leave blank to keep current PIN";
             window.scrollTo({ top: 160, behavior: "smooth" });
         }
 
@@ -4586,7 +4548,7 @@
             document.getElementById("rosterRole").value = "member";
             document.getElementById("rosterOtThreshold").value = "40";
             document.getElementById("rosterPin").value = "";
-            document.getElementById("rosterPin").placeholder = "Set or reset PIN (e.g., 1234)";
+            document.getElementById("rosterPin").placeholder = "Min 4 characters";
         }
 
         document.getElementById("rosterForm").addEventListener("submit", async (e) => {
