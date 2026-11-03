@@ -312,11 +312,20 @@
         }
 
         .btn-sm {
-            min-height: 44px;
-            padding: 0.6rem 1.05rem;
-            font-size: 0.94rem;
-            border-radius: 9px;
+            min-height: 36px;
+            padding: 0.4rem 0.78rem;
+            font-size: 0.86rem;
+            border-radius: 8px;
             font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .actions-btn-group {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            flex-wrap: nowrap;
+            white-space: nowrap;
         }
 
         .btn:disabled {
@@ -581,30 +590,117 @@
             color: #374151;
         }
 
-        /* Expandable Note Drawer */
-        .note-drawer {
-            margin-top: 0.55rem;
-            padding: 0.7rem 0.9rem;
+        /* Shift Date Group Header & Click-to-Expand Note Sub-Row */
+        table.data-table tbody tr.date-group-row {
+            background: #f1f5f9;
+            border-top: 2px solid #cbd5e1;
+            border-bottom: 1px solid #cbd5e1;
+        }
+
+        table.data-table tbody tr.date-group-row:hover {
+            background: #f1f5f9;
+        }
+
+        table.data-table tbody tr.date-group-row td.date-group-cell {
+            padding: 0.6rem 0.95rem;
+            font-weight: 800;
+            font-size: 0.9rem;
+            color: var(--primary-dark);
+            border-bottom: none;
+        }
+
+        .date-group-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            width: 100%;
+        }
+
+        .date-group-title {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            color: var(--primary-dark);
+            font-weight: 800;
+            font-size: 0.95rem;
+        }
+
+        .date-group-iso {
+            font-weight: 600;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+
+        .date-group-meta {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #475569;
+            background: #e2e8f0;
+            padding: 0.18rem 0.6rem;
+            border-radius: 999px;
+        }
+
+        table.data-table tbody tr.entry-row.has-note {
+            cursor: pointer;
+            transition: background-color 0.15s;
+        }
+
+        table.data-table tbody tr.entry-row.has-note:hover {
+            background: #f0f7ff;
+        }
+
+        table.data-table tbody tr.entry-row.note-open td {
+            border-bottom-color: transparent;
             background: #f8fafc;
+        }
+
+        .note-indicator-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            margin-left: 0.45rem;
+            padding: 0.16rem 0.55rem;
+            border-radius: 999px;
+            font-size: 0.74rem;
+            font-weight: 700;
+            background: #eff6ff;
+            border: 1px solid #93c5fd;
+            color: #1d4ed8;
+            user-select: none;
+            vertical-align: middle;
+        }
+
+        table.data-table tbody tr.entry-row.note-open .note-indicator-pill {
+            background: #dbeafe;
+            border-color: #3b82f6;
+            color: #1e3a8a;
+        }
+
+        table.data-table tbody tr.note-subrow {
+            background: #f8fafc;
+        }
+
+        table.data-table tbody tr.note-subrow:hover {
+            background: #f8fafc;
+        }
+
+        table.data-table tbody tr.note-subrow td.note-subrow-cell {
+            padding: 0.25rem 0.95rem 0.85rem 1.25rem;
+            border-bottom: 1px solid #cbd5e1;
+        }
+
+        .note-subrow-box {
+            padding: 0.65rem 0.9rem;
+            background: #ffffff;
             border: 1px solid #cbd5e1;
-            border-left: 4px solid var(--primary-dark);
+            border-left: 4px solid var(--primary-red);
             border-radius: 8px;
             font-size: 0.9rem;
             color: #1f2937;
             text-align: left;
             line-height: 1.45;
-            width: 100%;
-            flex-basis: 100%;
-        }
-
-        .btn-note-toggle {
-            background: #eff6ff;
-            border: 1.5px solid #93c5fd;
-            color: #1d4ed8;
-        }
-
-        .btn-note-toggle:hover:not(:disabled) {
-            background: #dbeafe;
         }
 
         /* Alerts / Toast */
@@ -990,13 +1086,61 @@
                 display: none;
             }
 
-            table.data-table tbody td.actions-cell {
-                display: flex;
-                justify-content: stretch;
-                flex-wrap: wrap;
-                gap: 0.55rem;
-                padding-top: 0.8rem;
+            table.data-table tbody tr.date-group-row {
+                background: #f1f5f9;
+                border: 1px solid #cbd5e1;
+                border-left: 4px solid var(--primary-red);
+                border-radius: 10px;
+                padding: 0.65rem 0.9rem;
                 margin-top: 0.35rem;
+                margin-bottom: 0.55rem;
+                box-shadow: none;
+            }
+
+            table.data-table tbody tr.date-group-row td.date-group-cell {
+                display: block;
+                padding: 0;
+                border: none;
+                text-align: left;
+            }
+
+            table.data-table tbody tr.date-group-row td.date-group-cell::before {
+                display: none;
+            }
+
+            table.data-table tbody tr.entry-row.note-open {
+                border-bottom-left-radius: 0;
+                border-bottom-right-radius: 0;
+                margin-bottom: 0;
+                border-bottom: none;
+            }
+
+            table.data-table tbody tr.note-subrow {
+                margin-top: 0;
+                margin-bottom: 0.9rem;
+                padding: 0 0.95rem 0.9rem 0.95rem;
+                background: #ffffff;
+                border: 1px solid #e2e8f0;
+                border-top: none;
+                border-radius: 0 0 12px 12px;
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            }
+
+            table.data-table tbody tr.note-subrow td.note-subrow-cell {
+                display: block;
+                padding: 0.25rem 0 0 0;
+                border: none;
+                text-align: left;
+            }
+
+            table.data-table tbody tr.note-subrow td.note-subrow-cell::before {
+                display: none;
+            }
+
+            table.data-table tbody td.actions-cell {
+                display: block;
+                padding-top: 0.7rem;
+                margin-top: 0.3rem;
                 border-top: 1px solid #e5e7eb;
             }
 
@@ -1004,12 +1148,19 @@
                 display: none;
             }
 
+            .actions-btn-group {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(68px, 1fr));
+                gap: 0.45rem;
+                width: 100%;
+            }
+
             table.data-table tbody td.actions-cell .btn-sm {
-                min-height: 50px;
-                padding: 0.7rem 1rem;
-                font-size: 1rem;
+                min-height: 48px;
+                padding: 0.6rem 0.5rem;
+                font-size: 0.95rem;
                 font-weight: 700;
-                flex: 1 1 calc(50% - 0.55rem);
+                width: 100%;
                 border-radius: 10px;
             }
 
@@ -1314,7 +1465,12 @@
                 <!-- My Timesheet Entries Table -->
                 <div class="card">
                     <div class="card-header">
-                        <div class="card-title">My Logged Shifts (<span id="myTablePeriodLabel">Selected Week</span>)</div>
+                        <div>
+                            <div class="card-title">My Logged Shifts (<span id="myTablePeriodLabel">Selected Week</span>)</div>
+                            <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;">
+                                Grouped by shift date &bull; Tap/click any entry with a <b>Note &#9662;</b> badge to view notes below it
+                            </div>
+                        </div>
                         <div style="display: flex; align-items: center; gap: 0.5rem;">
                             <label style="font-size: 0.86rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
                                 <input type="checkbox" id="showAllMyWeeks" onchange="loadMyEntries()">
@@ -1326,16 +1482,14 @@
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>Shift Date</th>
                                     <th>Start &ndash; End</th>
                                     <th>Hours</th>
-                                    <th>Pay Period (Mon&ndash;Sun)</th>
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="myEntriesTbody">
-                                <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No shifts logged for this week yet.</td></tr>
+                                <tr><td colspan="4" style="text-align: center; color: var(--text-muted);">No shifts logged for this week yet.</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -1348,7 +1502,12 @@
             <div id="tabOfficerReview" class="tab-pane" style="display: none;">
                 <div class="card">
                     <div class="card-header">
-                        <div class="card-title">Officer Timesheet Review &amp; Approval</div>
+                        <div>
+                            <div class="card-title">Officer Timesheet Review &amp; Approval</div>
+                            <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;">
+                                Grouped by shift date &bull; Tap/click any entry with a <b>Note &#9662;</b> badge to view notes below it
+                            </div>
+                        </div>
                         <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
                             <button type="button" class="btn btn-success btn-sm" onclick="bulkApproveWeek()">
                                 &#10003; Approve All Pending for Selected Week
@@ -1386,7 +1545,6 @@
                             <thead>
                                 <tr>
                                     <th>Member</th>
-                                    <th>Shift Date</th>
                                     <th>Start &ndash; End</th>
                                     <th>Hours</th>
                                     <th>Status / Reviewer</th>
@@ -1394,7 +1552,7 @@
                                 </tr>
                             </thead>
                             <tbody id="officerEntriesTbody">
-                                <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Loading entries...</td></tr>
+                                <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Loading entries...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -1582,7 +1740,7 @@
         </div>
 
         <div style="text-align: center; margin-top: 1.5rem; font-size: 0.88rem; color: var(--text-muted); font-weight: 600;">
-            Timesheet Portal <span style="display: inline-block; background: #e5e7eb; color: #1f2937; padding: 0.2rem 0.65rem; border-radius: 999px; font-weight: 700; margin-left: 0.25rem;">Beta v0.2</span>
+            Timesheet Portal <span style="display: inline-block; background: #e5e7eb; color: #1f2937; padding: 0.2rem 0.65rem; border-radius: 999px; font-weight: 700; margin-left: 0.25rem;">Beta v0.3</span>
         </div>
     </div>
 
@@ -1676,7 +1834,7 @@
     <footer class="no-print">
         <p>&copy; 2026 Riverview Fire Department | York County, South Carolina</p>
         <p style="margin-top: 0.5rem;">Dedicated to Protecting Our Community</p>
-        <p style="margin-top: 0.5rem; font-size: 0.85rem; color: #9ca3af;">Timesheet Portal Build: <b>Beta v0.2</b></p>
+        <p style="margin-top: 0.5rem; font-size: 0.85rem; color: #9ca3af;">Timesheet Portal Build: <b>Beta v0.3</b></p>
     </footer>
 
     <script src="js/main.js"></script>
@@ -2990,14 +3148,45 @@
             }
         }
 
-        function toggleNoteDrawer(drawerId, btnEl) {
-            const el = document.getElementById(drawerId);
-            if (!el) return;
-            const isHidden = el.style.display === "none";
-            el.style.display = isHidden ? "block" : "none";
-            if (btnEl) {
-                btnEl.innerHTML = isHidden ? "Hide Note &#9652;" : "View Note &#9662;";
+        function toggleEntryNoteRow(entryRowId, noteSubrowId, pillId, evt) {
+            if (evt && evt.target && evt.target.closest("button, a, input, select")) {
+                return;
             }
+            const entryRow = document.getElementById(entryRowId);
+            const subrow = document.getElementById(noteSubrowId);
+            const pill = document.getElementById(pillId);
+            if (!subrow) return;
+
+            const isHidden = subrow.style.display === "none";
+            subrow.style.display = isHidden ? "" : "none";
+            if (entryRow) {
+                entryRow.classList.toggle("note-open", isHidden);
+            }
+            if (pill) {
+                pill.innerHTML = isHidden ? "Note &#9652;" : "Note &#9662;";
+            }
+        }
+
+        function groupEntriesByShiftDate(entries) {
+            const groups = [];
+            const map = new Map();
+            entries.forEach(e => {
+                const d = e.shift_date;
+                if (!map.has(d)) {
+                    const g = {
+                        shiftDate: d,
+                        humanDate: formatHumanDate(d),
+                        totalHours: 0,
+                        items: []
+                    };
+                    map.set(d, g);
+                    groups.push(g);
+                }
+                const g = map.get(d);
+                g.items.push(e);
+                g.totalHours = Math.round((g.totalHours + Number(e.duration_hours || 0)) * 100) / 100;
+            });
+            return groups;
         }
 
         // =====================================================================
@@ -3031,44 +3220,70 @@
 
                 const tbody = document.getElementById("myEntriesTbody");
                 if (entries.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="6" class="empty-row-cell" style="text-align: center; color: var(--text-muted);">No shifts logged for ${showAll ? "any week" : "this weekly pay period"} yet.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="4" class="empty-row-cell" style="text-align: center; color: var(--text-muted);">No shifts logged for ${showAll ? "any week" : "this weekly pay period"} yet.</td></tr>`;
                     return;
                 }
 
-                tbody.innerHTML = entries.map(e => {
-                    const canModify = e.status === "pending" || currentUser.role === "officer" || currentUser.role === "cfo";
-                    const entryJson = JSON.stringify(e).replace(/'/g, "&#39;");
-                    const hasNote = Boolean((e.notes && e.notes.trim()) || (e.review_note && e.review_note.trim()));
-                    const noteDrawerId = `my-note-${e.id}`;
-                    return `
-                        <tr>
-                            <td data-label="Shift Date"><b>${escapeHtml(e.shift_date)}</b></td>
-                            <td data-label="Start – End">
-                                <span>
-                                    ${escapeHtml(e.start_time)} &ndash; ${escapeHtml(e.end_time)}
-                                    ${e.is_overnight ? '<span class="badge badge-overnight">Overnight</span>' : ''}
-                                </span>
-                            </td>
-                            <td data-label="Hours"><b>${Number(e.duration_hours).toFixed(2)} hrs</b></td>
-                            <td data-label="Pay Period" style="font-size: 0.85rem; color: var(--text-secondary);">${escapeHtml(e.pay_period_start)} &rarr; ${escapeHtml(e.pay_period_end)}</td>
-                            <td data-label="Status"><span class="badge badge-${e.status}">${escapeHtml(e.status)}</span></td>
-                            <td data-label="Actions" class="actions-cell">
-                                ${hasNote ? `
-                                    <button type="button" class="btn btn-note-toggle btn-sm" onclick="toggleNoteDrawer('${noteDrawerId}', this)">View Note &#9662;</button>
-                                ` : ""}
-                                ${canModify ? `
-                                    <button type="button" class="btn btn-outline btn-sm" onclick='startEditEntry(${entryJson})'>Edit</button>
-                                    <button type="button" class="btn btn-outline btn-sm" style="color: #dc2626;" onclick="deleteEntryById(${e.id})">Delete</button>
-                                ` : (!hasNote ? `<span style="font-size: 0.8rem; color: var(--text-muted);">Locked</span>` : "")}
-                                ${hasNote ? `
-                                    <div id="${noteDrawerId}" class="note-drawer" style="display: none;">
-                                        ${e.notes ? `<div><b>Shift Note:</b> ${escapeHtml(e.notes)}</div>` : ""}
-                                        ${e.review_note ? `<div style="color: #991b1b; margin-top: 4px;"><b>Review Note:</b> ${escapeHtml(e.review_note)}</div>` : ""}
-                                    </div>
-                                ` : ""}
+                const groups = groupEntriesByShiftDate(entries);
+                tbody.innerHTML = groups.map(group => {
+                    const headerHtml = `
+                        <tr class="date-group-row">
+                            <td colspan="4" class="date-group-cell">
+                                <div class="date-group-bar">
+                                    <span class="date-group-title">
+                                        &#128197; ${escapeHtml(group.humanDate)}
+                                        <span class="date-group-iso">(${escapeHtml(group.shiftDate)})</span>
+                                    </span>
+                                    <span class="date-group-meta">
+                                        ${group.items.length} ${group.items.length === 1 ? "shift" : "shifts"} &bull; ${group.totalHours.toFixed(2)} hrs
+                                    </span>
+                                </div>
                             </td>
                         </tr>
                     `;
+
+                    const rowsHtml = group.items.map(e => {
+                        const canModify = e.status === "pending" || currentUser.role === "officer" || currentUser.role === "cfo";
+                        const entryJson = JSON.stringify(e).replace(/'/g, "&#39;");
+                        const hasNote = Boolean((e.notes && e.notes.trim()) || (e.review_note && e.review_note.trim()));
+                        const entryRowId = `my-entry-row-${e.id}`;
+                        const noteSubrowId = `my-note-subrow-${e.id}`;
+                        const notePillId = `my-note-pill-${e.id}`;
+
+                        return `
+                            <tr id="${entryRowId}" class="entry-row ${hasNote ? 'has-note' : ''}" ${hasNote ? `onclick="toggleEntryNoteRow('${entryRowId}', '${noteSubrowId}', '${notePillId}', event)" title="Click or tap entry to view note"` : ""}>
+                                <td data-label="Start – End">
+                                    <span>
+                                        <b>${escapeHtml(e.start_time)} &ndash; ${escapeHtml(e.end_time)}</b>
+                                        ${e.is_overnight ? '<span class="badge badge-overnight">Overnight</span>' : ''}
+                                        ${hasNote ? `<span id="${notePillId}" class="note-indicator-pill">Note &#9662;</span>` : ''}
+                                    </span>
+                                </td>
+                                <td data-label="Hours"><b>${Number(e.duration_hours).toFixed(2)} hrs</b></td>
+                                <td data-label="Status"><span class="badge badge-${e.status}">${escapeHtml(e.status)}</span></td>
+                                <td data-label="Actions" class="actions-cell">
+                                    ${canModify ? `
+                                        <div class="actions-btn-group">
+                                            <button type="button" class="btn btn-outline btn-sm" onclick='startEditEntry(${entryJson})'>Edit</button>
+                                            <button type="button" class="btn btn-outline btn-sm" style="color: #dc2626;" onclick="deleteEntryById(${e.id})">Delete</button>
+                                        </div>
+                                    ` : `<span style="font-size: 0.8rem; color: var(--text-muted);">Locked</span>`}
+                                </td>
+                            </tr>
+                            ${hasNote ? `
+                                <tr id="${noteSubrowId}" class="note-subrow" style="display: none;">
+                                    <td colspan="4" class="note-subrow-cell">
+                                        <div class="note-subrow-box">
+                                            ${e.notes ? `<div><b>Shift Note:</b> ${escapeHtml(e.notes)}</div>` : ""}
+                                            ${e.review_note ? `<div style="color: #991b1b; margin-top: ${e.notes ? '4px' : '0'};"><b>Review Note:</b> ${escapeHtml(e.review_note)}</div>` : ""}
+                                        </div>
+                                    </td>
+                                </tr>
+                            ` : ""}
+                        `;
+                    }).join("");
+
+                    return headerHtml + rowsHtml;
                 }).join("");
             } catch (err) {
                 console.error("Error loading personal entries:", err);
@@ -3101,54 +3316,81 @@
 
                 const tbody = document.getElementById("officerEntriesTbody");
                 if (entries.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="6" class="empty-row-cell" style="text-align: center; color: var(--text-muted);">No matching shift entries found.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="5" class="empty-row-cell" style="text-align: center; color: var(--text-muted);">No matching shift entries found.</td></tr>`;
                     return;
                 }
 
-                tbody.innerHTML = entries.map(e => {
-                    const entryJson = JSON.stringify(e).replace(/'/g, "&#39;");
-                    const hasNote = Boolean((e.notes && e.notes.trim()) || (e.review_note && e.review_note.trim()));
-                    const noteDrawerId = `officer-note-${e.id}`;
-                    return `
-                        <tr>
-                            <td data-label="Member">
-                                <span><b>${escapeHtml(e.dept_id)}</b> &mdash; ${escapeHtml(e.employee_name)}</span>
-                            </td>
-                            <td data-label="Shift Date"><b>${escapeHtml(e.shift_date)}</b></td>
-                            <td data-label="Start – End">
-                                <span>
-                                    ${escapeHtml(e.start_time)} &ndash; ${escapeHtml(e.end_time)}
-                                    ${e.is_overnight ? '<span class="badge badge-overnight">Overnight</span>' : ''}
-                                </span>
-                            </td>
-                            <td data-label="Hours"><b>${Number(e.duration_hours).toFixed(2)} hrs</b></td>
-                            <td data-label="Status">
-                                <div>
-                                    <span class="badge badge-${e.status}">${escapeHtml(e.status)}</span>
-                                    ${e.reviewed_by ? `<div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 3px;">By ${escapeHtml(e.reviewed_by)}</div>` : ""}
+                const groups = groupEntriesByShiftDate(entries);
+                tbody.innerHTML = groups.map(group => {
+                    const headerHtml = `
+                        <tr class="date-group-row">
+                            <td colspan="5" class="date-group-cell">
+                                <div class="date-group-bar">
+                                    <span class="date-group-title">
+                                        &#128197; ${escapeHtml(group.humanDate)}
+                                        <span class="date-group-iso">(${escapeHtml(group.shiftDate)})</span>
+                                    </span>
+                                    <span class="date-group-meta">
+                                        ${group.items.length} ${group.items.length === 1 ? "shift" : "shifts"} &bull; ${group.totalHours.toFixed(2)} hrs
+                                    </span>
                                 </div>
-                            </td>
-                            <td data-label="Review" class="actions-cell">
-                                ${hasNote ? `
-                                    <button type="button" class="btn btn-note-toggle btn-sm" onclick="toggleNoteDrawer('${noteDrawerId}', this)">View Note &#9662;</button>
-                                ` : ""}
-                                ${e.status !== "approved" ? `
-                                    <button type="button" class="btn btn-success btn-sm" onclick="reviewEntry(${e.id}, 'approved')">Approve</button>
-                                ` : ""}
-                                ${e.status !== "rejected" ? `
-                                    <button type="button" class="btn btn-danger btn-sm" onclick="promptRejectEntry(${e.id})">Reject</button>
-                                ` : ""}
-                                <button type="button" class="btn btn-outline btn-sm" onclick='startEditEntry(${entryJson})'>Edit</button>
-                                <button type="button" class="btn btn-outline btn-sm" onclick="deleteEntryById(${e.id})">Del</button>
-                                ${hasNote ? `
-                                    <div id="${noteDrawerId}" class="note-drawer" style="display: none;">
-                                        ${e.notes ? `<div><b>Shift Note:</b> ${escapeHtml(e.notes)}</div>` : ""}
-                                        ${e.review_note ? `<div style="color: #991b1b; margin-top: 4px;"><b>Review Note:</b> ${escapeHtml(e.review_note)}</div>` : ""}
-                                    </div>
-                                ` : ""}
                             </td>
                         </tr>
                     `;
+
+                    const rowsHtml = group.items.map(e => {
+                        const entryJson = JSON.stringify(e).replace(/'/g, "&#39;");
+                        const hasNote = Boolean((e.notes && e.notes.trim()) || (e.review_note && e.review_note.trim()));
+                        const entryRowId = `officer-entry-row-${e.id}`;
+                        const noteSubrowId = `officer-note-subrow-${e.id}`;
+                        const notePillId = `officer-note-pill-${e.id}`;
+
+                        return `
+                            <tr id="${entryRowId}" class="entry-row ${hasNote ? 'has-note' : ''}" ${hasNote ? `onclick="toggleEntryNoteRow('${entryRowId}', '${noteSubrowId}', '${notePillId}', event)" title="Click or tap entry to view note"` : ""}>
+                                <td data-label="Member">
+                                    <span><b>${escapeHtml(e.dept_id)}</b> &mdash; ${escapeHtml(e.employee_name)}</span>
+                                </td>
+                                <td data-label="Start – End">
+                                    <span>
+                                        <b>${escapeHtml(e.start_time)} &ndash; ${escapeHtml(e.end_time)}</b>
+                                        ${e.is_overnight ? '<span class="badge badge-overnight">Overnight</span>' : ''}
+                                        ${hasNote ? `<span id="${notePillId}" class="note-indicator-pill">Note &#9662;</span>` : ''}
+                                    </span>
+                                </td>
+                                <td data-label="Hours"><b>${Number(e.duration_hours).toFixed(2)} hrs</b></td>
+                                <td data-label="Status">
+                                    <div>
+                                        <span class="badge badge-${e.status}">${escapeHtml(e.status)}</span>
+                                        ${e.reviewed_by ? `<div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 3px;">By ${escapeHtml(e.reviewed_by)}</div>` : ""}
+                                    </div>
+                                </td>
+                                <td data-label="Review" class="actions-cell">
+                                    <div class="actions-btn-group">
+                                        ${e.status !== "approved" ? `
+                                            <button type="button" class="btn btn-success btn-sm" onclick="reviewEntry(${e.id}, 'approved')">Approve</button>
+                                        ` : ""}
+                                        ${e.status !== "rejected" ? `
+                                            <button type="button" class="btn btn-danger btn-sm" onclick="promptRejectEntry(${e.id})">Reject</button>
+                                        ` : ""}
+                                        <button type="button" class="btn btn-outline btn-sm" onclick='startEditEntry(${entryJson})'>Edit</button>
+                                        <button type="button" class="btn btn-outline btn-sm" onclick="deleteEntryById(${e.id})">Del</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            ${hasNote ? `
+                                <tr id="${noteSubrowId}" class="note-subrow" style="display: none;">
+                                    <td colspan="5" class="note-subrow-cell">
+                                        <div class="note-subrow-box">
+                                            ${e.notes ? `<div><b>Shift Note:</b> ${escapeHtml(e.notes)}</div>` : ""}
+                                            ${e.review_note ? `<div style="color: #991b1b; margin-top: ${e.notes ? '4px' : '0'};"><b>Review Note:</b> ${escapeHtml(e.review_note)}</div>` : ""}
+                                        </div>
+                                    </td>
+                                </tr>
+                            ` : ""}
+                        `;
+                    }).join("");
+
+                    return headerHtml + rowsHtml;
                 }).join("");
             } catch (err) {
                 console.error("Failed loading officer entries:", err);
@@ -3388,10 +3630,12 @@
                                 </span>
                             </td>
                             <td data-label="Actions" class="actions-cell">
-                                <button type="button" class="btn btn-outline btn-sm" onclick='populateRosterForm(${empJson})'>Edit / Reset PIN</button>
-                                <button type="button" class="btn btn-outline btn-sm" onclick="toggleEmployeeActive('${emp.dept_id}', ${!emp.active})">
-                                    ${emp.active ? "Deactivate" : "Activate"}
-                                </button>
+                                <div class="actions-btn-group">
+                                    <button type="button" class="btn btn-outline btn-sm" onclick='populateRosterForm(${empJson})'>Edit / Reset PIN</button>
+                                    <button type="button" class="btn btn-outline btn-sm" onclick="toggleEmployeeActive('${emp.dept_id}', ${!emp.active})">
+                                        ${emp.active ? "Deactivate" : "Activate"}
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     `;
