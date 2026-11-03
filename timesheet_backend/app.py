@@ -28,6 +28,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     func,
+    text,
 )
 from sqlalchemy.orm import declarative_base, sessionmaker, scoped_session, relationship
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -95,6 +96,7 @@ class Employee(Base):
     dept_id = Column(String(3), primary_key=True)  # "900" through "999"
     name = Column(String(120), nullable=False)
     role = Column(String(20), nullable=False, default="member")  # member | officer | cfo
+    ot_threshold = Column(Integer, nullable=False, default=40)   # 53 for Full-Time 24/48, 40 for standard staff
     pin_hash = Column(String(256), nullable=False)
     active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime(timezone=True), default=utc_now)
@@ -106,6 +108,7 @@ class Employee(Base):
             "dept_id": self.dept_id,
             "name": self.name,
             "role": self.role,
+            "ot_threshold": self.ot_threshold if self.ot_threshold in (40, 53) else 40,
             "active": self.active,
             "is_reviewer": self.role in ("officer", "cfo"),
             "created_at": self.created_at.isoformat() if self.created_at else None,
@@ -270,6 +273,14 @@ def log_audit(session, actor_id: str, actor_name: str, action: str, target_type:
 
 def init_db():
     Base.metadata.create_all(bind=engine)
+    # Safe migration if existing table lacks ot_threshold column
+    with engine.connect() as conn:
+        try:
+            conn.execute(text("ALTER TABLE employees ADD COLUMN ot_threshold INTEGER NOT NULL DEFAULT 40"))
+            conn.commit()
+        except Exception:
+            pass
+
     session = SessionLocal()
     try:
         existing_count = session.query(Employee).count()
@@ -279,17 +290,17 @@ def init_db():
             admin_hash = generate_password_hash(default_admin_pin)
 
             seed_employees = [
-                Employee(dept_id="900", name="T. Couch", role="officer", pin_hash=admin_hash, active=True),
-                Employee(dept_id="901", name="M. Reynolds", role="cfo", pin_hash=admin_hash, active=True),
-                Employee(dept_id="902", name="J. Miller", role="officer", pin_hash=default_member_hash, active=True),
-                Employee(dept_id="903", name="S. Davis", role="officer", pin_hash=default_member_hash, active=True),
-                Employee(dept_id="904", name="R. Thompson", role="member", pin_hash=default_member_hash, active=True),
-                Employee(dept_id="905", name="K. Patel", role="member", pin_hash=default_member_hash, active=True),
-                Employee(dept_id="906", name="B. Henderson", role="member", pin_hash=default_member_hash, active=True),
-                Employee(dept_id="907", name="A. Morales", role="member", pin_hash=default_member_hash, active=True),
-                Employee(dept_id="908", name="D. Brooks", role="member", pin_hash=default_member_hash, active=True),
-                Employee(dept_id="909", name="C. Wallace", role="member", pin_hash=default_member_hash, active=True),
-                Employee(dept_id="910", name="H. Nguyen", role="member", pin_hash=default_member_hash, active=False),
+                Employee(dept_id="900", name="T. Couch", role="officer", ot_threshold=40, pin_hash=admin_hash, active=True),
+                Employee(dept_id="901", name="M. Reynolds", role="cfo", ot_threshold=40, pin_hash=admin_hash, active=True),
+                Employee(dept_id="902", name="J. Miller", role="officer", ot_threshold=40, pin_hash=default_member_hash, active=True),
+                Employee(dept_id="903", name="S. Davis", role="officer", ot_threshold=40, pin_hash=default_member_hash, active=True),
+                Employee(dept_id="904", name="R. Thompson", role="member", ot_threshold=53, pin_hash=default_member_hash, active=True),
+                Employee(dept_id="905", name="K. Patel", role="member", ot_threshold=40, pin_hash=default_member_hash, active=True),
+                Employee(dept_id="906", name="B. Henderson", role="member", ot_threshold=40, pin_hash=default_member_hash, active=True),
+                Employee(dept_id="907", name="A. Morales", role="member", ot_threshold=53, pin_hash=default_member_hash, active=True),
+                Employee(dept_id="908", name="D. Brooks", role="member", ot_threshold=40, pin_hash=default_member_hash, active=True),
+                Employee(dept_id="909", name="C. Wallace", role="member", ot_threshold=40, pin_hash=default_member_hash, active=True),
+                Employee(dept_id="910", name="H. Nguyen", role="member", ot_threshold=40, pin_hash=default_member_hash, active=False),
             ]
             session.add_all(seed_employees)
             session.flush()
@@ -1096,10 +1107,14 @@ def build_payroll_summary(session, pay_period_start: str = "", start_date: str =
     for e in entries:
         emp_obj = employees.get(e.dept_id)
         if e.dept_id not in by_employee:
+            ot_thresh = emp_obj.ot_threshold if (emp_obj and emp_obj.ot_threshold in (40, 53)) else 40
             by_employee[e.dept_id] = {
                 "dept_id": e.dept_id,
                 "name": emp_obj.name if emp_obj else f"ID {e.dept_id}",
                 "role": emp_obj.role if emp_obj else "member",
+                "ot_threshold": ot_thresh,
+                "regular_hours": 0.0,
+                "overtime_hours": 0.0,
                 "approved_hours": 0.0,
                 "pending_hours": 0.0,
                 "rejected_hours": 0.0,
@@ -1119,11 +1134,17 @@ def build_payroll_summary(session, pay_period_start: str = "", start_date: str =
             rec["rejected_hours"] = round(rec["rejected_hours"] + e.duration_hours, 2)
 
     summary_rows = sorted(by_employee.values(), key=lambda r: r["dept_id"])
+    for r in summary_rows:
+        thresh = r["ot_threshold"]
+        r["regular_hours"] = round(min(r["approved_hours"], thresh), 2)
+        r["overtime_hours"] = round(max(0.0, r["approved_hours"] - thresh), 2)
 
     totals = {
         "employee_count": len(summary_rows),
         "total_shifts": sum(r["shift_count"] for r in summary_rows),
         "approved_shifts": sum(r["approved_shift_count"] for r in summary_rows),
+        "regular_hours": round(sum(r["regular_hours"] for r in summary_rows), 2),
+        "overtime_hours": round(sum(r["overtime_hours"] for r in summary_rows), 2),
         "approved_hours": round(sum(r["approved_hours"] for r in summary_rows), 2),
         "pending_hours": round(sum(r["pending_hours"] for r in summary_rows), 2),
         "rejected_hours": round(sum(r["rejected_hours"] for r in summary_rows), 2),
@@ -1217,7 +1238,10 @@ def export_csv():
             "Department ID",
             "Employee Name",
             "Role",
-            "Approved Hours (Payroll)",
+            "OT Threshold (Hrs)",
+            "Regular Approved Hours",
+            "Overtime Approved Hours",
+            "Total Approved Hours (Payroll)",
             "Pending Hours",
             "Rejected Hours",
             "Total Submitted Hours",
@@ -1233,6 +1257,9 @@ def export_csv():
                 row["dept_id"],
                 row["name"],
                 row["role"].upper(),
+                row["ot_threshold"],
+                f"{row['regular_hours']:.2f}",
+                f"{row['overtime_hours']:.2f}",
                 f"{row['approved_hours']:.2f}",
                 f"{row['pending_hours']:.2f}",
                 f"{row['rejected_hours']:.2f}",
@@ -1249,6 +1276,9 @@ def export_csv():
             "TOTAL",
             f"{t['employee_count']} Employees",
             "",
+            "",
+            f"{t['regular_hours']:.2f}",
+            f"{t['overtime_hours']:.2f}",
             f"{t['approved_hours']:.2f}",
             f"{t['pending_hours']:.2f}",
             f"{t['rejected_hours']:.2f}",
@@ -1287,6 +1317,7 @@ def create_employee():
     dept_id = str(data.get("dept_id", "")).strip()
     name = str(data.get("name", "")).strip()
     role = str(data.get("role", "member")).strip().lower()
+    ot_threshold = 53 if int(data.get("ot_threshold", 40) or 40) == 53 else 40
     pin = str(data.get("pin", "")).strip()
 
     if not is_valid_dept_id(dept_id):
@@ -1306,6 +1337,7 @@ def create_employee():
         dept_id=dept_id,
         name=name,
         role=role,
+        ot_threshold=ot_threshold,
         pin_hash=generate_password_hash(pin),
         active=True,
     )
@@ -1317,7 +1349,7 @@ def create_employee():
         action="EMPLOYEE_CREATED",
         target_type="employee",
         target_id=dept_id,
-        details=f"Added {dept_id} ({name}) with role '{role}'.",
+        details=f"Added {dept_id} ({name}) with role '{role}' and {ot_threshold}h OT threshold.",
     )
     g.db.commit()
     return jsonify({"message": f"Added {dept_id} ({name}).", "employee": new_emp.to_dict()}), 201
@@ -1345,6 +1377,12 @@ def update_employee(dept_id: str):
         if new_role != emp.role:
             changes.append(f"role '{emp.role}' -> '{new_role}'")
             emp.role = new_role
+
+    if "ot_threshold" in data:
+        new_ot = 53 if int(data["ot_threshold"] or 40) == 53 else 40
+        if new_ot != emp.ot_threshold:
+            changes.append(f"ot_threshold {emp.ot_threshold}h -> {new_ot}h")
+            emp.ot_threshold = new_ot
 
     if "active" in data:
         new_active = bool(data["active"])

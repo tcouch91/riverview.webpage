@@ -703,6 +703,263 @@
             line-height: 1.45;
         }
 
+        /* Overtime & Schedule Badges */
+        .badge-ot {
+            background: #ffedd5;
+            color: #9a3412;
+            border: 1px solid #fdba74;
+        }
+
+        .badge-2448 {
+            background: #eff6ff;
+            color: #1e40af;
+            border: 1px solid #bfdbfe;
+        }
+
+        /* Calendar View (Month & Week) */
+        .calendar-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.85rem;
+            margin-bottom: 1.15rem;
+            padding-bottom: 0.85rem;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        .calendar-mode-toggle {
+            display: inline-flex;
+            background: #e5e7eb;
+            padding: 0.25rem;
+            border-radius: 10px;
+            gap: 0.25rem;
+        }
+
+        .cal-mode-btn {
+            border: none;
+            background: transparent;
+            padding: 0.5rem 1.05rem;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #374151;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .cal-mode-btn.active {
+            background: var(--primary-red);
+            color: #fff;
+            box-shadow: 0 2px 6px rgba(220, 38, 38, 0.3);
+        }
+
+        .calendar-nav-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .calendar-title {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--primary-dark);
+            min-width: 190px;
+            text-align: center;
+        }
+
+        .cal-dow-header {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.35rem;
+            margin-bottom: 0.35rem;
+        }
+
+        .cal-dow-cell {
+            text-align: center;
+            font-size: 0.78rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #475569;
+            padding: 0.4rem 0.2rem;
+            background: #f8fafc;
+            border-radius: 6px;
+        }
+
+        .cal-month-grid {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            gap: 0.35rem;
+        }
+
+        .cal-day-cell {
+            background: #ffffff;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            min-height: 104px;
+            padding: 0.45rem 0.5rem;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: flex;
+            flex-direction: column;
+            gap: 0.28rem;
+            overflow: hidden;
+        }
+
+        .cal-day-cell:hover {
+            border-color: #94a3b8;
+            background: #f8fafc;
+        }
+
+        .cal-day-cell.other-month {
+            background: #f8fafc;
+            opacity: 0.55;
+        }
+
+        .cal-day-cell.is-today {
+            border-color: var(--primary-red);
+            background: #fffafb;
+        }
+
+        .cal-day-cell.is-selected {
+            border-color: var(--primary-dark);
+            box-shadow: 0 0 0 2px rgba(26, 26, 46, 0.2);
+            background: #f8fafc;
+        }
+
+        .cal-day-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.2rem;
+        }
+
+        .cal-day-num {
+            font-weight: 800;
+            font-size: 0.88rem;
+            color: #1f2937;
+            width: 24px;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+        }
+
+        .cal-day-cell.is-today .cal-day-num {
+            background: var(--primary-red);
+            color: #fff;
+        }
+
+        .cal-day-hours {
+            font-size: 0.72rem;
+            font-weight: 800;
+            color: #166534;
+            background: #dcfce7;
+            padding: 0.08rem 0.38rem;
+            border-radius: 999px;
+            white-space: nowrap;
+        }
+
+        .cal-shift-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.22rem;
+        }
+
+        .cal-shift-pill {
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 0.16rem 0.38rem;
+            border-radius: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            border-left: 3px solid #16a34a;
+            background: #f0fdf4;
+            color: #166534;
+        }
+
+        .cal-shift-pill.status-pending {
+            border-left-color: #d97706;
+            background: #fffbeb;
+            color: #92400e;
+        }
+
+        .cal-shift-pill.status-rejected {
+            border-left-color: #dc2626;
+            background: #fef2f2;
+            color: #991b1b;
+        }
+
+        .cal-more-count {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #475569;
+            padding-left: 0.2rem;
+        }
+
+        /* Calendar Week View */
+        .cal-week-grid {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            gap: 0.55rem;
+        }
+
+        .cal-week-col {
+            background: #ffffff;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 0.65rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            min-height: 220px;
+        }
+
+        .cal-week-col.is-today {
+            border-color: var(--primary-red);
+            background: #fffafb;
+        }
+
+        .cal-week-col-header {
+            padding-bottom: 0.45rem;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .cal-week-card {
+            padding: 0.5rem 0.6rem;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            border-left: 4px solid #16a34a;
+            background: #f8fafc;
+            font-size: 0.82rem;
+        }
+
+        .cal-week-card.status-pending {
+            border-left-color: #d97706;
+            background: #fffbeb;
+        }
+
+        .cal-week-card.status-rejected {
+            border-left-color: #dc2626;
+            background: #fef2f2;
+        }
+
+        .cal-selected-day-panel {
+            margin-top: 1.15rem;
+            padding: 1rem 1.15rem;
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-left: 4px solid var(--primary-dark);
+            border-radius: 10px;
+        }
+
         /* Alerts / Toast */
         .alert-box {
             padding: 0.9rem 1.15rem;
@@ -946,10 +1203,6 @@
                 text-align: center;
             }
 
-            .tab-btn:first-child {
-                grid-column: 1 / -1;
-            }
-
             /* Quick-Tap Shift Presets as 2x2 Big Touch Grid on Mobile */
             .preset-bar {
                 display: grid;
@@ -1185,6 +1438,66 @@
                 font-size: 0.78rem;
                 color: #475569;
             }
+
+            /* Calendar Mobile Optimizations */
+            .calendar-toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .calendar-mode-toggle {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                width: 100%;
+            }
+
+            .cal-mode-btn {
+                min-height: 48px;
+                font-size: 0.98rem;
+            }
+
+            .calendar-nav-group {
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                width: 100%;
+                gap: 0.45rem;
+            }
+
+            .calendar-title {
+                grid-column: 1 / -1;
+                order: -1;
+                font-size: 1.15rem;
+                margin-bottom: 0.25rem;
+            }
+
+            .cal-day-cell {
+                min-height: 62px;
+                padding: 0.25rem;
+                border-radius: 8px;
+            }
+
+            .cal-day-num {
+                font-size: 0.8rem;
+                width: 22px;
+                height: 22px;
+            }
+
+            .cal-day-hours {
+                font-size: 0.65rem;
+                padding: 0.05rem 0.28rem;
+            }
+
+            .cal-shift-list {
+                display: none;
+            }
+
+            .cal-week-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .cal-week-col {
+                min-height: auto;
+            }
         }
     </style>
 </head>
@@ -1345,6 +1658,9 @@
                 <button type="button" class="tab-btn active" data-tab="tabLogHours" onclick="switchTab('tabLogHours')">
                     Log Shift &amp; My Hours
                 </button>
+                <button type="button" class="tab-btn" data-tab="tabCalendar" onclick="switchTab('tabCalendar')">
+                    &#128197; Calendar View
+                </button>
                 <button type="button" class="tab-btn reviewer-only" data-tab="tabOfficerReview" onclick="switchTab('tabOfficerReview')" style="display: none;">
                     Officer Review Portal
                     <span class="tab-badge" id="pendingCountBadge">0</span>
@@ -1369,7 +1685,7 @@
                     <div class="stat-card stat-approved">
                         <div class="stat-label">My Approved Hours (Week)</div>
                         <div class="stat-value" id="myApprovedHours">0.00</div>
-                        <div class="stat-sub">Ready for CFO payroll</div>
+                        <div class="stat-sub" id="myOvertimeSub">Reg: 0.00 &bull; OT: 0.00</div>
                     </div>
                     <div class="stat-card stat-pending">
                         <div class="stat-label">My Pending Hours (Week)</div>
@@ -1410,6 +1726,7 @@
                             <span class="preset-label">Quick Fill:</span>
                             <button type="button" class="preset-chip" onclick="applyShiftPreset('07:00', '17:00')">Day Shift 10h (07:00–17:00)</button>
                             <button type="button" class="preset-chip" onclick="applyShiftPreset('19:00', '07:00')">Night 12h (19:00–07:00)</button>
+                            <button type="button" class="preset-chip" onclick="applyShiftPreset('07:00', '07:00')">24h Shift (07:00–07:00)</button>
                         </div>
 
                         <div class="time-pair-grid">
@@ -1495,6 +1812,63 @@
             </div>
 
             <!-- ==============================================================
+                 TAB 1B: CALENDAR VIEW (MONTH & WEEK)
+                 ============================================================== -->
+            <div id="tabCalendar" class="tab-pane" style="display: none;">
+                <div class="card">
+                    <div class="calendar-toolbar">
+                        <div class="calendar-mode-toggle">
+                            <button type="button" class="cal-mode-btn active" id="calModeMonthBtn" onclick="setCalendarMode('month')">Month View</button>
+                            <button type="button" class="cal-mode-btn" id="calModeWeekBtn" onclick="setCalendarMode('week')">Week View</button>
+                        </div>
+
+                        <div class="calendar-nav-group">
+                            <button type="button" class="btn btn-outline btn-sm" onclick="shiftCalendarPeriod(-1)">&larr; Prev</button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="jumpCalendarToday()">Today</button>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="shiftCalendarPeriod(1)">Next &rarr;</button>
+                            <div class="calendar-title" id="calendarPeriodTitle">Month YYYY</div>
+                        </div>
+
+                        <div class="reviewer-only" id="calendarMemberFilterWrap" style="display: none; min-width: 210px;">
+                            <select id="calendarFilterMember" class="form-control" onchange="renderCalendarView()" style="min-height: 40px; padding: 0.4rem 0.7rem; font-size: 0.9rem;">
+                                <option value="">All Members</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="calendarMonthContainer">
+                        <div class="cal-dow-header">
+                            <div class="cal-dow-cell">Mon</div>
+                            <div class="cal-dow-cell">Tue</div>
+                            <div class="cal-dow-cell">Wed</div>
+                            <div class="cal-dow-cell">Thu</div>
+                            <div class="cal-dow-cell">Fri</div>
+                            <div class="cal-dow-cell">Sat</div>
+                            <div class="cal-dow-cell">Sun</div>
+                        </div>
+                        <div class="cal-month-grid" id="calendarMonthGrid"></div>
+                    </div>
+
+                    <div id="calendarWeekContainer" style="display: none;">
+                        <div class="cal-week-grid" id="calendarWeekGrid"></div>
+                    </div>
+
+                    <div class="cal-selected-day-panel" id="calendarSelectedDayPanel">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.65rem;">
+                            <div>
+                                <b style="font-size: 1.02rem; color: var(--primary-dark);" id="calSelectedDateTitle">Selected Date</b>
+                                <span style="font-size: 0.85rem; color: var(--text-muted); margin-left: 0.4rem;" id="calSelectedDateTotal"></span>
+                            </div>
+                            <button type="button" class="btn btn-primary btn-sm" id="calQuickLogBtn" onclick="quickLogForCalendarDate()">
+                                + Log Shift on This Date
+                            </button>
+                        </div>
+                        <div id="calSelectedDayShifts"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==============================================================
                  TAB 2: OFFICER REVIEW PORTAL
                  ============================================================== -->
             <div id="tabOfficerReview" class="tab-pane" style="display: none;">
@@ -1564,33 +1938,33 @@
                 <!-- Department Totals for Selected Weekly Pay Period -->
                 <div class="stats-grid">
                     <div class="stat-card stat-approved">
-                        <div class="stat-label">Approved Payroll Hours</div>
-                        <div class="stat-value" id="cfoApprovedHours">0.00</div>
+                        <div class="stat-label">Regular Approved Hours</div>
+                        <div class="stat-value" id="cfoRegularHours">0.00</div>
                         <div class="stat-sub"><span id="cfoApprovedShifts">0</span> approved shift(s)</div>
+                    </div>
+                    <div class="stat-card stat-primary">
+                        <div class="stat-label">Overtime Approved Hours</div>
+                        <div class="stat-value" id="cfoOvertimeHours">0.00</div>
+                        <div class="stat-sub">&gt;53h (24/48) or &gt;40h (Std)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Total Approved (Payroll)</div>
+                        <div class="stat-value" id="cfoApprovedHours">0.00</div>
+                        <div class="stat-sub"><span id="cfoEmployeeCount">0</span> employee(s) (<span id="cfoTotalShifts">0</span> shifts)</div>
                     </div>
                     <div class="stat-card stat-pending">
                         <div class="stat-label">Unreviewed Pending Hours</div>
                         <div class="stat-value" id="cfoPendingHours">0.00</div>
-                        <div class="stat-sub">Needs officer sign-off</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Employees Logged</div>
-                        <div class="stat-value" id="cfoEmployeeCount">0</div>
-                        <div class="stat-sub"><span id="cfoTotalShifts">0</span> total shift(s) submitted</div>
-                    </div>
-                    <div class="stat-card stat-primary">
-                        <div class="stat-label">Total Submitted Hours</div>
-                        <div class="stat-value" id="cfoTotalHours">0.00</div>
-                        <div class="stat-sub">Approved + Pending + Rejected</div>
+                        <div class="stat-sub">Total logged: <span id="cfoTotalHours">0.00</span></div>
                     </div>
                 </div>
 
                 <div class="card">
                     <div class="card-header">
                         <div>
-                            <div class="card-title">CFO Weekly Payroll Summary</div>
+                            <div class="card-title">CFO Weekly Payroll Summary (Regular &amp; Overtime)</div>
                             <div style="font-size: 0.88rem; color: var(--text-secondary);" id="cfoPeriodSubheader">
-                                Weekly Pay Period (Monday 00:00 &ndash; Sunday 24:00)
+                                Weekly Pay Period (Monday 00:00 &ndash; Sunday 24:00) &bull; OT: &gt;53 hrs for Full-Time 24/48, &gt;40 hrs for all other staff
                             </div>
                         </div>
                         <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
@@ -1612,12 +1986,12 @@
                                 <tr>
                                     <th>Dept ID</th>
                                     <th>Employee Name</th>
-                                    <th>Role</th>
+                                    <th>Schedule / OT Rule</th>
                                     <th>Approved Shifts</th>
-                                    <th>Approved Hours (Payroll)</th>
+                                    <th>Regular Hours</th>
+                                    <th>Overtime Hours</th>
+                                    <th>Total Approved</th>
                                     <th>Pending Hours</th>
-                                    <th>Rejected Hours</th>
-                                    <th>Total Logged Hours</th>
                                 </tr>
                             </thead>
                             <tbody id="cfoSummaryTbody">
@@ -1670,6 +2044,13 @@
                                 </select>
                             </div>
                             <div class="form-group">
+                                <label for="rosterOtThreshold">Work Schedule / Overtime Threshold</label>
+                                <select id="rosterOtThreshold" class="form-control">
+                                    <option value="40">Standard Staff (OT after 40 hrs/wk)</option>
+                                    <option value="53">Full-Time 24/48 (OT after 53 hrs/wk)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
                                 <label for="rosterPin">PIN / Password (min 4 chars)</label>
                                 <input
                                     type="text"
@@ -1683,7 +2064,7 @@
                             <button type="submit" class="btn btn-primary">Save Member to Roster</button>
                             <button type="button" class="btn btn-outline" onclick="clearRosterForm()">Clear Form</button>
                             <span style="font-size: 0.85rem; color: var(--text-muted);">
-                                Tip: Click "Edit" on any member below to update their role, name, or reset their PIN.
+                                Tip: Click "Edit" on any member below to update their schedule/OT threshold, role, name, or PIN.
                             </span>
                         </div>
                     </form>
@@ -1699,6 +2080,7 @@
                                 <tr>
                                     <th>Dept ID</th>
                                     <th>Name</th>
+                                    <th>Schedule / OT Rule</th>
                                     <th>Role</th>
                                     <th>Status</th>
                                     <th>Actions</th>
@@ -1738,7 +2120,7 @@
         </div>
 
         <div style="text-align: center; margin-top: 1.5rem; font-size: 0.88rem; color: var(--text-muted); font-weight: 600;">
-            Timesheet Portal <span style="display: inline-block; background: #e5e7eb; color: #1f2937; padding: 0.2rem 0.65rem; border-radius: 999px; font-weight: 700; margin-left: 0.25rem;">Beta v0.6</span>
+            Timesheet Portal <span style="display: inline-block; background: #e5e7eb; color: #1f2937; padding: 0.2rem 0.65rem; border-radius: 999px; font-weight: 700; margin-left: 0.25rem;">Beta v0.7</span>
         </div>
     </div>
 
@@ -1785,17 +2167,18 @@
             </div>
         </div>
 
-        <h3 style="margin: 12px 0 6px; font-size: 12pt;">1. CFO Payroll Summary by Employee</h3>
+        <h3 style="margin: 12px 0 6px; font-size: 12pt;">1. CFO Payroll Summary by Employee (Regular vs. Overtime)</h3>
         <table class="print-table">
             <thead>
                 <tr>
                     <th>Dept ID</th>
                     <th>Employee Name</th>
-                    <th>Role</th>
+                    <th>OT Rule</th>
                     <th>Approved Shifts</th>
-                    <th>Approved Hours (Payroll)</th>
+                    <th>Regular Hours</th>
+                    <th>Overtime Hours</th>
+                    <th>Total Approved</th>
                     <th>Pending Hours</th>
-                    <th>Total Hours</th>
                 </tr>
             </thead>
             <tbody id="printSummaryTbody"></tbody>
@@ -1832,7 +2215,7 @@
     <footer class="no-print">
         <p>&copy; 2026 Riverview Fire Department | York County, South Carolina</p>
         <p style="margin-top: 0.5rem;">Dedicated to Protecting Our Community</p>
-        <p style="margin-top: 0.5rem; font-size: 0.85rem; color: #9ca3af;">Timesheet Portal Build: <b>Beta v0.6</b></p>
+        <p style="margin-top: 0.5rem; font-size: 0.85rem; color: #9ca3af;">Timesheet Portal Build: <b>Beta v0.7</b></p>
     </footer>
 
     <script src="js/main.js"></script>
@@ -1855,6 +2238,9 @@
         let selectedPayPeriodStart = ""; // Monday YYYY-MM-DD
         let selectedPayPeriodEnd = "";   // Sunday YYYY-MM-DD
         let lastCfoSummaryData = null;
+        let calendarMode = "month";      // "month" or "week"
+        let calendarCursorDate = "";     // YYYY-MM-DD cursor for calendar navigation
+        let calendarSelectedDate = "";   // YYYY-MM-DD selected date in calendar
 
         // =====================================================================
         // Date & Weekly Pay Period Helpers (Monday 00:00 - Sunday 24:00)
@@ -1931,9 +2317,9 @@
         // =====================================================================
 
         const LocalDB = {
-            KEY_EMPLOYEES: "rvfd_demo_employees_v4",
-            KEY_ENTRIES: "rvfd_demo_entries_v4",
-            KEY_AUDIT: "rvfd_demo_audit_v4",
+            KEY_EMPLOYEES: "rvfd_demo_employees_v5",
+            KEY_ENTRIES: "rvfd_demo_entries_v5",
+            KEY_AUDIT: "rvfd_demo_audit_v5",
 
             addDaysIso(baseIso, daysOffset) {
                 const dt = parseIsoDateLocal(baseIso);
@@ -1953,17 +2339,17 @@
             init() {
                 if (!localStorage.getItem(this.KEY_EMPLOYEES)) {
                     const seedEmployees = [
-                        { dept_id: "900", name: "T. Couch", role: "officer", pin: "1234", active: true },
-                        { dept_id: "901", name: "M. Reynolds", role: "cfo", pin: "1234", active: true },
-                        { dept_id: "902", name: "J. Miller", role: "officer", pin: "1234", active: true },
-                        { dept_id: "903", name: "S. Davis", role: "officer", pin: "1234", active: true },
-                        { dept_id: "904", name: "R. Thompson", role: "member", pin: "1234", active: true },
-                        { dept_id: "905", name: "K. Patel", role: "member", pin: "1234", active: true },
-                        { dept_id: "906", name: "B. Henderson", role: "member", pin: "1234", active: true },
-                        { dept_id: "907", name: "A. Morales", role: "member", pin: "1234", active: true },
-                        { dept_id: "908", name: "D. Brooks", role: "member", pin: "1234", active: true },
-                        { dept_id: "909", name: "C. Wallace", role: "member", pin: "1234", active: true },
-                        { dept_id: "910", name: "H. Nguyen", role: "member", pin: "1234", active: false }
+                        { dept_id: "900", name: "T. Couch", role: "officer", ot_threshold: 40, pin: "1234", active: true },
+                        { dept_id: "901", name: "M. Reynolds", role: "cfo", ot_threshold: 40, pin: "1234", active: true },
+                        { dept_id: "902", name: "J. Miller", role: "officer", ot_threshold: 40, pin: "1234", active: true },
+                        { dept_id: "903", name: "S. Davis", role: "officer", ot_threshold: 40, pin: "1234", active: true },
+                        { dept_id: "904", name: "R. Thompson", role: "member", ot_threshold: 53, pin: "1234", active: true },
+                        { dept_id: "905", name: "K. Patel", role: "member", ot_threshold: 40, pin: "1234", active: true },
+                        { dept_id: "906", name: "B. Henderson", role: "member", ot_threshold: 40, pin: "1234", active: true },
+                        { dept_id: "907", name: "A. Morales", role: "member", ot_threshold: 53, pin: "1234", active: true },
+                        { dept_id: "908", name: "D. Brooks", role: "member", ot_threshold: 40, pin: "1234", active: true },
+                        { dept_id: "909", name: "C. Wallace", role: "member", ot_threshold: 40, pin: "1234", active: true },
+                        { dept_id: "910", name: "H. Nguyen", role: "member", ot_threshold: 40, pin: "1234", active: false }
                     ];
                     localStorage.setItem(this.KEY_EMPLOYEES, JSON.stringify(seedEmployees));
                 }
@@ -1984,14 +2370,14 @@
                         {
                             id: 101,
                             dept_id: "904",
-                            shift_date: curr.start, // Monday (Part 2 of Sunday overnight split)
-                            start_time: "00:00",
-                            end_time: "06:00",
-                            is_overnight: false,
-                            duration_hours: 6.0,
+                            shift_date: curr.start, // Monday 24/48 tour
+                            start_time: "07:00",
+                            end_time: "07:00",
+                            is_overnight: true,
+                            duration_hours: 24.0,
                             pay_period_start: curr.start,
                             pay_period_end: curr.end,
-                            notes: "Engine 1 overnight coverage [Part 2/2 - Split at Sun Midnight]",
+                            notes: "Full-time 24/48 Tour 1 (Engine 1)",
                             status: "approved",
                             reviewed_by: "900 T. Couch",
                             reviewed_at: nowIso,
@@ -2048,14 +2434,14 @@
                         {
                             id: 105,
                             dept_id: "907",
-                            shift_date: this.addDaysIso(curr.start, 1), // Tuesday
+                            shift_date: this.addDaysIso(curr.start, 1), // Tuesday 24/48 tour
                             start_time: "07:00",
-                            end_time: "17:00",
-                            is_overnight: false,
-                            duration_hours: 10.0,
+                            end_time: "07:00",
+                            is_overnight: true,
+                            duration_hours: 24.0,
                             pay_period_start: curr.start,
                             pay_period_end: curr.end,
-                            notes: "Rescue 1 ALS coverage & 3 medical calls",
+                            notes: "Full-time 24/48 ALS tour (Rescue 1)",
                             status: "approved",
                             reviewed_by: "902 J. Miller",
                             reviewed_at: nowIso,
@@ -2144,11 +2530,11 @@
                         {
                             id: 111,
                             dept_id: "904",
-                            shift_date: this.addDaysIso(curr.start, 3), // Thursday
+                            shift_date: this.addDaysIso(curr.start, 3), // Thursday 24/48 tour
                             start_time: "07:00",
-                            end_time: "17:00",
-                            is_overnight: false,
-                            duration_hours: 10.0,
+                            end_time: "07:00",
+                            is_overnight: true,
+                            duration_hours: 24.0,
                             pay_period_start: curr.start,
                             pay_period_end: curr.end,
                             notes: "",
@@ -2176,11 +2562,11 @@
                         {
                             id: 113,
                             dept_id: "907",
-                            shift_date: this.addDaysIso(curr.start, 4), // Friday
-                            start_time: "19:00",
+                            shift_date: this.addDaysIso(curr.start, 4), // Friday 24/48 tour
+                            start_time: "07:00",
                             end_time: "07:00",
                             is_overnight: true,
-                            duration_hours: 12.0,
+                            duration_hours: 24.0,
                             pay_period_start: curr.start,
                             pay_period_end: curr.end,
                             notes: "",
@@ -2223,12 +2609,12 @@
                         },
 
                         // =====================================================
-                        // PREVIOUS WEEK (Last Monday - Last Sunday) — Fully Approved Payroll Week
+                        // PREVIOUS WEEK (Last Monday - Last Sunday) — Demonstrates 53h (24/48) & 40h Overtime
                         // =====================================================
                         {
                             id: 81,
                             dept_id: "902",
-                            shift_date: prev.start, // Prev Mon
+                            shift_date: prev.start, // Prev Mon (10h)
                             start_time: "07:00",
                             end_time: "17:00",
                             is_overnight: false,
@@ -2243,22 +2629,150 @@
                         },
                         {
                             id: 82,
-                            dept_id: "904",
-                            shift_date: this.addDaysIso(prev.start, 1), // Prev Tue
+                            dept_id: "902",
+                            shift_date: this.addDaysIso(prev.start, 1), // Prev Tue (10h)
                             start_time: "07:00",
                             end_time: "17:00",
                             is_overnight: false,
                             duration_hours: 10.0,
                             pay_period_start: prev.start,
                             pay_period_end: prev.end,
-                            notes: "Ladder 1 aerial check",
+                            notes: "",
+                            status: "approved",
+                            reviewed_by: "900 T. Couch",
+                            reviewed_at: nowIso,
+                            review_note: ""
+                        },
+                        {
+                            id: 83,
+                            dept_id: "902",
+                            shift_date: this.addDaysIso(prev.start, 2), // Prev Wed (10h)
+                            start_time: "07:00",
+                            end_time: "17:00",
+                            is_overnight: false,
+                            duration_hours: 10.0,
+                            pay_period_start: prev.start,
+                            pay_period_end: prev.end,
+                            notes: "",
+                            status: "approved",
+                            reviewed_by: "900 T. Couch",
+                            reviewed_at: nowIso,
+                            review_note: ""
+                        },
+                        {
+                            id: 84,
+                            dept_id: "902",
+                            shift_date: this.addDaysIso(prev.start, 3), // Prev Thu (10h)
+                            start_time: "07:00",
+                            end_time: "17:00",
+                            is_overnight: false,
+                            duration_hours: 10.0,
+                            pay_period_start: prev.start,
+                            pay_period_end: prev.end,
+                            notes: "",
+                            status: "approved",
+                            reviewed_by: "900 T. Couch",
+                            reviewed_at: nowIso,
+                            review_note: ""
+                        },
+                        {
+                            id: 85,
+                            dept_id: "902",
+                            shift_date: this.addDaysIso(prev.start, 4), // Prev Fri extra 4h (Total 44h -> 40h Reg + 4h OT)
+                            start_time: "18:00",
+                            end_time: "22:00",
+                            is_overnight: false,
+                            duration_hours: 4.0,
+                            pay_period_start: prev.start,
+                            pay_period_end: prev.end,
+                            notes: "Officer training & pre-plan review (pushes week to 44h -> 4h OT)",
+                            status: "approved",
+                            reviewed_by: "900 T. Couch",
+                            reviewed_at: nowIso,
+                            review_note: ""
+                        },
+                        {
+                            id: 86,
+                            dept_id: "904",
+                            shift_date: prev.start, // Prev Mon 24h tour (904 is Full-Time 24/48, 53h OT threshold)
+                            start_time: "07:00",
+                            end_time: "07:00",
+                            is_overnight: true,
+                            duration_hours: 24.0,
+                            pay_period_start: prev.start,
+                            pay_period_end: prev.end,
+                            notes: "Full-time 24/48 Tour 1",
                             status: "approved",
                             reviewed_by: "902 J. Miller",
                             reviewed_at: nowIso,
                             review_note: ""
                         },
                         {
-                            id: 83,
+                            id: 87,
+                            dept_id: "904",
+                            shift_date: this.addDaysIso(prev.start, 3), // Prev Thu 24h tour
+                            start_time: "07:00",
+                            end_time: "07:00",
+                            is_overnight: true,
+                            duration_hours: 24.0,
+                            pay_period_start: prev.start,
+                            pay_period_end: prev.end,
+                            notes: "",
+                            status: "approved",
+                            reviewed_by: "902 J. Miller",
+                            reviewed_at: nowIso,
+                            review_note: ""
+                        },
+                        {
+                            id: 88,
+                            dept_id: "904",
+                            shift_date: this.addDaysIso(prev.start, 5), // Prev Sat 12h callback (Total 60h -> 53h Reg + 7h OT)
+                            start_time: "07:00",
+                            end_time: "19:00",
+                            is_overnight: false,
+                            duration_hours: 12.0,
+                            pay_period_start: prev.start,
+                            pay_period_end: prev.end,
+                            notes: "Extra shift coverage (60h weekly total -> 53h Reg + 7h OT)",
+                            status: "approved",
+                            reviewed_by: "900 T. Couch",
+                            reviewed_at: nowIso,
+                            review_note: ""
+                        },
+                        {
+                            id: 89,
+                            dept_id: "907",
+                            shift_date: this.addDaysIso(prev.start, 1), // Prev Tue 24h tour (907 is Full-Time 24/48, 53h OT threshold)
+                            start_time: "07:00",
+                            end_time: "07:00",
+                            is_overnight: true,
+                            duration_hours: 24.0,
+                            pay_period_start: prev.start,
+                            pay_period_end: prev.end,
+                            notes: "",
+                            status: "approved",
+                            reviewed_by: "903 S. Davis",
+                            reviewed_at: nowIso,
+                            review_note: ""
+                        },
+                        {
+                            id: 90,
+                            dept_id: "907",
+                            shift_date: this.addDaysIso(prev.start, 4), // Prev Fri 24h tour (Total 48h -> 48h Reg + 0h OT under 53h rule)
+                            start_time: "07:00",
+                            end_time: "07:00",
+                            is_overnight: true,
+                            duration_hours: 24.0,
+                            pay_period_start: prev.start,
+                            pay_period_end: prev.end,
+                            notes: "Full-time 24/48 Tour 2 (48h total -> 0h OT under 53h threshold)",
+                            status: "approved",
+                            reviewed_by: "900 T. Couch",
+                            reviewed_at: nowIso,
+                            review_note: ""
+                        },
+                        {
+                            id: 91,
                             dept_id: "905",
                             shift_date: this.addDaysIso(prev.start, 2), // Prev Wed
                             start_time: "07:00",
@@ -2273,54 +2787,6 @@
                             reviewed_at: nowIso,
                             review_note: ""
                         },
-                        {
-                            id: 84,
-                            dept_id: "906",
-                            shift_date: this.addDaysIso(prev.start, 4), // Prev Fri
-                            start_time: "19:00",
-                            end_time: "07:00",
-                            is_overnight: true,
-                            duration_hours: 12.0,
-                            pay_period_start: prev.start,
-                            pay_period_end: prev.end,
-                            notes: "",
-                            status: "approved",
-                            reviewed_by: "903 S. Davis",
-                            reviewed_at: nowIso,
-                            review_note: ""
-                        },
-                        {
-                            id: 85,
-                            dept_id: "907",
-                            shift_date: this.addDaysIso(prev.start, 5), // Prev Sat
-                            start_time: "08:00",
-                            end_time: "20:00",
-                            is_overnight: false,
-                            duration_hours: 12.0,
-                            pay_period_start: prev.start,
-                            pay_period_end: prev.end,
-                            notes: "Community event medical standby (ATV 1)",
-                            status: "approved",
-                            reviewed_by: "900 T. Couch",
-                            reviewed_at: nowIso,
-                            review_note: ""
-                        },
-                        {
-                            id: 86,
-                            dept_id: "904",
-                            shift_date: prev.end, // Prev Sunday night (Part 1 of Sunday midnight split!)
-                            start_time: "20:00",
-                            end_time: "24:00",
-                            is_overnight: false,
-                            duration_hours: 4.0,
-                            pay_period_start: prev.start,
-                            pay_period_end: prev.end,
-                            notes: "Engine 1 overnight coverage [Part 1/2 - Split at Sun Midnight]",
-                            status: "approved",
-                            reviewed_by: "900 T. Couch",
-                            reviewed_at: nowIso,
-                            review_note: ""
-                        },
 
                         // =====================================================
                         // TWO WEEKS AGO — Historical Completed Pay Period
@@ -2330,9 +2796,9 @@
                             dept_id: "904",
                             shift_date: twoWeeksAgo.start,
                             start_time: "07:00",
-                            end_time: "17:00",
-                            is_overnight: false,
-                            duration_hours: 10.0,
+                            end_time: "07:00",
+                            is_overnight: true,
+                            duration_hours: 24.0,
                             pay_period_start: twoWeeksAgo.start,
                             pay_period_end: twoWeeksAgo.end,
                             notes: "",
@@ -2770,10 +3236,14 @@
                 entries.forEach(e => {
                     if (!byEmp[e.dept_id]) {
                         const emp = empMap[e.dept_id];
+                        const otThreshold = emp && Number(emp.ot_threshold) === 53 ? 53 : 40;
                         byEmp[e.dept_id] = {
                             dept_id: e.dept_id,
                             name: emp ? emp.name : `ID ${e.dept_id}`,
                             role: emp ? emp.role : "member",
+                            ot_threshold: otThreshold,
+                            regular_hours: 0,
+                            overtime_hours: 0,
                             approved_hours: 0,
                             pending_hours: 0,
                             rejected_hours: 0,
@@ -2795,10 +3265,17 @@
                     }
                 });
                 const summary = Object.values(byEmp).sort((a, b) => a.dept_id.localeCompare(b.dept_id));
+                summary.forEach(r => {
+                    const thresh = Number(r.ot_threshold) === 53 ? 53 : 40;
+                    r.regular_hours = Math.round(Math.min(r.approved_hours, thresh) * 100) / 100;
+                    r.overtime_hours = Math.round(Math.max(0, r.approved_hours - thresh) * 100) / 100;
+                });
                 const totals = {
                     employee_count: summary.length,
                     total_shifts: summary.reduce((s, r) => s + r.shift_count, 0),
                     approved_shifts: summary.reduce((s, r) => s + r.approved_shift_count, 0),
+                    regular_hours: Math.round(summary.reduce((s, r) => s + r.regular_hours, 0) * 100) / 100,
+                    overtime_hours: Math.round(summary.reduce((s, r) => s + r.overtime_hours, 0) * 100) / 100,
                     approved_hours: Math.round(summary.reduce((s, r) => s + r.approved_hours, 0) * 100) / 100,
                     pending_hours: Math.round(summary.reduce((s, r) => s + r.pending_hours, 0) * 100) / 100,
                     rejected_hours: Math.round(summary.reduce((s, r) => s + r.rejected_hours, 0) * 100) / 100,
@@ -2813,12 +3290,13 @@
 
             if (pathname === "/api/employees" && method === "POST") {
                 const { dept_id, name, role, pin } = body;
+                const ot_threshold = Number(body.ot_threshold) === 53 ? 53 : 40;
                 if (!/^9\d{2}$/.test(dept_id)) throw new Error("Department ID must be 900–999.");
                 if (employees.some(e => e.dept_id === dept_id)) throw new Error(`ID ${dept_id} already exists.`);
-                const newEmp = { dept_id, name, role: role || "member", pin: pin || "1234", active: true };
+                const newEmp = { dept_id, name, role: role || "member", ot_threshold, pin: pin || "1234", active: true };
                 employees.push(newEmp);
                 LocalDB.saveEmployees(employees);
-                LocalDB.addAudit(currentUser.dept_id, currentUser.name, "EMPLOYEE_CREATED", "employee", dept_id, `Created ${dept_id} (${name}).`);
+                LocalDB.addAudit(currentUser.dept_id, currentUser.name, "EMPLOYEE_CREATED", "employee", dept_id, `Created ${dept_id} (${name}, ${ot_threshold}h OT threshold).`);
                 return { message: `Added ${dept_id}.`, employee: newEmp };
             }
 
@@ -2828,10 +3306,11 @@
                 if (!emp) throw new Error("Member not found.");
                 if (body.name) emp.name = body.name;
                 if (body.role) emp.role = body.role;
+                if (body.ot_threshold !== undefined) emp.ot_threshold = Number(body.ot_threshold) === 53 ? 53 : 40;
                 if (typeof body.active === "boolean") emp.active = body.active;
                 if (body.pin) emp.pin = body.pin;
                 LocalDB.saveEmployees(employees);
-                LocalDB.addAudit(currentUser.dept_id, currentUser.name, "EMPLOYEE_UPDATED", "employee", id, `Updated ${id} (${emp.name}).`);
+                LocalDB.addAudit(currentUser.dept_id, currentUser.name, "EMPLOYEE_UPDATED", "employee", id, `Updated ${id} (${emp.name}, ${emp.ot_threshold || 40}h OT threshold).`);
                 return { message: `Updated ${id}.`, employee: emp };
             }
 
@@ -2953,6 +3432,8 @@
 
             // Default shift date, normal day shift (07:00 - 17:00), & current pay period
             const todayIso = toIsoDate(new Date());
+            calendarCursorDate = todayIso;
+            calendarSelectedDate = todayIso;
             const shiftDateInput = document.getElementById("entryShiftDate");
             shiftDateInput.max = getMaxAllowedShiftDateIso();
             shiftDateInput.value = todayIso;
@@ -2973,9 +3454,13 @@
                 const data = await apiRequest("/api/employees");
                 const entrySelect = document.getElementById("entryDeptId");
                 const filterSelect = document.getElementById("reviewFilterMember");
+                const calFilterSelect = document.getElementById("calendarFilterMember");
 
                 entrySelect.innerHTML = "";
                 filterSelect.innerHTML = '<option value="">All Members</option>';
+                if (calFilterSelect) {
+                    calFilterSelect.innerHTML = '<option value="">All Members</option>';
+                }
 
                 data.employees.forEach(emp => {
                     if (emp.active) {
@@ -2989,6 +3474,13 @@
                     fOpt.value = emp.dept_id;
                     fOpt.textContent = emp.name;
                     filterSelect.appendChild(fOpt);
+
+                    if (calFilterSelect) {
+                        const cOpt = document.createElement("option");
+                        cOpt.value = emp.dept_id;
+                        cOpt.textContent = emp.name;
+                        calFilterSelect.appendChild(cOpt);
+                    }
                 });
             } catch (err) {
                 console.error("Failed loading member dropdowns:", err);
@@ -3003,6 +3495,10 @@
             const pp = getMondaySundayPeriod(isoDate);
             selectedPayPeriodStart = pp.start;
             selectedPayPeriodEnd = pp.end;
+            calendarCursorDate = isoDate;
+            if (!calendarSelectedDate) {
+                calendarSelectedDate = isoDate;
+            }
 
             document.getElementById("weekPickerInput").value = selectedPayPeriodStart;
             document.getElementById("payPeriodTitle").textContent =
@@ -3018,15 +3514,22 @@
         function shiftPayPeriod(daysDelta) {
             const dt = parseIsoDateLocal(selectedPayPeriodStart);
             dt.setDate(dt.getDate() + daysDelta);
-            setPayPeriodByDate(toIsoDate(dt), true);
+            const nextIso = toIsoDate(dt);
+            calendarSelectedDate = nextIso;
+            setPayPeriodByDate(nextIso, true);
         }
 
         function resetToCurrentWeek() {
-            setPayPeriodByDate(toIsoDate(new Date()), true);
+            const todayIso = toIsoDate(new Date());
+            calendarSelectedDate = todayIso;
+            setPayPeriodByDate(todayIso, true);
         }
 
         function onWeekPickerChange(val) {
-            if (val) setPayPeriodByDate(val, true);
+            if (val) {
+                calendarSelectedDate = val;
+                setPayPeriodByDate(val, true);
+            }
         }
 
         // =====================================================================
@@ -3048,6 +3551,7 @@
         async function refreshActiveViews() {
             if (!currentUser) return;
             await loadMyEntries();
+            await renderCalendarView();
             if (currentUser.role === "officer" || currentUser.role === "cfo") {
                 await loadOfficerEntries();
                 await loadCfoSummary();
@@ -3268,6 +3772,17 @@
                 document.getElementById("myTotalHours").textContent = total.toFixed(2);
                 document.getElementById("myShiftCount").textContent = weekData.length;
 
+                const otThreshold = Number(currentUser.ot_threshold) === 53 ? 53 : 40;
+                const myReg = Math.min(approved, otThreshold);
+                const myOt = Math.max(0, approved - otThreshold);
+                const myOtSub = document.getElementById("myOvertimeSub");
+                if (myOtSub) {
+                    const ruleLabel = otThreshold === 53 ? "24/48 53h rule" : "40h rule";
+                    myOtSub.innerHTML = myOt > 0
+                        ? `Reg: <b>${myReg.toFixed(2)}</b> &bull; <b style="color: #9a3412;">OT: ${myOt.toFixed(2)}</b> (${ruleLabel})`
+                        : `Reg: ${myReg.toFixed(2)} &bull; OT: 0.00 (${ruleLabel})`;
+                }
+
                 const tbody = document.getElementById("myEntriesTbody");
                 if (entries.length === 0) {
                     tbody.innerHTML = `<tr><td colspan="4" class="empty-row-cell" style="text-align: center; color: var(--text-muted);">No shifts logged for ${showAll ? "any week" : "this weekly pay period"} yet.</td></tr>`;
@@ -3337,6 +3852,245 @@
                 }).join("");
             } catch (err) {
                 console.error("Error loading personal entries:", err);
+            }
+        }
+
+        // =====================================================================
+        // Calendar View (Month & Week)
+        // =====================================================================
+
+        function setCalendarMode(mode) {
+            calendarMode = mode === "week" ? "week" : "month";
+            document.getElementById("calModeMonthBtn").classList.toggle("active", calendarMode === "month");
+            document.getElementById("calModeWeekBtn").classList.toggle("active", calendarMode === "week");
+            document.getElementById("calendarMonthContainer").style.display = calendarMode === "month" ? "block" : "none";
+            document.getElementById("calendarWeekContainer").style.display = calendarMode === "week" ? "block" : "none";
+            renderCalendarView();
+        }
+
+        function shiftCalendarPeriod(delta) {
+            const baseIso = calendarCursorDate || selectedPayPeriodStart || toIsoDate(new Date());
+            const dt = parseIsoDateLocal(baseIso);
+            if (calendarMode === "month") {
+                const nextMonth = new Date(dt.getFullYear(), dt.getMonth() + delta, 1);
+                calendarCursorDate = toIsoDate(nextMonth);
+                calendarSelectedDate = calendarCursorDate;
+            } else {
+                dt.setDate(dt.getDate() + delta * 7);
+                calendarCursorDate = toIsoDate(dt);
+                calendarSelectedDate = calendarCursorDate;
+                setPayPeriodByDate(calendarCursorDate, false);
+            }
+            renderCalendarView();
+        }
+
+        function jumpCalendarToday() {
+            const todayIso = toIsoDate(new Date());
+            calendarCursorDate = todayIso;
+            calendarSelectedDate = todayIso;
+            setPayPeriodByDate(todayIso, false);
+            renderCalendarView();
+        }
+
+        function selectCalendarDate(isoDate) {
+            calendarSelectedDate = isoDate;
+            renderCalendarView();
+        }
+
+        function quickLogForCalendarDate() {
+            const targetDate = calendarSelectedDate || toIsoDate(new Date());
+            const maxIso = getMaxAllowedShiftDateIso();
+            if (targetDate > maxIso) {
+                showAlert("Shift date cannot be more than 1 day in the future.", "error");
+                return;
+            }
+            switchTab("tabLogHours");
+            const shiftDateInput = document.getElementById("entryShiftDate");
+            shiftDateInput.value = targetDate;
+            updateDurationPreview();
+            window.scrollTo({ top: 160, behavior: "smooth" });
+        }
+
+        async function renderCalendarView() {
+            if (!currentUser) return;
+            const isReviewer = currentUser.role === "officer" || currentUser.role === "cfo";
+            const filterWrap = document.getElementById("calendarMemberFilterWrap");
+            if (filterWrap) {
+                filterWrap.style.display = isReviewer ? "block" : "none";
+            }
+
+            const query = new URLSearchParams();
+            if (!isReviewer) {
+                query.set("mine", "true");
+            } else {
+                const filterMemberEl = document.getElementById("calendarFilterMember");
+                const memberFilter = filterMemberEl ? filterMemberEl.value : "";
+                if (memberFilter) {
+                    query.set("dept_id", memberFilter);
+                }
+            }
+
+            try {
+                const data = await apiRequest(`/api/entries?${query.toString()}`);
+                const entries = data.entries || [];
+                const byDate = new Map();
+                entries.forEach(e => {
+                    if (!byDate.has(e.shift_date)) {
+                        byDate.set(e.shift_date, []);
+                    }
+                    byDate.get(e.shift_date).push(e);
+                });
+                byDate.forEach(list => {
+                    list.sort((a, b) => a.start_time.localeCompare(b.start_time));
+                });
+
+                const todayIso = toIsoDate(new Date());
+                if (!calendarCursorDate) calendarCursorDate = todayIso;
+                if (!calendarSelectedDate) calendarSelectedDate = todayIso;
+
+                const cursorDt = parseIsoDateLocal(calendarCursorDate);
+                const titleEl = document.getElementById("calendarPeriodTitle");
+
+                if (calendarMode === "month") {
+                    const year = cursorDt.getFullYear();
+                    const month = cursorDt.getMonth();
+                    const firstOfMonth = new Date(year, month, 1);
+                    const lastOfMonth = new Date(year, month + 1, 0);
+
+                    titleEl.textContent = firstOfMonth.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+
+                    // Start on Monday of the first week
+                    const firstDow = firstOfMonth.getDay(); // 0=Sun..6=Sat
+                    const startOffset = firstDow === 0 ? -6 : 1 - firstDow;
+                    const gridStart = new Date(year, month, 1 + startOffset);
+
+                    // End on Sunday of the last week
+                    const lastDow = lastOfMonth.getDay();
+                    const endOffset = lastDow === 0 ? 0 : 7 - lastDow;
+                    const gridEnd = new Date(year, month + 1, endOffset);
+
+                    const cellsHtml = [];
+                    const iter = new Date(gridStart.getFullYear(), gridStart.getMonth(), gridStart.getDate());
+                    while (iter <= gridEnd) {
+                        const iso = toIsoDate(iter);
+                        const isOtherMonth = iter.getMonth() !== month;
+                        const isToday = iso === todayIso;
+                        const isSelected = iso === calendarSelectedDate;
+                        const dayEntries = byDate.get(iso) || [];
+                        const dayHours = dayEntries.reduce((s, e) => s + Number(e.duration_hours || 0), 0);
+
+                        const chipsHtml = dayEntries.slice(0, 3).map(e => {
+                            const who = isReviewer ? `${escapeHtml(e.employee_name)}: ` : "";
+                            return `<div class="cal-shift-chip status-${e.status}" title="${escapeHtml(e.employee_name)} (${escapeHtml(e.start_time)}–${escapeHtml(e.end_time)}, ${Number(e.duration_hours).toFixed(2)}h)">${who}${escapeHtml(e.start_time)} (${Number(e.duration_hours).toFixed(0)}h)</div>`;
+                        }).join("");
+                        const moreHtml = dayEntries.length > 3
+                            ? `<div style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted); padding-left: 2px;">+${dayEntries.length - 3} more</div>`
+                            : "";
+                        const dotsHtml = dayEntries.slice(0, 5).map(e => `<span class="cal-mobile-dot status-${e.status}"></span>`).join("");
+
+                        cellsHtml.push(`
+                            <div class="cal-day-cell ${isOtherMonth ? 'other-month' : ''} ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}" onclick="selectCalendarDate('${iso}')">
+                                <div class="cal-day-top">
+                                    <span class="cal-day-num">${iter.getDate()}</span>
+                                    ${dayHours > 0 ? `<span class="cal-day-hours-badge">${dayHours.toFixed(1)}h</span>` : ""}
+                                </div>
+                                <div class="cal-day-shifts">
+                                    ${chipsHtml}
+                                    ${moreHtml}
+                                </div>
+                                ${dayEntries.length > 0 ? `<div class="cal-mobile-dots">${dotsHtml}</div>` : ""}
+                            </div>
+                        `);
+                        iter.setDate(iter.getDate() + 1);
+                    }
+                    document.getElementById("calendarMonthGrid").innerHTML = cellsHtml.join("");
+                } else {
+                    const weekPP = getMondaySundayPeriod(calendarCursorDate);
+                    titleEl.textContent = `${formatHumanDate(weekPP.start)} – ${formatHumanDate(weekPP.end)}`;
+                    const weekStartDt = parseIsoDateLocal(weekPP.start);
+                    const colsHtml = [];
+
+                    for (let i = 0; i < 7; i++) {
+                        const d = new Date(weekStartDt.getFullYear(), weekStartDt.getMonth(), weekStartDt.getDate() + i);
+                        const iso = toIsoDate(d);
+                        const isToday = iso === todayIso;
+                        const dayName = d.toLocaleDateString("en-US", { weekday: "short" });
+                        const dateShort = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+                        const dayEntries = byDate.get(iso) || [];
+                        const dayHours = dayEntries.reduce((s, e) => s + Number(e.duration_hours || 0), 0);
+
+                        const cardsHtml = dayEntries.length === 0
+                            ? `<div style="font-size: 0.78rem; color: var(--text-muted); text-align: center; padding: 0.75rem 0.25rem;">No shifts</div>`
+                            : dayEntries.map(e => `
+                                <div class="cal-shift-chip status-${e.status}" style="white-space: normal; line-height: 1.35; padding: 0.35rem 0.45rem;" onclick="selectCalendarDate('${iso}')">
+                                    <div style="font-weight: 800;">${escapeHtml(e.employee_name)}</div>
+                                    <div>${escapeHtml(e.start_time)}&ndash;${escapeHtml(e.end_time)} &bull; <b>${Number(e.duration_hours).toFixed(2)}h</b></div>
+                                    ${e.notes ? `<div style="font-size: 0.7rem; opacity: 0.9; margin-top: 2px;">${escapeHtml(e.notes)}</div>` : ""}
+                                </div>
+                            `).join("");
+
+                        colsHtml.push(`
+                            <div class="cal-week-col ${isToday ? 'today' : ''}" onclick="selectCalendarDate('${iso}')" style="cursor: pointer;">
+                                <div class="cal-week-col-header">
+                                    <div>
+                                        <div class="cal-week-day-name">${dayName}</div>
+                                        <div class="cal-week-day-num">${dateShort}</div>
+                                    </div>
+                                    ${dayHours > 0 ? `<span class="cal-day-hours-badge">${dayHours.toFixed(1)}h</span>` : ""}
+                                </div>
+                                <div class="cal-day-shifts">
+                                    ${cardsHtml}
+                                </div>
+                            </div>
+                        `);
+                    }
+                    document.getElementById("calendarWeekGrid").innerHTML = colsHtml.join("");
+                }
+
+                // Render selected day detail panel
+                const selectedEntries = byDate.get(calendarSelectedDate) || [];
+                const selectedHours = selectedEntries.reduce((s, e) => s + Number(e.duration_hours || 0), 0);
+                document.getElementById("calSelectedDateTitle").textContent =
+                    `${formatHumanDate(calendarSelectedDate)} (${calendarSelectedDate})`;
+                document.getElementById("calSelectedDateTotal").textContent =
+                    selectedEntries.length > 0
+                        ? `• ${selectedEntries.length} ${selectedEntries.length === 1 ? "shift" : "shifts"} (${selectedHours.toFixed(2)} hrs total)`
+                        : "• No shifts logged";
+
+                const quickLogBtn = document.getElementById("calQuickLogBtn");
+                if (quickLogBtn) {
+                    const isFutureBlocked = calendarSelectedDate > getMaxAllowedShiftDateIso();
+                    quickLogBtn.disabled = isFutureBlocked;
+                    quickLogBtn.title = isFutureBlocked ? "Cannot log shifts more than 1 day into the future" : "";
+                }
+
+                const detailContainer = document.getElementById("calSelectedDayShifts");
+                if (selectedEntries.length === 0) {
+                    detailContainer.innerHTML = `<div style="font-size: 0.88rem; color: var(--text-muted); padding: 0.35rem 0;">No shifts recorded on this date. Tap "+ Log Shift on This Date" to add one.</div>`;
+                } else {
+                    detailContainer.innerHTML = selectedEntries.map(e => {
+                        const canModify = e.status === "pending" || isReviewer;
+                        const entryJson = JSON.stringify(e).replace(/'/g, "&#39;");
+                        return `
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; padding: 0.55rem 0.7rem; background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 0.4rem;">
+                                <div style="font-size: 0.9rem;">
+                                    <b>${escapeHtml(e.employee_name)}</b> &bull;
+                                    <span>${escapeHtml(e.start_time)} &ndash; ${escapeHtml(e.end_time)}</span>
+                                    ${e.is_overnight ? '<span class="badge badge-overnight">Overnight</span>' : ""}
+                                    &bull; <b>${Number(e.duration_hours).toFixed(2)} hrs</b>
+                                    <span class="badge badge-${e.status}" style="margin-left: 0.25rem;">${escapeHtml(e.status)}</span>
+                                    ${e.notes ? `<div style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 2px;">Note: ${escapeHtml(e.notes)}</div>` : ""}
+                                </div>
+                                <div class="actions-btn-group">
+                                    ${isReviewer && e.status !== "approved" ? `<button type="button" class="btn btn-success btn-sm" onclick="reviewEntry(${e.id}, 'approved')">Approve</button>` : ""}
+                                    ${canModify ? `<button type="button" class="btn btn-outline btn-sm" onclick='startEditEntry(${entryJson})'>Edit</button>` : ""}
+                                </div>
+                            </div>
+                        `;
+                    }).join("");
+                }
+            } catch (err) {
+                console.error("Failed rendering calendar view:", err);
             }
         }
 
@@ -3495,6 +4249,11 @@
                 lastCfoSummaryData = data;
 
                 const t = data.totals;
+                const regTotal = t.regular_hours !== undefined ? Number(t.regular_hours) : Number(t.approved_hours);
+                const otTotal = t.overtime_hours !== undefined ? Number(t.overtime_hours) : 0;
+
+                document.getElementById("cfoRegularHours").textContent = regTotal.toFixed(2);
+                document.getElementById("cfoOvertimeHours").textContent = otTotal.toFixed(2);
                 document.getElementById("cfoApprovedHours").textContent = Number(t.approved_hours).toFixed(2);
                 document.getElementById("cfoApprovedShifts").textContent = t.approved_shifts;
                 document.getElementById("cfoPendingHours").textContent = Number(t.pending_hours).toFixed(2);
@@ -3502,7 +4261,7 @@
                 document.getElementById("cfoTotalShifts").textContent = t.total_shifts;
                 document.getElementById("cfoTotalHours").textContent = Number(t.total_submitted_hours).toFixed(2);
                 document.getElementById("cfoPeriodSubheader").textContent =
-                    `Pay Period: ${data.pay_period_start} (Mon 00:00) through ${data.pay_period_end} (Sun 24:00)`;
+                    `Pay Period: ${data.pay_period_start} (Mon 00:00) through ${data.pay_period_end} (Sun 24:00) • OT: >53 hrs (24/48 Full-Time) / >40 hrs (Standard)`;
 
                 const tbody = document.getElementById("cfoSummaryTbody");
                 const tfoot = document.getElementById("cfoSummaryTfoot");
@@ -3513,27 +4272,35 @@
                     return;
                 }
 
-                tbody.innerHTML = data.summary.map(r => `
-                    <tr>
-                        <td data-label="Dept ID"><b>${escapeHtml(r.dept_id)}</b></td>
-                        <td data-label="Employee">${escapeHtml(r.name)}</td>
-                        <td data-label="Role"><span class="badge badge-role">${escapeHtml(r.role)}</span></td>
-                        <td data-label="Approved Shifts">${r.approved_shift_count} / ${r.shift_count}</td>
-                        <td data-label="Approved (Payroll)" style="color: #166534; font-weight: 800; font-size: 1.02rem;">${Number(r.approved_hours).toFixed(2)}</td>
-                        <td data-label="Pending" style="color: ${r.pending_hours > 0 ? '#92400e' : '#6b7280'};">${Number(r.pending_hours).toFixed(2)}</td>
-                        <td data-label="Rejected" style="color: ${r.rejected_hours > 0 ? '#991b1b' : '#6b7280'};">${Number(r.rejected_hours).toFixed(2)}</td>
-                        <td data-label="Total Logged"><b>${Number(r.total_submitted_hours).toFixed(2)}</b></td>
-                    </tr>
-                `).join("");
+                tbody.innerHTML = data.summary.map(r => {
+                    const thresh = Number(r.ot_threshold) === 53 ? 53 : 40;
+                    const regHrs = r.regular_hours !== undefined ? Number(r.regular_hours) : Math.min(Number(r.approved_hours), thresh);
+                    const otHrs = r.overtime_hours !== undefined ? Number(r.overtime_hours) : Math.max(0, Number(r.approved_hours) - thresh);
+                    const schedBadge = thresh === 53
+                        ? `<span class="badge badge-2448">24/48 FT (&gt;53h OT)</span>`
+                        : `<span class="badge badge-role">Standard (&gt;40h OT)</span>`;
+                    return `
+                        <tr>
+                            <td data-label="Dept ID"><b>${escapeHtml(r.dept_id)}</b></td>
+                            <td data-label="Employee"><b>${escapeHtml(r.name)}</b></td>
+                            <td data-label="Schedule / OT Rule">${schedBadge}</td>
+                            <td data-label="Approved Shifts">${r.approved_shift_count} / ${r.shift_count}</td>
+                            <td data-label="Regular Hours"><b>${regHrs.toFixed(2)}</b></td>
+                            <td data-label="Overtime Hours">${otHrs > 0 ? `<span class="badge badge-ot">${otHrs.toFixed(2)} OT</span>` : `<span style="color: #6b7280;">0.00</span>`}</td>
+                            <td data-label="Total Approved" style="color: #166534; font-weight: 800; font-size: 1.02rem;">${Number(r.approved_hours).toFixed(2)}</td>
+                            <td data-label="Pending Hours" style="color: ${r.pending_hours > 0 ? '#92400e' : '#6b7280'};">${Number(r.pending_hours).toFixed(2)}</td>
+                        </tr>
+                    `;
+                }).join("");
 
                 tfoot.innerHTML = `
                     <tr>
                         <td colspan="3" data-label="Summary">DEPARTMENT PAYROLL TOTALS (${t.employee_count} Employees)</td>
                         <td data-label="Approved Shifts">${t.approved_shifts} / ${t.total_shifts}</td>
-                        <td data-label="Approved (Payroll)" style="color: #166534;">${Number(t.approved_hours).toFixed(2)}</td>
-                        <td data-label="Pending">${Number(t.pending_hours).toFixed(2)}</td>
-                        <td data-label="Rejected">${Number(t.rejected_hours).toFixed(2)}</td>
-                        <td data-label="Total Logged">${Number(t.total_submitted_hours).toFixed(2)}</td>
+                        <td data-label="Regular Hours">${regTotal.toFixed(2)}</td>
+                        <td data-label="Overtime Hours" style="color: ${otTotal > 0 ? '#9a3412' : 'inherit'};">${otTotal.toFixed(2)}</td>
+                        <td data-label="Total Approved" style="color: #166534;">${Number(t.approved_hours).toFixed(2)}</td>
+                        <td data-label="Pending Hours">${Number(t.pending_hours).toFixed(2)}</td>
                     </tr>
                 `;
             } catch (err) {
@@ -3581,21 +4348,29 @@
             } else {
                 rows.push([
                     "Pay Period Start (Mon)", "Pay Period End (Sun)", "Department ID", "Employee Name",
-                    "Role", "Approved Hours (Payroll)", "Pending Hours", "Rejected Hours",
+                    "Role", "OT Threshold (Hrs)", "Regular Approved Hours", "Overtime Approved Hours",
+                    "Total Approved Hours (Payroll)", "Pending Hours", "Rejected Hours",
                     "Total Submitted Hours", "Approved Shifts", "Total Shifts"
                 ]);
                 lastCfoSummaryData.summary.forEach(r => {
+                    const thresh = Number(r.ot_threshold) === 53 ? 53 : 40;
+                    const regHrs = r.regular_hours !== undefined ? Number(r.regular_hours) : Math.min(Number(r.approved_hours), thresh);
+                    const otHrs = r.overtime_hours !== undefined ? Number(r.overtime_hours) : Math.max(0, Number(r.approved_hours) - thresh);
                     rows.push([
-                        pStart, pEnd, r.dept_id, r.name, r.role.toUpperCase(),
+                        pStart, pEnd, r.dept_id, r.name, r.role.toUpperCase(), thresh,
+                        regHrs.toFixed(2), otHrs.toFixed(2),
                         Number(r.approved_hours).toFixed(2), Number(r.pending_hours).toFixed(2),
                         Number(r.rejected_hours).toFixed(2), Number(r.total_submitted_hours).toFixed(2),
                         r.approved_shift_count, r.shift_count
                     ]);
                 });
                 const t = lastCfoSummaryData.totals;
+                const regTotal = t.regular_hours !== undefined ? Number(t.regular_hours) : Number(t.approved_hours);
+                const otTotal = t.overtime_hours !== undefined ? Number(t.overtime_hours) : 0;
                 rows.push([]);
                 rows.push([
-                    pStart, pEnd, "TOTAL", `${t.employee_count} Employees`, "",
+                    pStart, pEnd, "TOTAL", `${t.employee_count} Employees`, "", "",
+                    regTotal.toFixed(2), otTotal.toFixed(2),
                     Number(t.approved_hours).toFixed(2), Number(t.pending_hours).toFixed(2),
                     Number(t.rejected_hours).toFixed(2), Number(t.total_submitted_hours).toFixed(2),
                     t.approved_shifts, t.total_shifts
@@ -3622,26 +4397,35 @@
             document.getElementById("printGeneratedAt").textContent = new Date().toLocaleString();
             document.getElementById("printGeneratedBy").textContent = `${currentUser.dept_id} ${currentUser.name}`;
 
-            document.getElementById("printSummaryTbody").innerHTML = (d.summary || []).map(r => `
-                <tr>
-                    <td>${escapeHtml(r.dept_id)}</td>
-                    <td>${escapeHtml(r.name)}</td>
-                    <td>${escapeHtml(r.role.toUpperCase())}</td>
-                    <td>${r.approved_shift_count} / ${r.shift_count}</td>
-                    <td><b>${Number(r.approved_hours).toFixed(2)}</b></td>
-                    <td>${Number(r.pending_hours).toFixed(2)}</td>
-                    <td>${Number(r.total_submitted_hours).toFixed(2)}</td>
-                </tr>
-            `).join("") || `<tr><td colspan="7">No records for this period.</td></tr>`;
+            document.getElementById("printSummaryTbody").innerHTML = (d.summary || []).map(r => {
+                const thresh = Number(r.ot_threshold) === 53 ? 53 : 40;
+                const regHrs = r.regular_hours !== undefined ? Number(r.regular_hours) : Math.min(Number(r.approved_hours), thresh);
+                const otHrs = r.overtime_hours !== undefined ? Number(r.overtime_hours) : Math.max(0, Number(r.approved_hours) - thresh);
+                return `
+                    <tr>
+                        <td>${escapeHtml(r.dept_id)}</td>
+                        <td>${escapeHtml(r.name)}</td>
+                        <td>${thresh === 53 ? "24/48 (>53h)" : "Std (>40h)"}</td>
+                        <td>${r.approved_shift_count} / ${r.shift_count}</td>
+                        <td>${regHrs.toFixed(2)}</td>
+                        <td><b>${otHrs.toFixed(2)}</b></td>
+                        <td><b>${Number(r.approved_hours).toFixed(2)}</b></td>
+                        <td>${Number(r.pending_hours).toFixed(2)}</td>
+                    </tr>
+                `;
+            }).join("") || `<tr><td colspan="8">No records for this period.</td></tr>`;
 
             const t = d.totals;
+            const regTotal = t.regular_hours !== undefined ? Number(t.regular_hours) : Number(t.approved_hours);
+            const otTotal = t.overtime_hours !== undefined ? Number(t.overtime_hours) : 0;
             document.getElementById("printSummaryTfoot").innerHTML = `
                 <tr>
                     <td colspan="3"><b>TOTAL (${t.employee_count} Employees)</b></td>
                     <td><b>${t.approved_shifts} / ${t.total_shifts}</b></td>
+                    <td><b>${regTotal.toFixed(2)}</b></td>
+                    <td><b>${otTotal.toFixed(2)}</b></td>
                     <td><b>${Number(t.approved_hours).toFixed(2)}</b></td>
                     <td><b>${Number(t.pending_hours).toFixed(2)}</b></td>
-                    <td><b>${Number(t.total_submitted_hours).toFixed(2)}</b></td>
                 </tr>
             `;
 
@@ -3671,10 +4455,15 @@
                 const tbody = document.getElementById("rosterTbody");
                 tbody.innerHTML = (data.employees || []).map(emp => {
                     const empJson = JSON.stringify(emp).replace(/'/g, "&#39;");
+                    const thresh = Number(emp.ot_threshold) === 53 ? 53 : 40;
+                    const schedBadge = thresh === 53
+                        ? `<span class="badge badge-2448">Full-Time 24/48 (&gt;53h OT)</span>`
+                        : `<span class="badge badge-role">Standard (&gt;40h OT)</span>`;
                     return `
                         <tr>
                             <td data-label="Dept ID"><b>${escapeHtml(emp.dept_id)}</b></td>
-                            <td data-label="Name">${escapeHtml(emp.name)}</td>
+                            <td data-label="Name"><b>${escapeHtml(emp.name)}</b></td>
+                            <td data-label="Schedule / OT Rule">${schedBadge}</td>
                             <td data-label="Role"><span class="badge badge-role">${escapeHtml(emp.role)}</span></td>
                             <td data-label="Status">
                                 <span class="badge ${emp.active ? 'badge-approved' : 'badge-rejected'}">
@@ -3701,6 +4490,7 @@
             document.getElementById("rosterDeptId").value = emp.dept_id;
             document.getElementById("rosterName").value = emp.name;
             document.getElementById("rosterRole").value = emp.role;
+            document.getElementById("rosterOtThreshold").value = String(Number(emp.ot_threshold) === 53 ? 53 : 40);
             document.getElementById("rosterPin").value = "";
             document.getElementById("rosterPin").placeholder = "Leave blank to keep existing PIN, or enter new PIN";
             window.scrollTo({ top: 160, behavior: "smooth" });
@@ -3710,6 +4500,7 @@
             document.getElementById("rosterDeptId").value = "";
             document.getElementById("rosterName").value = "";
             document.getElementById("rosterRole").value = "member";
+            document.getElementById("rosterOtThreshold").value = "40";
             document.getElementById("rosterPin").value = "";
             document.getElementById("rosterPin").placeholder = "Set or reset PIN (e.g., 1234)";
         }
@@ -3719,6 +4510,7 @@
             const dept_id = document.getElementById("rosterDeptId").value.trim();
             const name = document.getElementById("rosterName").value.trim();
             const role = document.getElementById("rosterRole").value;
+            const ot_threshold = Number(document.getElementById("rosterOtThreshold").value) === 53 ? 53 : 40;
             const pin = document.getElementById("rosterPin").value.trim();
 
             try {
@@ -3726,13 +4518,16 @@
                 const exists = (rosterData.employees || []).some(emp => emp.dept_id === dept_id);
 
                 if (exists) {
-                    const payload = { name, role };
+                    const payload = { name, role, ot_threshold };
                     if (pin) payload.pin = pin;
                     await apiRequest(`/api/employees/${dept_id}`, {
                         method: "PUT",
                         body: JSON.stringify(payload)
                     });
-                    showAlert(`Updated member ${dept_id} (${name}).`);
+                    if (currentUser && currentUser.dept_id === dept_id) {
+                        currentUser.ot_threshold = ot_threshold;
+                    }
+                    showAlert(`Updated member ${dept_id} (${name}, ${ot_threshold}h OT rule).`);
                 } else {
                     if (!pin || pin.length < 4) {
                         showAlert("Please set an initial PIN (at least 4 characters) for the new member.", "error");
@@ -3740,14 +4535,13 @@
                     }
                     await apiRequest("/api/employees", {
                         method: "POST",
-                        body: JSON.stringify({ dept_id, name, role, pin })
+                        body: JSON.stringify({ dept_id, name, role, ot_threshold, pin })
                     });
                     showAlert(`Added member ${dept_id} (${name}) to roster.`);
                 }
                 clearRosterForm();
                 await populateMemberDropdowns();
-                await loadRoster();
-                await loadAuditLogs();
+                await refreshActiveViews();
             } catch (err) {
                 showAlert(err.message, "error");
             }
