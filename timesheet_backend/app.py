@@ -138,7 +138,7 @@ class TimeEntry(Base):
         return {
             "id": self.id,
             "dept_id": self.dept_id,
-            "employee_name": self.employee.name if self.employee else f"ID #{self.dept_id}",
+            "employee_name": self.employee.name if self.employee else f"ID {self.dept_id}",
             "shift_date": self.shift_date,
             "start_time": self.start_time,
             "end_time": self.end_time,
@@ -277,17 +277,17 @@ def init_db():
             admin_hash = generate_password_hash(default_admin_pin)
 
             seed_employees = [
-                Employee(dept_id="900", name="Chief T. Couch (Fire Chief)", role="officer", pin_hash=admin_hash, active=True),
-                Employee(dept_id="901", name="M. Reynolds (Department CFO)", role="cfo", pin_hash=admin_hash, active=True),
-                Employee(dept_id="902", name="Capt. J. Miller (Station 1 Captain)", role="officer", pin_hash=default_member_hash, active=True),
-                Employee(dept_id="903", name="Lt. S. Davis (Station 2 Lieutenant)", role="officer", pin_hash=default_member_hash, active=True),
-                Employee(dept_id="904", name="R. Thompson (Engineer / Operator)", role="member", pin_hash=default_member_hash, active=True),
-                Employee(dept_id="905", name="K. Patel (Firefighter / EMT)", role="member", pin_hash=default_member_hash, active=True),
-                Employee(dept_id="906", name="B. Henderson (Firefighter)", role="member", pin_hash=default_member_hash, active=True),
-                Employee(dept_id="907", name="A. Morales (Firefighter / Paramedic)", role="member", pin_hash=default_member_hash, active=True),
-                Employee(dept_id="908", name="D. Brooks (Firefighter)", role="member", pin_hash=default_member_hash, active=True),
-                Employee(dept_id="909", name="C. Wallace (Probationary FF)", role="member", pin_hash=default_member_hash, active=True),
-                Employee(dept_id="910", name="H. Nguyen (Reserve FF - Leave)", role="member", pin_hash=default_member_hash, active=False),
+                Employee(dept_id="900", name="T. Couch", role="officer", pin_hash=admin_hash, active=True),
+                Employee(dept_id="901", name="M. Reynolds", role="cfo", pin_hash=admin_hash, active=True),
+                Employee(dept_id="902", name="J. Miller", role="officer", pin_hash=default_member_hash, active=True),
+                Employee(dept_id="903", name="S. Davis", role="officer", pin_hash=default_member_hash, active=True),
+                Employee(dept_id="904", name="R. Thompson", role="member", pin_hash=default_member_hash, active=True),
+                Employee(dept_id="905", name="K. Patel", role="member", pin_hash=default_member_hash, active=True),
+                Employee(dept_id="906", name="B. Henderson", role="member", pin_hash=default_member_hash, active=True),
+                Employee(dept_id="907", name="A. Morales", role="member", pin_hash=default_member_hash, active=True),
+                Employee(dept_id="908", name="D. Brooks", role="member", pin_hash=default_member_hash, active=True),
+                Employee(dept_id="909", name="C. Wallace", role="member", pin_hash=default_member_hash, active=True),
+                Employee(dept_id="910", name="H. Nguyen", role="member", pin_hash=default_member_hash, active=False),
             ]
             session.add_all(seed_employees)
             session.flush()
@@ -307,42 +307,42 @@ def init_db():
                     dept_id="902",
                     shift_date=prev_mon.isoformat(),
                     start_time="07:00",
-                    end_time="19:00",
+                    end_time="17:00",
                     is_overnight=False,
-                    duration_hours=12.0,
+                    duration_hours=10.0,
                     pay_period_start=prev_start_str,
                     pay_period_end=prev_end_str,
-                    notes="Station 1 A-Shift command",
+                    notes="",
                     status="approved",
-                    reviewed_by="#900 Chief T. Couch (Fire Chief)",
+                    reviewed_by="900 T. Couch",
                     reviewed_at=now,
                 ),
                 TimeEntry(
                     dept_id="904",
                     shift_date=(prev_mon + timedelta(days=1)).isoformat(),
                     start_time="07:00",
-                    end_time="19:00",
+                    end_time="17:00",
                     is_overnight=False,
-                    duration_hours=12.0,
+                    duration_hours=10.0,
                     pay_period_start=prev_start_str,
                     pay_period_end=prev_end_str,
-                    notes="Engine 1 operator shift & Ladder 1 aerial check",
+                    notes="Ladder 1 aerial check",
                     status="approved",
-                    reviewed_by="#902 Capt. J. Miller (Station 1 Captain)",
+                    reviewed_by="902 J. Miller",
                     reviewed_at=now,
                 ),
                 TimeEntry(
                     dept_id="905",
                     shift_date=(prev_mon + timedelta(days=2)).isoformat(),
-                    start_time="08:00",
-                    end_time="18:00",
+                    start_time="07:00",
+                    end_time="17:00",
                     is_overnight=False,
                     duration_hours=10.0,
                     pay_period_start=prev_start_str,
                     pay_period_end=prev_end_str,
-                    notes="Station 1 day duty & EMS supply restock",
+                    notes="",
                     status="approved",
-                    reviewed_by="#902 Capt. J. Miller (Station 1 Captain)",
+                    reviewed_by="902 J. Miller",
                     reviewed_at=now,
                 ),
                 TimeEntry(
@@ -354,9 +354,9 @@ def init_db():
                     duration_hours=12.0,
                     pay_period_start=prev_start_str,
                     pay_period_end=prev_end_str,
-                    notes="Station 2 overnight shift",
+                    notes="",
                     status="approved",
-                    reviewed_by="#903 Lt. S. Davis (Station 2 Lieutenant)",
+                    reviewed_by="903 S. Davis",
                     reviewed_at=now,
                 ),
                 TimeEntry(
@@ -368,9 +368,9 @@ def init_db():
                     duration_hours=12.0,
                     pay_period_start=prev_start_str,
                     pay_period_end=prev_end_str,
-                    notes="Weekend ALS shift & community event medical standby (ATV 1)",
+                    notes="Community event medical standby (ATV 1)",
                     status="approved",
-                    reviewed_by="#900 Chief T. Couch (Fire Chief)",
+                    reviewed_by="900 T. Couch",
                     reviewed_at=now,
                 ),
                 TimeEntry(
@@ -384,7 +384,7 @@ def init_db():
                     pay_period_end=prev_end_str,
                     notes="Engine 1 overnight coverage [Part 1/2 - Split at Sun Midnight]",
                     status="approved",
-                    reviewed_by="#900 Chief T. Couch (Fire Chief)",
+                    reviewed_by="900 T. Couch",
                     reviewed_at=now,
                 ),
                 # Current Week (Approved, Pending, Sunday Midnight Split Part 2, and Rejected example)
@@ -399,35 +399,35 @@ def init_db():
                     pay_period_end=curr_end_str,
                     notes="Engine 1 overnight coverage [Part 2/2 - Split at Sun Midnight]",
                     status="approved",
-                    reviewed_by="#900 Chief T. Couch (Fire Chief)",
+                    reviewed_by="900 T. Couch",
                     reviewed_at=now,
                 ),
                 TimeEntry(
                     dept_id="902",
                     shift_date=curr_mon.isoformat(),
                     start_time="07:00",
-                    end_time="19:00",
+                    end_time="17:00",
                     is_overnight=False,
-                    duration_hours=12.0,
+                    duration_hours=10.0,
                     pay_period_start=curr_start_str,
                     pay_period_end=curr_end_str,
-                    notes="Station 1 A-Shift command & apparatus inspection",
+                    notes="",
                     status="approved",
-                    reviewed_by="#900 Chief T. Couch (Fire Chief)",
+                    reviewed_by="900 T. Couch",
                     reviewed_at=now,
                 ),
                 TimeEntry(
                     dept_id="905",
                     shift_date=curr_mon.isoformat(),
-                    start_time="08:00",
-                    end_time="16:30",
+                    start_time="07:00",
+                    end_time="17:00",
                     is_overnight=False,
-                    duration_hours=8.5,
+                    duration_hours=10.0,
                     pay_period_start=curr_start_str,
                     pay_period_end=curr_end_str,
-                    notes="Station 1 day shift & medical inventory check (Squad 1)",
+                    notes="Medical inventory check (Squad 1)",
                     status="approved",
-                    reviewed_by="#902 Capt. J. Miller (Station 1 Captain)",
+                    reviewed_by="902 J. Miller",
                     reviewed_at=now,
                 ),
                 TimeEntry(
@@ -439,23 +439,23 @@ def init_db():
                     duration_hours=12.0,
                     pay_period_start=curr_start_str,
                     pay_period_end=curr_end_str,
-                    notes="Station 2 overnight shift (Engine 2)",
+                    notes="",
                     status="approved",
-                    reviewed_by="#903 Lt. S. Davis (Station 2 Lieutenant)",
+                    reviewed_by="903 S. Davis",
                     reviewed_at=now,
                 ),
                 TimeEntry(
                     dept_id="907",
                     shift_date=(curr_mon + timedelta(days=1)).isoformat(),
                     start_time="07:00",
-                    end_time="19:00",
+                    end_time="17:00",
                     is_overnight=False,
-                    duration_hours=12.0,
+                    duration_hours=10.0,
                     pay_period_start=curr_start_str,
                     pay_period_end=curr_end_str,
                     notes="Rescue 1 ALS coverage & 3 medical calls",
                     status="approved",
-                    reviewed_by="#902 Capt. J. Miller (Station 1 Captain)",
+                    reviewed_by="902 J. Miller",
                     reviewed_at=now,
                 ),
                 TimeEntry(
@@ -469,7 +469,7 @@ def init_db():
                     pay_period_end=curr_end_str,
                     notes="Weekly department pump ops & drafting drill (Tanker 1)",
                     status="approved",
-                    reviewed_by="#902 Capt. J. Miller (Station 1 Captain)",
+                    reviewed_by="902 J. Miller",
                     reviewed_at=now,
                 ),
                 TimeEntry(
@@ -481,9 +481,9 @@ def init_db():
                     duration_hours=4.0,
                     pay_period_start=curr_start_str,
                     pay_period_end=curr_end_str,
-                    notes="Weekly department pump ops & drafting drill",
+                    notes="",
                     status="approved",
-                    reviewed_by="#902 Capt. J. Miller (Station 1 Captain)",
+                    reviewed_by="902 J. Miller",
                     reviewed_at=now,
                 ),
                 TimeEntry(
@@ -495,9 +495,9 @@ def init_db():
                     duration_hours=4.0,
                     pay_period_start=curr_start_str,
                     pay_period_end=curr_end_str,
-                    notes="Probationary firefighter SCBA & ladder evolution drill",
+                    notes="SCBA & ladder evolution drill",
                     status="approved",
-                    reviewed_by="#903 Lt. S. Davis (Station 2 Lieutenant)",
+                    reviewed_by="903 S. Davis",
                     reviewed_at=now,
                 ),
                 TimeEntry(
@@ -516,12 +516,12 @@ def init_db():
                     dept_id="904",
                     shift_date=(curr_mon + timedelta(days=3)).isoformat(),
                     start_time="07:00",
-                    end_time="19:00",
+                    end_time="17:00",
                     is_overnight=False,
-                    duration_hours=12.0,
+                    duration_hours=10.0,
                     pay_period_start=curr_start_str,
                     pay_period_end=curr_end_str,
-                    notes="Engine 1 operator day shift & hose testing",
+                    notes="",
                     status="pending",
                 ),
                 TimeEntry(
@@ -533,7 +533,7 @@ def init_db():
                     duration_hours=8.5,
                     pay_period_start=curr_start_str,
                     pay_period_end=curr_end_str,
-                    notes="Afternoon/evening station coverage & Grass 1 maintenance",
+                    notes="Brush/Grass 1 pump maintenance",
                     status="pending",
                 ),
                 TimeEntry(
@@ -545,19 +545,19 @@ def init_db():
                     duration_hours=12.0,
                     pay_period_start=curr_start_str,
                     pay_period_end=curr_end_str,
-                    notes="Friday overnight ALS duty (Rescue 1)",
+                    notes="",
                     status="pending",
                 ),
                 TimeEntry(
                     dept_id="908",
                     shift_date=(curr_mon + timedelta(days=4)).isoformat(),
-                    start_time="08:00",
-                    end_time="16:00",
+                    start_time="07:00",
+                    end_time="17:00",
                     is_overnight=False,
-                    duration_hours=8.0,
+                    duration_hours=10.0,
                     pay_period_start=curr_start_str,
                     pay_period_end=curr_end_str,
-                    notes="Station 1 day shift & elementary school fire safety demo",
+                    notes="Elementary school fire safety demo",
                     status="pending",
                 ),
                 TimeEntry(
@@ -569,9 +569,9 @@ def init_db():
                     duration_hours=4.0,
                     pay_period_start=curr_start_str,
                     pay_period_end=curr_end_str,
-                    notes="Pump ops drill (accidental second submission)",
+                    notes="",
                     status="rejected",
-                    reviewed_by="#902 Capt. J. Miller (Station 1 Captain)",
+                    reviewed_by="902 J. Miller",
                     reviewed_at=now,
                     review_note="Duplicate entry — already approved.",
                 ),
@@ -585,7 +585,7 @@ def init_db():
                 action="INITIAL_SEED",
                 target_type="employee",
                 target_id="900-910",
-                details="Created initial roster accounts (#900-#910) and multi-week sample shift entries.",
+                details="Created initial roster accounts (900-910) and multi-week sample shift entries.",
             )
             session.commit()
     except Exception as exc:
@@ -853,7 +853,7 @@ def create_entry():
             target_type="time_entry",
             target_id=f"{entry_sun.id},{entry_mon.id}",
             details=(
-                f"Logged overnight Sunday shift for #{target_dept_id} ({shift_date_str} {start_time_str}-{end_time_str}), "
+                f"Logged overnight Sunday shift for {target_dept_id} ({shift_date_str} {start_time_str}-{end_time_str}), "
                 f"split at Sunday midnight into {sun_hours}h and {mon_hours}h."
             ),
         )
@@ -883,7 +883,7 @@ def create_entry():
             target_type="time_entry",
             target_id=str(entry.id),
             details=(
-                f"Logged {duration_hours}h for #{target_dept_id} on {shift_date_str} "
+                f"Logged {duration_hours}h for {target_dept_id} on {shift_date_str} "
                 f"({start_time_str} - {end_time_str})."
             ),
         )
@@ -944,7 +944,7 @@ def update_entry(entry_id: int):
         action="ENTRY_UPDATED",
         target_type="time_entry",
         target_id=str(entry.id),
-        details=f"Updated entry #{entry.id} for #{entry.dept_id}: {old_summary} -> {new_summary}",
+        details=f"Updated entry {entry.id} for {entry.dept_id}: {old_summary} -> {new_summary}",
     )
     g.db.commit()
     return jsonify({"message": "Entry updated.", "entry": entry.to_dict()})
@@ -966,7 +966,7 @@ def delete_entry(entry_id: int):
         if entry.status != "pending":
             return jsonify({"error": "Only pending entries can be deleted by members."}), 400
 
-    details = f"Deleted entry #{entry.id} for #{entry.dept_id} ({entry.shift_date} {entry.start_time}-{entry.end_time}, {entry.duration_hours}h)"
+    details = f"Deleted entry {entry.id} for {entry.dept_id} ({entry.shift_date} {entry.start_time}-{entry.end_time}, {entry.duration_hours}h)"
     g.db.delete(entry)
     log_audit(
         g.db,
@@ -997,7 +997,7 @@ def review_entry(entry_id: int):
         return jsonify({"error": "Time entry not found."}), 404
 
     entry.status = new_status
-    entry.reviewed_by = f"#{emp.dept_id} {emp.name}"
+    entry.reviewed_by = f"{emp.dept_id} {emp.name}"
     entry.reviewed_at = utc_now()
     entry.review_note = review_note
 
@@ -1009,7 +1009,7 @@ def review_entry(entry_id: int):
         target_type="time_entry",
         target_id=str(entry.id),
         details=(
-            f"Marked entry #{entry.id} (#{entry.dept_id}, {entry.shift_date}, {entry.duration_hours}h) "
+            f"Marked entry {entry.id} ({entry.dept_id}, {entry.shift_date}, {entry.duration_hours}h) "
             f"as {new_status}." + (f" Note: {review_note}" if review_note else "")
         ),
     )
@@ -1039,7 +1039,7 @@ def bulk_approve():
     ids = []
     for entry in pending_entries:
         entry.status = "approved"
-        entry.reviewed_by = f"#{emp.dept_id} {emp.name}"
+        entry.reviewed_by = f"{emp.dept_id} {emp.name}"
         entry.reviewed_at = now
         ids.append(str(entry.id))
 
@@ -1090,7 +1090,7 @@ def build_payroll_summary(session, pay_period_start: str = "", start_date: str =
         if e.dept_id not in by_employee:
             by_employee[e.dept_id] = {
                 "dept_id": e.dept_id,
-                "name": emp_obj.name if emp_obj else f"ID #{e.dept_id}",
+                "name": emp_obj.name if emp_obj else f"ID {e.dept_id}",
                 "role": emp_obj.role if emp_obj else "member",
                 "approved_hours": 0.0,
                 "pending_hours": 0.0,
@@ -1309,10 +1309,10 @@ def create_employee():
         action="EMPLOYEE_CREATED",
         target_type="employee",
         target_id=dept_id,
-        details=f"Added #{dept_id} ({name}) with role '{role}'.",
+        details=f"Added {dept_id} ({name}) with role '{role}'.",
     )
     g.db.commit()
-    return jsonify({"message": f"Added #{dept_id} ({name}).", "employee": new_emp.to_dict()}), 201
+    return jsonify({"message": f"Added {dept_id} ({name}).", "employee": new_emp.to_dict()}), 201
 
 
 @app.route("/api/employees/<dept_id>", methods=["PUT"])
@@ -1359,11 +1359,11 @@ def update_employee(dept_id: str):
             action="EMPLOYEE_UPDATED",
             target_type="employee",
             target_id=emp.dept_id,
-            details=f"Updated #{emp.dept_id} ({emp.name}): {', '.join(changes)}.",
+            details=f"Updated {emp.dept_id} ({emp.name}): {', '.join(changes)}.",
         )
         g.db.commit()
 
-    return jsonify({"message": f"Updated #{emp.dept_id}.", "employee": emp.to_dict()})
+    return jsonify({"message": f"Updated {emp.dept_id}.", "employee": emp.to_dict()})
 
 
 @app.route("/api/audit-logs", methods=["GET"])
