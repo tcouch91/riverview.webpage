@@ -1414,12 +1414,12 @@
 
                         <div class="time-pair-grid">
                             <div class="form-group">
-                                <label for="entryStartTime">Start Time</label>
-                                <input type="time" id="entryStartTime" class="form-control" value="07:00" required>
+                                <label for="entryStartTime">Start Time (15-min intervals)</label>
+                                <select id="entryStartTime" class="form-control" required></select>
                             </div>
                             <div class="form-group">
-                                <label for="entryEndTime">End Time</label>
-                                <input type="time" id="entryEndTime" class="form-control" value="17:00" required>
+                                <label for="entryEndTime">End Time (15-min intervals)</label>
+                                <select id="entryEndTime" class="form-control" required></select>
                             </div>
                         </div>
 
@@ -1738,7 +1738,7 @@
         </div>
 
         <div style="text-align: center; margin-top: 1.5rem; font-size: 0.88rem; color: var(--text-muted); font-weight: 600;">
-            Timesheet Portal <span style="display: inline-block; background: #e5e7eb; color: #1f2937; padding: 0.2rem 0.65rem; border-radius: 999px; font-weight: 700; margin-left: 0.25rem;">Beta v0.5</span>
+            Timesheet Portal <span style="display: inline-block; background: #e5e7eb; color: #1f2937; padding: 0.2rem 0.65rem; border-radius: 999px; font-weight: 700; margin-left: 0.25rem;">Beta v0.6</span>
         </div>
     </div>
 
@@ -1832,7 +1832,7 @@
     <footer class="no-print">
         <p>&copy; 2026 Riverview Fire Department | York County, South Carolina</p>
         <p style="margin-top: 0.5rem;">Dedicated to Protecting Our Community</p>
-        <p style="margin-top: 0.5rem; font-size: 0.85rem; color: #9ca3af;">Timesheet Portal Build: <b>Beta v0.5</b></p>
+        <p style="margin-top: 0.5rem; font-size: 0.85rem; color: #9ca3af;">Timesheet Portal Build: <b>Beta v0.6</b></p>
     </footer>
 
     <script src="js/main.js"></script>
@@ -2906,6 +2906,35 @@
             document.getElementById("loginView").style.display = "block";
         }
 
+        function populateQuarterHourTimeSelects() {
+            const startSelect = document.getElementById("entryStartTime");
+            const endSelect = document.getElementById("entryEndTime");
+            if (!startSelect || !endSelect) return;
+
+            const buildOptionsHtml = (includeMidnightEnd) => {
+                const items = [];
+                for (let h = 0; h < 24; h++) {
+                    for (const m of [0, 15, 30, 45]) {
+                        const hh24 = String(h).padStart(2, "0");
+                        const mm = String(m).padStart(2, "0");
+                        const val = `${hh24}:${mm}`;
+                        const period = h >= 12 ? "PM" : "AM";
+                        const h12 = h % 12 === 0 ? 12 : h % 12;
+                        items.push(`<option value="${val}">${val} (${h12}:${mm} ${period})</option>`);
+                    }
+                }
+                if (includeMidnightEnd) {
+                    items.push(`<option value="24:00">24:00 (Midnight End)</option>`);
+                }
+                return items.join("");
+            };
+
+            startSelect.innerHTML = buildOptionsHtml(false);
+            endSelect.innerHTML = buildOptionsHtml(true);
+            startSelect.value = "07:00";
+            endSelect.value = "17:00";
+        }
+
         async function enterPortal() {
             document.getElementById("loginView").style.display = "none";
             document.getElementById("portalView").style.display = "block";
@@ -2919,6 +2948,8 @@
                 el.style.display = isReviewer ? "inline-flex" : "none";
             });
             document.getElementById("logForMemberGroup").style.display = isReviewer ? "block" : "none";
+
+            populateQuarterHourTimeSelects();
 
             // Default shift date, normal day shift (07:00 - 17:00), & current pay period
             const todayIso = toIsoDate(new Date());

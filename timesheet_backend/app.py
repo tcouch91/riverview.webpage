@@ -219,6 +219,8 @@ def time_to_minutes(t_str: str) -> int:
     if t_str == "24:00":
         return 24 * 60
     hh, mm = map(int, t_str.split(":"))
+    if mm % 15 != 0:
+        raise ValueError("Start and end times must be in 15-minute intervals (:00, :15, :30, :45).")
     return hh * 60 + mm
 
 
