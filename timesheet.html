@@ -125,10 +125,11 @@
 
         .form-control {
             width: 100%;
+            min-height: 48px;
             padding: 0.7rem 0.9rem;
             border: 1px solid #d1d5db;
-            border-radius: 8px;
-            font-size: 1rem;
+            border-radius: 10px;
+            font-size: 16px; /* Prevents iOS Safari auto-zoom on focus */
             font-family: inherit;
             color: var(--text-primary);
             background: #fff;
@@ -139,6 +140,47 @@
             outline: none;
             border-color: var(--primary-red);
             box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.18);
+        }
+
+        .time-pair-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.85rem;
+        }
+
+        /* Quick Shift Preset Chips */
+        .preset-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .preset-label {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin-right: 0.15rem;
+        }
+
+        .preset-chip {
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            color: #1f2937;
+            padding: 0.42rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: inherit;
+        }
+
+        .preset-chip:hover, .preset-chip:active {
+            background: #fee2e2;
+            border-color: var(--primary-red);
+            color: var(--primary-red-dark);
         }
 
         /* Duration Live Preview Box */
@@ -628,15 +670,257 @@
 
         @media (max-width: 768px) {
             .container--page {
-                padding-top: 95px;
-                padding-left: 1rem;
-                padding-right: 1rem;
+                padding-top: 86px;
+                padding-left: 0.75rem;
+                padding-right: 0.75rem;
             }
+
+            .portal-topbar {
+                margin-bottom: 0.9rem;
+                gap: 0.5rem;
+            }
+
+            .portal-topbar .section-title {
+                font-size: 1.45rem !important;
+                padding-bottom: 0.4rem;
+            }
+
             .card {
-                padding: 1.25rem;
+                padding: 1.1rem;
+                border-radius: 12px;
+                margin-bottom: 1.15rem;
             }
-            .user-session-bar, .pay-period-bar {
-                padding: 1rem;
+
+            .card-header {
+                margin-bottom: 0.9rem;
+                padding-bottom: 0.65rem;
+            }
+
+            .card-title {
+                font-size: 1.12rem;
+            }
+
+            .user-session-bar {
+                padding: 0.9rem 1rem;
+                margin-bottom: 0.9rem;
+            }
+
+            .user-session-bar .dept-id-circle {
+                width: 42px;
+                height: 42px;
+                font-size: 1rem;
+            }
+
+            /* Pay Period Bar on Mobile */
+            .pay-period-bar {
+                padding: 0.9rem 1rem;
+                margin-bottom: 1rem;
+                gap: 0.75rem;
+            }
+
+            .pay-period-info h3 {
+                font-size: 1rem;
+                line-height: 1.35;
+            }
+
+            .pay-period-info p {
+                font-size: 0.78rem;
+            }
+
+            .pay-period-controls {
+                width: 100%;
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 0.45rem;
+            }
+
+            .pay-period-controls .btn {
+                width: 100%;
+                min-height: 42px;
+                padding: 0.45rem 0.4rem;
+                font-size: 0.82rem;
+            }
+
+            .pay-period-controls input[type="date"] {
+                grid-column: 1 / -1;
+                width: 100% !important;
+                min-height: 42px;
+            }
+
+            /* Horizontal Touch-Scrollable Tabs on Mobile */
+            .portal-tabs {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                gap: 0.4rem;
+                margin-bottom: 1rem;
+                padding-bottom: 0.35rem;
+            }
+
+            .portal-tabs::-webkit-scrollbar {
+                display: none;
+            }
+
+            .tab-btn {
+                white-space: nowrap;
+                flex-shrink: 0;
+                padding: 0.6rem 0.95rem;
+                font-size: 0.88rem;
+                min-height: 42px;
+            }
+
+            /* Compact 3-Column Summary Strip on Mobile */
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 0.5rem;
+                margin-bottom: 1rem;
+            }
+
+            #tabCfoExport .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .stat-card {
+                padding: 0.7rem 0.6rem;
+                text-align: center;
+            }
+
+            .stat-label {
+                font-size: 0.68rem;
+                margin-bottom: 0.2rem;
+                line-height: 1.2;
+            }
+
+            .stat-value {
+                font-size: 1.28rem;
+            }
+
+            .stat-sub {
+                font-size: 0.68rem;
+                display: none;
+            }
+
+            /* Full-Width Touch Submit Button on Mobile */
+            #saveEntryBtn {
+                width: 100%;
+                min-height: 50px;
+                font-size: 1.05rem;
+            }
+
+            .duration-preview {
+                padding: 0.75rem 0.95rem;
+            }
+
+            .duration-preview .calc-value {
+                font-size: 1.25rem;
+            }
+
+            /* Transform Data Tables into Stacked Mobile Cards */
+            .table-responsive {
+                overflow-x: visible;
+            }
+
+            table.data-table,
+            table.data-table tbody,
+            table.data-table tfoot {
+                display: block;
+                width: 100%;
+            }
+
+            table.data-table thead {
+                display: none;
+            }
+
+            table.data-table tbody tr {
+                display: block;
+                background: #ffffff;
+                border: 1px solid #e2e8f0;
+                border-radius: 10px;
+                padding: 0.85rem 0.95rem;
+                margin-bottom: 0.8rem;
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+            }
+
+            table.data-table tbody td {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                gap: 0.75rem;
+                padding: 0.42rem 0;
+                border-bottom: 1px dashed #f1f5f9;
+                text-align: right;
+                font-size: 0.92rem;
+            }
+
+            table.data-table tbody td:last-child {
+                border-bottom: none;
+            }
+
+            table.data-table tbody td::before {
+                content: attr(data-label);
+                font-weight: 700;
+                font-size: 0.76rem;
+                text-transform: uppercase;
+                letter-spacing: 0.03em;
+                color: #64748b;
+                text-align: left;
+                flex-shrink: 0;
+                max-width: 44%;
+            }
+
+            table.data-table tbody td.empty-row-cell {
+                display: block;
+                text-align: center;
+                padding: 1rem 0.5rem;
+            }
+
+            table.data-table tbody td.empty-row-cell::before {
+                display: none;
+            }
+
+            table.data-table tbody td.actions-cell {
+                display: flex;
+                justify-content: flex-end;
+                flex-wrap: wrap;
+                gap: 0.45rem;
+                padding-top: 0.65rem;
+                margin-top: 0.25rem;
+                border-top: 1px solid #e5e7eb;
+            }
+
+            table.data-table tbody td.actions-cell::before {
+                margin-right: auto;
+                align-self: center;
+            }
+
+            table.data-table tbody td.actions-cell .btn-sm {
+                min-height: 38px;
+                padding: 0.45rem 0.85rem;
+                font-size: 0.85rem;
+                flex: 1 1 auto;
+            }
+
+            table.data-table tfoot tr {
+                display: block;
+                background: #f8fafc;
+                border: 2px solid #cbd5e1;
+                border-radius: 10px;
+                padding: 0.85rem 0.95rem;
+            }
+
+            table.data-table tfoot td {
+                display: flex;
+                justify-content: space-between;
+                padding: 0.35rem 0;
+                border: none;
+            }
+
+            table.data-table tfoot td::before {
+                content: attr(data-label);
+                font-weight: 700;
+                font-size: 0.78rem;
+                color: #475569;
             }
         }
     </style>
@@ -856,6 +1140,18 @@
                                 <label for="entryShiftDate">Shift Date</label>
                                 <input type="date" id="entryShiftDate" class="form-control" required>
                             </div>
+                        </div>
+
+                        <!-- Quick-Tap Shift Time Presets for Mobile Convenience -->
+                        <div class="preset-bar">
+                            <span class="preset-label">Quick Fill:</span>
+                            <button type="button" class="preset-chip" onclick="applyShiftPreset('07:00', '19:00')">Day 12h (07:00–19:00)</button>
+                            <button type="button" class="preset-chip" onclick="applyShiftPreset('19:00', '07:00')">Night 12h (19:00–07:00)</button>
+                            <button type="button" class="preset-chip" onclick="applyShiftPreset('08:00', '16:00')">Day 8h (08:00–16:00)</button>
+                            <button type="button" class="preset-chip" onclick="applyShiftPreset('18:00', '22:00')">Drill 4h (18:00–22:00)</button>
+                        </div>
+
+                        <div class="time-pair-grid">
                             <div class="form-group">
                                 <label for="entryStartTime">Start Time</label>
                                 <input type="time" id="entryStartTime" class="form-control" required>
@@ -2534,6 +2830,12 @@
             }
         });
 
+        function applyShiftPreset(startTime, endTime) {
+            document.getElementById("entryStartTime").value = startTime;
+            document.getElementById("entryEndTime").value = endTime;
+            updateDurationPreview();
+        }
+
         function resetEntryForm() {
             document.getElementById("editEntryId").value = "";
             document.getElementById("entryFormTitle").textContent = "Submit Completed Hours (Retro Log)";
@@ -2601,7 +2903,7 @@
 
                 const tbody = document.getElementById("myEntriesTbody");
                 if (entries.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No shifts logged for ${showAll ? "any week" : "this weekly pay period"} yet.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="7" class="empty-row-cell" style="text-align: center; color: var(--text-muted);">No shifts logged for ${showAll ? "any week" : "this weekly pay period"} yet.</td></tr>`;
                     return;
                 }
 
@@ -2610,19 +2912,23 @@
                     const entryJson = JSON.stringify(e).replace(/'/g, "&#39;");
                     return `
                         <tr>
-                            <td><b>${escapeHtml(e.shift_date)}</b></td>
-                            <td>
-                                ${escapeHtml(e.start_time)} &ndash; ${escapeHtml(e.end_time)}
-                                ${e.is_overnight ? '<span class="badge badge-overnight">Overnight</span>' : ''}
+                            <td data-label="Shift Date"><b>${escapeHtml(e.shift_date)}</b></td>
+                            <td data-label="Start – End">
+                                <span>
+                                    ${escapeHtml(e.start_time)} &ndash; ${escapeHtml(e.end_time)}
+                                    ${e.is_overnight ? '<span class="badge badge-overnight">Overnight</span>' : ''}
+                                </span>
                             </td>
-                            <td><b>${Number(e.duration_hours).toFixed(2)} hrs</b></td>
-                            <td style="font-size: 0.85rem; color: var(--text-secondary);">${escapeHtml(e.pay_period_start)} &rarr; ${escapeHtml(e.pay_period_end)}</td>
-                            <td>
-                                ${escapeHtml(e.notes || "—")}
-                                ${e.review_note ? `<div style="font-size: 0.8rem; color: #991b1b; margin-top: 2px;">Officer Note: ${escapeHtml(e.review_note)}</div>` : ""}
+                            <td data-label="Hours"><b>${Number(e.duration_hours).toFixed(2)} hrs</b></td>
+                            <td data-label="Pay Period" style="font-size: 0.85rem; color: var(--text-secondary);">${escapeHtml(e.pay_period_start)} &rarr; ${escapeHtml(e.pay_period_end)}</td>
+                            <td data-label="Notes">
+                                <div>
+                                    ${escapeHtml(e.notes || "—")}
+                                    ${e.review_note ? `<div style="font-size: 0.8rem; color: #991b1b; margin-top: 2px;">Officer Note: ${escapeHtml(e.review_note)}</div>` : ""}
+                                </div>
                             </td>
-                            <td><span class="badge badge-${e.status}">${escapeHtml(e.status)}</span></td>
-                            <td>
+                            <td data-label="Status"><span class="badge badge-${e.status}">${escapeHtml(e.status)}</span></td>
+                            <td data-label="Actions" class="actions-cell">
                                 ${canModify ? `
                                     <button type="button" class="btn btn-outline btn-sm" onclick='startEditEntry(${entryJson})'>Edit</button>
                                     <button type="button" class="btn btn-outline btn-sm" style="color: #dc2626;" onclick="deleteEntryById(${e.id})">Delete</button>
@@ -2662,7 +2968,7 @@
 
                 const tbody = document.getElementById("officerEntriesTbody");
                 if (entries.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No matching shift entries found.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="7" class="empty-row-cell" style="text-align: center; color: var(--text-muted);">No matching shift entries found.</td></tr>`;
                     return;
                 }
 
@@ -2670,24 +2976,30 @@
                     const entryJson = JSON.stringify(e).replace(/'/g, "&#39;");
                     return `
                         <tr>
-                            <td>
-                                <b>#${escapeHtml(e.dept_id)}</b> &mdash; ${escapeHtml(e.employee_name)}
+                            <td data-label="Member">
+                                <span><b>#${escapeHtml(e.dept_id)}</b> &mdash; ${escapeHtml(e.employee_name)}</span>
                             </td>
-                            <td><b>${escapeHtml(e.shift_date)}</b></td>
-                            <td>
-                                ${escapeHtml(e.start_time)} &ndash; ${escapeHtml(e.end_time)}
-                                ${e.is_overnight ? '<span class="badge badge-overnight">Overnight</span>' : ''}
+                            <td data-label="Shift Date"><b>${escapeHtml(e.shift_date)}</b></td>
+                            <td data-label="Start – End">
+                                <span>
+                                    ${escapeHtml(e.start_time)} &ndash; ${escapeHtml(e.end_time)}
+                                    ${e.is_overnight ? '<span class="badge badge-overnight">Overnight</span>' : ''}
+                                </span>
                             </td>
-                            <td><b>${Number(e.duration_hours).toFixed(2)} hrs</b></td>
-                            <td>
-                                ${escapeHtml(e.notes || "—")}
-                                ${e.review_note ? `<div style="font-size: 0.8rem; color: #4b5563;"><i>Review Note: ${escapeHtml(e.review_note)}</i></div>` : ""}
+                            <td data-label="Hours"><b>${Number(e.duration_hours).toFixed(2)} hrs</b></td>
+                            <td data-label="Notes">
+                                <div>
+                                    ${escapeHtml(e.notes || "—")}
+                                    ${e.review_note ? `<div style="font-size: 0.8rem; color: #4b5563;"><i>Review Note: ${escapeHtml(e.review_note)}</i></div>` : ""}
+                                </div>
                             </td>
-                            <td>
-                                <span class="badge badge-${e.status}">${escapeHtml(e.status)}</span>
-                                ${e.reviewed_by ? `<div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 3px;">By ${escapeHtml(e.reviewed_by)}</div>` : ""}
+                            <td data-label="Status">
+                                <div>
+                                    <span class="badge badge-${e.status}">${escapeHtml(e.status)}</span>
+                                    ${e.reviewed_by ? `<div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 3px;">By ${escapeHtml(e.reviewed_by)}</div>` : ""}
+                                </div>
                             </td>
-                            <td style="white-space: nowrap;">
+                            <td data-label="Review" class="actions-cell" style="white-space: nowrap;">
                                 ${e.status !== "approved" ? `
                                     <button type="button" class="btn btn-success btn-sm" onclick="reviewEntry(${e.id}, 'approved')">Approve</button>
                                 ` : ""}
@@ -2764,32 +3076,32 @@
                 const tfoot = document.getElementById("cfoSummaryTfoot");
 
                 if (!data.summary || data.summary.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted);">No shift hours logged for ${data.pay_period_start} to ${data.pay_period_end}.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="8" class="empty-row-cell" style="text-align: center; color: var(--text-muted);">No shift hours logged for ${data.pay_period_start} to ${data.pay_period_end}.</td></tr>`;
                     tfoot.innerHTML = "";
                     return;
                 }
 
                 tbody.innerHTML = data.summary.map(r => `
                     <tr>
-                        <td><b>#${escapeHtml(r.dept_id)}</b></td>
-                        <td>${escapeHtml(r.name)}</td>
-                        <td><span class="badge badge-role">${escapeHtml(r.role)}</span></td>
-                        <td>${r.approved_shift_count} / ${r.shift_count}</td>
-                        <td style="color: #166534; font-weight: 800; font-size: 1.02rem;">${Number(r.approved_hours).toFixed(2)} hrs</td>
-                        <td style="color: ${r.pending_hours > 0 ? '#92400e' : '#6b7280'};">${Number(r.pending_hours).toFixed(2)} hrs</td>
-                        <td style="color: ${r.rejected_hours > 0 ? '#991b1b' : '#6b7280'};">${Number(r.rejected_hours).toFixed(2)} hrs</td>
-                        <td><b>${Number(r.total_submitted_hours).toFixed(2)} hrs</b></td>
+                        <td data-label="Dept ID"><b>#${escapeHtml(r.dept_id)}</b></td>
+                        <td data-label="Employee">${escapeHtml(r.name)}</td>
+                        <td data-label="Role"><span class="badge badge-role">${escapeHtml(r.role)}</span></td>
+                        <td data-label="Approved Shifts">${r.approved_shift_count} / ${r.shift_count}</td>
+                        <td data-label="Approved (Payroll)" style="color: #166534; font-weight: 800; font-size: 1.02rem;">${Number(r.approved_hours).toFixed(2)} hrs</td>
+                        <td data-label="Pending" style="color: ${r.pending_hours > 0 ? '#92400e' : '#6b7280'};">${Number(r.pending_hours).toFixed(2)} hrs</td>
+                        <td data-label="Rejected" style="color: ${r.rejected_hours > 0 ? '#991b1b' : '#6b7280'};">${Number(r.rejected_hours).toFixed(2)} hrs</td>
+                        <td data-label="Total Logged"><b>${Number(r.total_submitted_hours).toFixed(2)} hrs</b></td>
                     </tr>
                 `).join("");
 
                 tfoot.innerHTML = `
                     <tr>
-                        <td colspan="3">DEPARTMENT PAYROLL TOTALS (${t.employee_count} Employees)</td>
-                        <td>${t.approved_shifts} / ${t.total_shifts}</td>
-                        <td style="color: #166534;">${Number(t.approved_hours).toFixed(2)} hrs</td>
-                        <td>${Number(t.pending_hours).toFixed(2)} hrs</td>
-                        <td>${Number(t.rejected_hours).toFixed(2)} hrs</td>
-                        <td>${Number(t.total_submitted_hours).toFixed(2)} hrs</td>
+                        <td colspan="3" data-label="Summary">DEPARTMENT PAYROLL TOTALS (${t.employee_count} Employees)</td>
+                        <td data-label="Approved Shifts">${t.approved_shifts} / ${t.total_shifts}</td>
+                        <td data-label="Approved (Payroll)" style="color: #166534;">${Number(t.approved_hours).toFixed(2)} hrs</td>
+                        <td data-label="Pending">${Number(t.pending_hours).toFixed(2)} hrs</td>
+                        <td data-label="Rejected">${Number(t.rejected_hours).toFixed(2)} hrs</td>
+                        <td data-label="Total Logged">${Number(t.total_submitted_hours).toFixed(2)} hrs</td>
                     </tr>
                 `;
             } catch (err) {
@@ -2929,15 +3241,15 @@
                     const empJson = JSON.stringify(emp).replace(/'/g, "&#39;");
                     return `
                         <tr>
-                            <td><b>#${escapeHtml(emp.dept_id)}</b></td>
-                            <td>${escapeHtml(emp.name)}</td>
-                            <td><span class="badge badge-role">${escapeHtml(emp.role)}</span></td>
-                            <td>
+                            <td data-label="Dept ID"><b>#${escapeHtml(emp.dept_id)}</b></td>
+                            <td data-label="Name">${escapeHtml(emp.name)}</td>
+                            <td data-label="Role"><span class="badge badge-role">${escapeHtml(emp.role)}</span></td>
+                            <td data-label="Status">
                                 <span class="badge ${emp.active ? 'badge-approved' : 'badge-rejected'}">
                                     ${emp.active ? "Active" : "Inactive"}
                                 </span>
                             </td>
-                            <td>
+                            <td data-label="Actions" class="actions-cell">
                                 <button type="button" class="btn btn-outline btn-sm" onclick='populateRosterForm(${empJson})'>Edit / Reset PIN</button>
                                 <button type="button" class="btn btn-outline btn-sm" onclick="toggleEmployeeActive('${emp.dept_id}', ${!emp.active})">
                                     ${emp.active ? "Deactivate" : "Activate"}
@@ -3031,18 +3343,18 @@
                 const tbody = document.getElementById("auditLogsTbody");
                 const logs = data.logs || [];
                 if (logs.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No audit records yet.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="5" class="empty-row-cell" style="text-align: center; color: var(--text-muted);">No audit records yet.</td></tr>`;
                     return;
                 }
                 tbody.innerHTML = logs.map(l => `
                     <tr>
-                        <td style="font-size: 0.82rem; color: var(--text-secondary); white-space: nowrap;">
+                        <td data-label="Timestamp" style="font-size: 0.82rem; color: var(--text-secondary); white-space: nowrap;">
                             ${new Date(l.timestamp).toLocaleString()}
                         </td>
-                        <td><b>#${escapeHtml(l.actor_id)}</b> ${escapeHtml(l.actor_name)}</td>
-                        <td><span class="badge badge-role">${escapeHtml(l.action)}</span></td>
-                        <td>${escapeHtml(l.target_type)} (${escapeHtml(l.target_id)})</td>
-                        <td>${escapeHtml(l.details)}</td>
+                        <td data-label="Actor"><span><b>#${escapeHtml(l.actor_id)}</b> ${escapeHtml(l.actor_name)}</span></td>
+                        <td data-label="Action"><span class="badge badge-role">${escapeHtml(l.action)}</span></td>
+                        <td data-label="Target">${escapeHtml(l.target_type)} (${escapeHtml(l.target_id)})</td>
+                        <td data-label="Details">${escapeHtml(l.details)}</td>
                     </tr>
                 `).join("");
             } catch (err) {
