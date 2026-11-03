@@ -1276,8 +1276,8 @@
          * fallback to Local Browser Storage when testing offline.
          */
         const CONFIG = {
-            // Update PROD_BACKEND_URL once deployed to Northflank (e.g., "https://site--timesheet--xxxx.code.run")
-            PROD_BACKEND_URL: "http://127.0.0.1:5000",
+            // Set PROD_BACKEND_URL once deployed to Northflank (e.g., "https://site--timesheet--xxxx.code.run")
+            PROD_BACKEND_URL: "",
             LOCAL_BACKEND_URL: "http://127.0.0.1:5000"
         };
 
@@ -1921,7 +1921,21 @@
         async function detectBackend() {
             const badge = document.getElementById("connectionBadge");
             const text = document.getElementById("connectionText");
-            const candidates = [CONFIG.LOCAL_BACKEND_URL, CONFIG.PROD_BACKEND_URL];
+            const isLocalHost = (
+                window.location.protocol === "file:" ||
+                window.location.hostname === "localhost" ||
+                window.location.hostname === "127.0.0.1"
+            );
+
+            // Avoid probing 127.0.0.1 from public HTTPS domains (like riverviewfire.org)
+            // so browsers do not show a "wants to access other apps and services on this device" prompt.
+            const candidates = [];
+            if (CONFIG.PROD_BACKEND_URL) {
+                candidates.push(CONFIG.PROD_BACKEND_URL.replace(/\/+$/, ""));
+            }
+            if (isLocalHost && CONFIG.LOCAL_BACKEND_URL) {
+                candidates.push(CONFIG.LOCAL_BACKEND_URL.replace(/\/+$/, ""));
+            }
 
             for (const url of candidates) {
                 try {
@@ -1944,7 +1958,7 @@
             useLocalDemoStorage = true;
             LocalDB.init();
             badge.className = "status-pill local";
-            text.textContent = "Browser Storage Mode (Start Flask for SQLite/Postgres)";
+            text.textContent = "Interactive Demo Mode (Browser Storage)";
         }
 
         async function apiRequest(path, options = {}) {
