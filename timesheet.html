@@ -686,65 +686,124 @@
             }
 
             .card {
-                padding: 1.1rem;
+                padding: 1.15rem;
                 border-radius: 12px;
                 margin-bottom: 1.15rem;
             }
 
             .card-header {
-                margin-bottom: 0.9rem;
-                padding-bottom: 0.65rem;
+                margin-bottom: 0.95rem;
+                padding-bottom: 0.7rem;
+            }
+
+            .card-header > div {
+                width: 100%;
             }
 
             .card-title {
-                font-size: 1.12rem;
+                font-size: 1.18rem;
             }
 
+            /* Make ALL buttons on mobile large, bold, and thumb-friendly */
+            .btn {
+                min-height: 52px;
+                padding: 0.8rem 1.2rem;
+                font-size: 1.04rem;
+                font-weight: 700;
+                border-radius: 10px;
+            }
+
+            .btn-sm {
+                min-height: 48px;
+                padding: 0.7rem 1rem;
+                font-size: 0.96rem;
+                font-weight: 700;
+                border-radius: 10px;
+            }
+
+            #loginSubmitBtn,
+            #saveEntryBtn {
+                width: 100%;
+                min-height: 58px !important;
+                font-size: 1.15rem !important;
+                border-radius: 12px;
+            }
+
+            /* Demo Account Buttons on Login View */
+            .demo-account-grid {
+                display: grid !important;
+                grid-template-columns: 1fr 1fr;
+                gap: 0.55rem !important;
+            }
+
+            .demo-account-grid .btn {
+                width: 100%;
+                min-height: 48px;
+                font-size: 0.9rem;
+                padding: 0.6rem 0.5rem;
+                text-align: center;
+            }
+
+            /* User Session Bar on Mobile */
             .user-session-bar {
-                padding: 0.9rem 1rem;
-                margin-bottom: 0.9rem;
+                padding: 1rem;
+                margin-bottom: 0.95rem;
             }
 
             .user-session-bar .dept-id-circle {
-                width: 42px;
-                height: 42px;
-                font-size: 1rem;
+                width: 46px;
+                height: 46px;
+                font-size: 1.05rem;
+            }
+
+            .session-actions {
+                width: 100%;
+                display: grid !important;
+                grid-template-columns: 1fr 1fr;
+                gap: 0.6rem !important;
+            }
+
+            .session-actions .btn {
+                width: 100%;
+                min-height: 48px;
+                font-size: 0.98rem;
             }
 
             /* Pay Period Bar on Mobile */
             .pay-period-bar {
-                padding: 0.9rem 1rem;
+                padding: 1rem;
                 margin-bottom: 1rem;
-                gap: 0.75rem;
+                gap: 0.8rem;
             }
 
             .pay-period-info h3 {
-                font-size: 1rem;
+                font-size: 1.04rem;
                 line-height: 1.35;
             }
 
             .pay-period-info p {
-                font-size: 0.78rem;
+                font-size: 0.8rem;
             }
 
             .pay-period-controls {
                 width: 100%;
                 display: grid;
                 grid-template-columns: 1fr 1fr 1fr;
-                gap: 0.45rem;
+                gap: 0.5rem;
             }
 
             .pay-period-controls .btn {
                 width: 100%;
-                min-height: 42px;
-                padding: 0.45rem 0.4rem;
-                font-size: 0.82rem;
+                min-height: 50px;
+                padding: 0.6rem 0.4rem;
+                font-size: 0.94rem;
             }
 
             .pay-period-controls input[type="date"] {
                 grid-column: 1 / -1;
                 width: 100% !important;
-                min-height: 42px;
+                min-height: 50px;
+                font-size: 1rem !important;
             }
 
             /* Horizontal Touch-Scrollable Tabs on Mobile */
@@ -753,9 +812,9 @@
                 overflow-x: auto;
                 -webkit-overflow-scrolling: touch;
                 scrollbar-width: none;
-                gap: 0.4rem;
+                gap: 0.5rem;
                 margin-bottom: 1rem;
-                padding-bottom: 0.35rem;
+                padding-bottom: 0.4rem;
             }
 
             .portal-tabs::-webkit-scrollbar {
@@ -765,9 +824,37 @@
             .tab-btn {
                 white-space: nowrap;
                 flex-shrink: 0;
-                padding: 0.6rem 0.95rem;
+                padding: 0.75rem 1.15rem;
+                font-size: 1rem;
+                min-height: 50px;
+                border-radius: 10px;
+            }
+
+            /* Quick-Tap Shift Presets as 2x2 Big Touch Grid on Mobile */
+            .preset-bar {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 0.55rem;
+                margin-bottom: 1.1rem;
+            }
+
+            .preset-label {
+                grid-column: 1 / -1;
                 font-size: 0.88rem;
-                min-height: 42px;
+                margin-bottom: 0.1rem;
+            }
+
+            .preset-chip {
+                width: 100%;
+                min-height: 48px;
+                padding: 0.65rem 0.6rem;
+                font-size: 0.92rem;
+                font-weight: 700;
+                border-radius: 10px;
+                text-align: center;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
 
             /* Compact 3-Column Summary Strip on Mobile */
@@ -801,19 +888,19 @@
                 display: none;
             }
 
-            /* Full-Width Touch Submit Button on Mobile */
-            #saveEntryBtn {
-                width: 100%;
-                min-height: 50px;
-                font-size: 1.05rem;
-            }
-
             .duration-preview {
-                padding: 0.75rem 0.95rem;
+                padding: 0.85rem 1rem;
             }
 
             .duration-preview .calc-value {
-                font-size: 1.25rem;
+                font-size: 1.3rem;
+            }
+
+            /* Full-Width Header Action Buttons (Bulk Approve, CFO Exports) on Mobile */
+            .card-header .btn {
+                width: 100%;
+                min-height: 50px;
+                font-size: 1rem;
             }
 
             /* Transform Data Tables into Stacked Mobile Cards */
@@ -836,10 +923,10 @@
                 display: block;
                 background: #ffffff;
                 border: 1px solid #e2e8f0;
-                border-radius: 10px;
-                padding: 0.85rem 0.95rem;
-                margin-bottom: 0.8rem;
-                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+                border-radius: 12px;
+                padding: 0.95rem 1rem;
+                margin-bottom: 0.9rem;
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
             }
 
             table.data-table tbody td {
@@ -847,10 +934,10 @@
                 justify-content: space-between;
                 align-items: flex-start;
                 gap: 0.75rem;
-                padding: 0.42rem 0;
+                padding: 0.48rem 0;
                 border-bottom: 1px dashed #f1f5f9;
                 text-align: right;
-                font-size: 0.92rem;
+                font-size: 0.96rem;
             }
 
             table.data-table tbody td:last-child {
@@ -860,7 +947,7 @@
             table.data-table tbody td::before {
                 content: attr(data-label);
                 font-weight: 700;
-                font-size: 0.76rem;
+                font-size: 0.78rem;
                 text-transform: uppercase;
                 letter-spacing: 0.03em;
                 color: #64748b;
@@ -881,24 +968,25 @@
 
             table.data-table tbody td.actions-cell {
                 display: flex;
-                justify-content: flex-end;
+                justify-content: stretch;
                 flex-wrap: wrap;
-                gap: 0.45rem;
-                padding-top: 0.65rem;
-                margin-top: 0.25rem;
+                gap: 0.55rem;
+                padding-top: 0.8rem;
+                margin-top: 0.35rem;
                 border-top: 1px solid #e5e7eb;
             }
 
             table.data-table tbody td.actions-cell::before {
-                margin-right: auto;
-                align-self: center;
+                display: none;
             }
 
             table.data-table tbody td.actions-cell .btn-sm {
-                min-height: 38px;
-                padding: 0.45rem 0.85rem;
-                font-size: 0.85rem;
-                flex: 1 1 auto;
+                min-height: 50px;
+                padding: 0.7rem 1rem;
+                font-size: 1rem;
+                font-weight: 700;
+                flex: 1 1 calc(50% - 0.55rem);
+                border-radius: 10px;
             }
 
             table.data-table tfoot tr {
@@ -1008,19 +1096,19 @@
                 </form>
 
                 <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px dashed #e5e7eb; font-size: 0.85rem; color: var(--text-muted);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.6rem;">
                         <span style="font-weight: 700; color: #374151;">Quick Demo Accounts (Default PIN: <code>1234</code>):</span>
-                        <button type="button" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 0.2rem 0.55rem;" onclick="resetDemoDataset()">Reset Demo Data</button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="resetDemoDataset()">Reset Demo Data</button>
                     </div>
-                    <div style="margin-bottom: 0.3rem; font-size: 0.78rem; color: #6b7280; font-weight: 600;">Officers &amp; Finance (Full Review + Export Access):</div>
-                    <div style="display: flex; gap: 0.45rem; flex-wrap: wrap; margin-bottom: 0.65rem;">
+                    <div style="margin-bottom: 0.35rem; font-size: 0.8rem; color: #6b7280; font-weight: 600;">Officers &amp; Finance (Full Review + Export Access):</div>
+                    <div class="demo-account-grid" style="display: flex; gap: 0.45rem; flex-wrap: wrap; margin-bottom: 0.75rem;">
                         <button type="button" class="btn btn-outline btn-sm" onclick="quickFillLogin('900', '1234')">#900 Chief Couch (Officer)</button>
                         <button type="button" class="btn btn-outline btn-sm" onclick="quickFillLogin('901', '1234')">#901 M. Reynolds (CFO)</button>
                         <button type="button" class="btn btn-outline btn-sm" onclick="quickFillLogin('902', '1234')">#902 Capt. Miller (Officer)</button>
                         <button type="button" class="btn btn-outline btn-sm" onclick="quickFillLogin('903', '1234')">#903 Lt. Davis (Officer)</button>
                     </div>
-                    <div style="margin-bottom: 0.3rem; font-size: 0.78rem; color: #6b7280; font-weight: 600;">Firefighters &amp; Engineers (Member View):</div>
-                    <div style="display: flex; gap: 0.45rem; flex-wrap: wrap;">
+                    <div style="margin-bottom: 0.35rem; font-size: 0.8rem; color: #6b7280; font-weight: 600;">Firefighters &amp; Engineers (Member View):</div>
+                    <div class="demo-account-grid" style="display: flex; gap: 0.45rem; flex-wrap: wrap;">
                         <button type="button" class="btn btn-outline btn-sm" onclick="quickFillLogin('904', '1234')">#904 Eng. Thompson</button>
                         <button type="button" class="btn btn-outline btn-sm" onclick="quickFillLogin('905', '1234')">#905 FF/EMT Patel</button>
                         <button type="button" class="btn btn-outline btn-sm" onclick="quickFillLogin('906', '1234')">#906 FF Henderson</button>
@@ -1050,7 +1138,7 @@
                         </div>
                     </div>
                 </div>
-                <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+                <div class="session-actions" style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
                     <button type="button" class="btn btn-secondary btn-sm" onclick="openPinModal()">Change PIN</button>
                     <button type="button" class="btn btn-danger btn-sm" onclick="logout()">Sign Out</button>
                 </div>
