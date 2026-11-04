@@ -400,6 +400,7 @@ def parse_roster_csv_text(csv_text: str) -> tuple[list[dict], list[str]]:
             "ot_threshold": ot_threshold,
             "rank": rank,
             "employment_status": emp_status,
+            "pin": row.get("PIN", "").strip(),
         })
 
     return records, skipped
@@ -416,15 +417,21 @@ def upsert_roster_records(session, records: list[dict], default_pin: str = "1234
     updated = 0
 
     for rec in records:
+        csv_pin = (rec.get("pin") or "").strip()
         existing = session.query(Employee).filter_by(dept_id=rec["dept_id"]).first()
         if existing:
             existing.name = rec["name"]
             existing.role = rec["role"]
             existing.ot_threshold = rec["ot_threshold"]
+            if len(csv_pin) >= 4:
+                existing.pin_hash = generate_password_hash(csv_pin)
             existing.active = True
             updated += 1
         else:
-            pin_hash = officer_hash if rec["role"] in ("officer", "cfo") else member_hash
+            if len(csv_pin) >= 4:
+                pin_hash = generate_password_hash(csv_pin)
+            else:
+                pin_hash = officer_hash if rec["role"] in ("officer", "cfo") else member_hash
             session.add(
                 Employee(
                     dept_id=rec["dept_id"],

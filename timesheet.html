@@ -3385,15 +3385,17 @@
                         role = "cfo";
                     }
                     const ot_threshold = (statusLower.includes("full time") || statusLower.includes("full-time")) ? 53 : 40;
+                    const csvPin = (row["PIN"] || "").trim();
                     const existing = employees.find(e => e.dept_id === deptId);
                     if (existing) {
                         existing.name = fullName;
                         existing.role = role;
                         existing.ot_threshold = ot_threshold;
+                        if (csvPin.length >= 4) existing.pin = csvPin;
                         existing.active = true;
                         updated++;
                     } else {
-                        employees.push({ dept_id: deptId, name: fullName, role, ot_threshold, pin: defaultPin, active: true });
+                        employees.push({ dept_id: deptId, name: fullName, role, ot_threshold, pin: csvPin.length >= 4 ? csvPin : defaultPin, active: true });
                         created++;
                     }
                 }
