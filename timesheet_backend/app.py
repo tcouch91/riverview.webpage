@@ -634,6 +634,115 @@ def require_reviewer(f):
 
 
 # ==============================================================================
+# Rate Limiting Helpers (Database-backed across Gunicorn workers)
+# ==============================================================================
+
+LOGIN_MAX_ATTEMPTS_PER_ID = int(os.environ.get("LOGIN_MAX_ATTEMPTS_PER_ID", 5))
+LOGIN_MAX_ATTEMPTS_PER_IP = int(os.environ.get("LOGIN_MAX_ATTEMPTS_PER_IP", 12))
+LOGIN_LOCKOUT_WINDOW_MINUTES = int(os.environ.get("LOGIN_LOCKOUT_WINDOW_MINUTES", 15))
+
+ENTRY_MAX_PER_MINUTE = int(os.environ.get("ENTRY_MAX_PER_MINUTE", 6))
+ENTRY_MAX_PER_HOUR = int(os.environ.get("ENTRY_MAX_PER_HOUR", 30))
+
+
+def get_client_ip() -> str:
+    forwarded = request.headers.get("X-Forwarded-For", "")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return (request.remote_addr or "unknown").strip()
+
+
+def is_login_rate_limited(session, dept_id: str, client_ip: str) -> str | None:
+    """
+    Returns an error message if the Department ID or client IP has exceeded
+    the allowed failed sign-in attempts within the lockout window.
+    """
+    window_start = utc_now() - timedelta(minutes=LOGIN_LOCKOUT_WINDOW_MINUTES)
+
+    # If the account logged in successfully or had its PIN updated recently, only count failures since then
+    last_reset = (
+        session.query(AuditLog.timestamp)
+        .filter(
+            AuditLog.target_id == dept_id,
+            AuditLog.action.in_(["LOGIN_SUCCESS", "PIN_CHANGED", "EMPLOYEE_UPDATED", "ROSTER_CSV_IMPORTED"]),
+            AuditLog.timestamp >= window_start,
+        )
+        .order_by(AuditLog.timestamp.desc())
+        .first()
+    )
+    id_cutoff = last_reset[0] if last_reset else window_start
+
+    failed_for_id = (
+        session.query(AuditLog)
+        .filter(
+            AuditLog.action == "LOGIN_FAILED",
+            AuditLog.target_id == dept_id,
+            AuditLog.timestamp > id_cutoff,
+        )
+        .count()
+    )
+    if failed_for_id >= LOGIN_MAX_ATTEMPTS_PER_ID:
+        return (
+            f"Too many failed sign-in attempts for ID {dept_id}. "
+            f"Please wait {LOGIN_LOCKOUT_WINDOW_MINUTES} minutes or contact Tyler."
+        )
+
+    failed_for_ip = (
+        session.query(AuditLog)
+        .filter(
+            AuditLog.action == "LOGIN_FAILED",
+            AuditLog.actor_id == client_ip,
+            AuditLog.timestamp >= window_start,
+        )
+        .count()
+    )
+    if failed_for_ip >= LOGIN_MAX_ATTEMPTS_PER_IP:
+        return (
+            f"Too many failed sign-in attempts from this network. "
+            f"Please wait {LOGIN_LOCKOUT_WINDOW_MINUTES} minutes or contact Tyler."
+        )
+
+    return None
+
+
+def is_entry_rate_limited(session, actor_dept_id: str) -> str | None:
+    """
+    Returns an error message if the authenticated member is submitting shift
+    entries faster than the per-minute or per-hour threshold.
+    """
+    now = utc_now()
+    one_min_ago = now - timedelta(minutes=1)
+    one_hour_ago = now - timedelta(hours=1)
+    entry_actions = ["ENTRY_CREATED", "ENTRY_CREATED_SPLIT"]
+
+    recent_minute = (
+        session.query(AuditLog)
+        .filter(
+            AuditLog.actor_id == actor_dept_id,
+            AuditLog.action.in_(entry_actions),
+            AuditLog.timestamp >= one_min_ago,
+        )
+        .count()
+    )
+    if recent_minute >= ENTRY_MAX_PER_MINUTE:
+        return "Rate limit reached: Too many shifts submitted in the last minute. Please wait a moment and try again."
+
+    recent_hour = (
+        session.query(AuditLog)
+        .filter(
+            AuditLog.actor_id == actor_dept_id,
+            AuditLog.action.in_(entry_actions),
+            AuditLog.timestamp >= one_hour_ago,
+        )
+        .count()
+    )
+    if recent_hour >= ENTRY_MAX_PER_HOUR:
+        return f"Rate limit reached: Maximum of {ENTRY_MAX_PER_HOUR} shift submissions per hour. Please wait or contact Tyler."
+
+    return None
+
+
+# ==============================================================================
 # API Routes: Health & Authentication
 # ==============================================================================
 
@@ -662,13 +771,39 @@ def login():
     if not pin:
         return jsonify({"error": "Please enter your PIN / password."}), 400
 
+    client_ip = get_client_ip()
     session = SessionLocal()
+    rate_err = is_login_rate_limited(session, dept_id, client_ip)
+    if rate_err:
+        return jsonify({"error": rate_err}), 429
+
     emp = session.query(Employee).filter_by(dept_id=dept_id).first()
     if not emp or not check_password_hash(emp.pin_hash, pin):
+        log_audit(
+            session,
+            actor_id=client_ip,
+            actor_name="Sign-In Attempt",
+            action="LOGIN_FAILED",
+            target_type="employee",
+            target_id=dept_id,
+            details=f"Failed login attempt for ID {dept_id}.",
+        )
+        session.commit()
         return jsonify({"error": "Invalid Department ID or PIN."}), 401
 
     if not emp.active:
-        return jsonify({"error": "This Department ID is currently inactive. Contact an officer."}), 403
+        return jsonify({"error": "This Department ID is currently inactive. Contact Tyler."}), 403
+
+    log_audit(
+        session,
+        actor_id=emp.dept_id,
+        actor_name=emp.name,
+        action="LOGIN_SUCCESS",
+        target_type="employee",
+        target_id=emp.dept_id,
+        details="Signed in.",
+    )
+    session.commit()
 
     token = create_auth_token(emp)
     return jsonify({
@@ -696,7 +831,22 @@ def change_own_pin():
         return jsonify({"error": "New PIN/password must be at least 4 characters."}), 400
 
     emp = g.current_user
+    client_ip = get_client_ip()
+    rate_err = is_login_rate_limited(g.db, emp.dept_id, client_ip)
+    if rate_err:
+        return jsonify({"error": rate_err}), 429
+
     if not check_password_hash(emp.pin_hash, current_pin):
+        log_audit(
+            g.db,
+            actor_id=client_ip,
+            actor_name=emp.name,
+            action="LOGIN_FAILED",
+            target_type="employee",
+            target_id=emp.dept_id,
+            details="Failed current PIN verification during PIN change.",
+        )
+        g.db.commit()
         return jsonify({"error": "Current PIN is incorrect."}), 400
 
     emp.pin_hash = generate_password_hash(new_pin)
@@ -761,6 +911,10 @@ def create_entry():
     data = request.get_json(silent=True) or {}
     emp = g.current_user
     is_reviewer = emp.role in ("officer", "cfo")
+
+    rate_err = is_entry_rate_limited(g.db, emp.dept_id)
+    if rate_err:
+        return jsonify({"error": rate_err}), 429
 
     # Officers can log on behalf of another member if dept_id is provided
     target_dept_id = str(data.get("dept_id") or emp.dept_id).strip()
