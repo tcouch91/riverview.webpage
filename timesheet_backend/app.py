@@ -411,32 +411,41 @@ def upsert_roster_records(session, records: list[dict], default_pin: str = "1234
     Inserts or updates Employee rows from parsed roster records.
     Returns (created_count, updated_count).
     """
+    env_admin_pin = os.environ.get("INITIAL_ADMIN_PIN", "").strip()
+    effective_admin_pin = env_admin_pin or admin_pin or default_pin
     member_hash = generate_password_hash(default_pin)
-    officer_hash = generate_password_hash(admin_pin or default_pin)
+    officer_hash = generate_password_hash(effective_admin_pin)
     created = 0
     updated = 0
 
     for rec in records:
+        dept_id = rec["dept_id"]
+        is_primary_admin = dept_id == "953"
+        role = "officer" if is_primary_admin else rec["role"]
         csv_pin = (rec.get("pin") or "").strip()
-        existing = session.query(Employee).filter_by(dept_id=rec["dept_id"]).first()
+        existing = session.query(Employee).filter_by(dept_id=dept_id).first()
         if existing:
             existing.name = rec["name"]
-            existing.role = rec["role"]
+            existing.role = role
             existing.ot_threshold = rec["ot_threshold"]
-            if len(csv_pin) >= 4:
+            if is_primary_admin and env_admin_pin:
+                existing.pin_hash = officer_hash
+            elif len(csv_pin) >= 4:
                 existing.pin_hash = generate_password_hash(csv_pin)
             existing.active = True
             updated += 1
         else:
-            if len(csv_pin) >= 4:
+            if is_primary_admin and env_admin_pin:
+                pin_hash = officer_hash
+            elif len(csv_pin) >= 4:
                 pin_hash = generate_password_hash(csv_pin)
             else:
-                pin_hash = officer_hash if rec["role"] in ("officer", "cfo") else member_hash
+                pin_hash = officer_hash if role in ("officer", "cfo") else member_hash
             session.add(
                 Employee(
-                    dept_id=rec["dept_id"],
+                    dept_id=dept_id,
                     name=rec["name"],
-                    role=rec["role"],
+                    role=role,
                     ot_threshold=rec["ot_threshold"],
                     pin_hash=pin_hash,
                     active=True,
@@ -479,13 +488,71 @@ def init_db():
 
     session = SessionLocal()
     try:
-        existing_count = session.query(Employee).count()
-        default_admin_pin = os.environ.get("INITIAL_ADMIN_PIN", "1234")
-        default_member_pin = os.environ.get("INITIAL_MEMBER_PIN", "1234")
+        default_admin_pin = os.environ.get("INITIAL_ADMIN_PIN", "1234").strip() or "1234"
+        default_member_pin = os.environ.get("INITIAL_MEMBER_PIN", "1234").strip() or "1234"
+        admin_hash = generate_password_hash(default_admin_pin)
 
-        # If a roster CSV is present on disk or in ROSTER_CSV env var and DB is empty, seed from it
+        # Clean up legacy demo accounts (900-910 from initial prototype or 930 bootstrap) if present
+        demo_names = {
+            "900": "T. Couch",
+            "901": "M. Reynolds",
+            "902": "J. Miller",
+            "903": "S. Davis",
+            "904": "R. Thompson",
+            "905": "K. Patel",
+            "906": "B. Henderson",
+            "907": "A. Morales",
+            "908": "D. Brooks",
+            "909": "C. Wallace",
+            "910": "H. Nguyen",
+            "930": "David Hord",
+        }
+        has_legacy_demo = session.query(Employee).filter_by(dept_id="900", name="T. Couch").first() is not None
+        if has_legacy_demo:
+            session.query(TimeEntry).filter(TimeEntry.dept_id.in_(list(demo_names.keys()))).delete(synchronize_session=False)
+            for d_id, d_name in demo_names.items():
+                session.query(Employee).filter_by(dept_id=d_id, name=d_name).delete(synchronize_session=False)
+            session.commit()
+        else:
+            # Also remove 930 bootstrap if it has no shift entries
+            emp_930 = session.query(Employee).filter_by(dept_id="930", name="David Hord").first()
+            if emp_930 and session.query(TimeEntry).filter_by(dept_id="930").count() == 0:
+                session.delete(emp_930)
+                session.commit()
+
+        # Always guarantee 953 (Tyler Couch) exists as an active Officer with INITIAL_ADMIN_PIN
+        admin_953 = session.query(Employee).filter_by(dept_id="953").first()
+        if admin_953:
+            admin_953.name = "Tyler Couch"
+            admin_953.role = "officer"
+            admin_953.pin_hash = admin_hash
+            admin_953.active = True
+            session.commit()
+        else:
+            session.add(
+                Employee(
+                    dept_id="953",
+                    name="Tyler Couch",
+                    role="officer",
+                    ot_threshold=40,
+                    pin_hash=admin_hash,
+                    active=True,
+                )
+            )
+            log_audit(
+                session,
+                actor_id="SYSTEM",
+                actor_name="System Initializer",
+                action="INITIAL_SEED",
+                target_type="employee",
+                target_id="953",
+                details="Created bootstrap officer account (953 Tyler Couch). Use Roster -> Import CSV to load full roster.",
+            )
+            session.commit()
+
+        # If a roster CSV is present on disk or in ROSTER_CSV env var and only 953 exists, seed from it
         csv_text = load_startup_roster_csv()
-        if existing_count == 0 and csv_text:
+        if session.query(Employee).count() <= 1 and csv_text:
             records, skipped = parse_roster_csv_text(csv_text)
             if records:
                 created, updated = upsert_roster_records(
@@ -501,29 +568,10 @@ def init_db():
                     actor_name="System Initializer",
                     action="INITIAL_ROSTER_SEED",
                     target_type="employee",
-                    target_id=f"{created} members",
-                    details=f"Seeded {created} department members from Name_and_ID.csv.{skip_note}",
+                    target_id=f"{created + updated} members",
+                    details=f"Seeded department members from Name_and_ID.csv.{skip_note}",
                 )
                 session.commit()
-                return
-
-        if existing_count == 0:
-            admin_hash = generate_password_hash(default_admin_pin)
-            seed_employees = [
-                Employee(dept_id="953", name="Tyler Couch", role="officer", ot_threshold=40, pin_hash=admin_hash, active=True),
-                Employee(dept_id="930", name="David Hord", role="officer", ot_threshold=40, pin_hash=admin_hash, active=True),
-            ]
-            session.add_all(seed_employees)
-            log_audit(
-                session,
-                actor_id="SYSTEM",
-                actor_name="System Initializer",
-                action="INITIAL_SEED",
-                target_type="employee",
-                target_id="930, 953",
-                details="Created bootstrap officer accounts (953 Tyler Couch, 930 David Hord). Use Roster -> Import CSV to load full roster.",
-            )
-            session.commit()
     except Exception as exc:
         session.rollback()
         print(f"Database seed warning: {exc}")
