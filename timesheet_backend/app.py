@@ -331,8 +331,130 @@ def log_audit(session, actor_id: str, actor_name: str, action: str, target_type:
 
 
 # ==============================================================================
-# Database Initialization & Default Seed
+# Database Initialization & Roster CSV Loader
 # ==============================================================================
+
+def parse_roster_csv_text(csv_text: str) -> tuple[list[dict], list[str]]:
+    """
+    Parses a roster CSV (such as Name_and_ID.csv with columns:
+    AGENCY PERSONNEL ID, LAST NAME, FIRST NAME, RANK, EMPLOYMENT STATUS).
+    Returns (valid_records, skipped_descriptions).
+    """
+    records = []
+    skipped = []
+    reader = csv.DictReader(io.StringIO(csv_text.lstrip("\ufeff").strip()))
+    for raw_row in reader:
+        row = {(k or "").strip().upper(): (v or "").strip() for k, v in raw_row.items()}
+        dept_id = (
+            row.get("AGENCY PERSONNEL ID")
+            or row.get("DEPT_ID")
+            or row.get("DEPARTMENT ID")
+            or row.get("ID")
+            or ""
+        ).strip()
+
+        first_name = row.get("FIRST NAME", "")
+        last_name = row.get("LAST NAME", "")
+        full_name = row.get("NAME") or f"{first_name} {last_name}".strip()
+
+        if not is_valid_dept_id(dept_id):
+            label = full_name or "Unknown"
+            skipped.append(f"{label} (missing/invalid ID '{dept_id}')")
+            continue
+
+        if not full_name:
+            skipped.append(f"ID {dept_id} (missing name)")
+            continue
+
+        rank = row.get("RANK", "")
+        emp_status = row.get("EMPLOYMENT STATUS", "")
+        explicit_role = row.get("ROLE", "").lower()
+
+        rank_lower = rank.lower()
+        if explicit_role in ("member", "officer", "cfo"):
+            role = explicit_role
+        elif dept_id == "953" or any(k in rank_lower for k in ("chief", "captain", "lieutenant", "officer")):
+            role = "officer"
+        elif any(k in rank_lower for k in ("administrator", "support", "cfo", "finance")):
+            role = "cfo"
+        else:
+            role = "member"
+
+        status_lower = emp_status.lower()
+        explicit_ot = row.get("OT_THRESHOLD", "")
+        if explicit_ot in ("40", "53"):
+            ot_threshold = int(explicit_ot)
+        elif "full time" in status_lower or "full-time" in status_lower:
+            ot_threshold = 53
+        else:
+            ot_threshold = 40
+
+        records.append({
+            "dept_id": dept_id,
+            "name": full_name,
+            "role": role,
+            "ot_threshold": ot_threshold,
+            "rank": rank,
+            "employment_status": emp_status,
+        })
+
+    return records, skipped
+
+
+def upsert_roster_records(session, records: list[dict], default_pin: str = "1234", admin_pin: str | None = None) -> tuple[int, int]:
+    """
+    Inserts or updates Employee rows from parsed roster records.
+    Returns (created_count, updated_count).
+    """
+    member_hash = generate_password_hash(default_pin)
+    officer_hash = generate_password_hash(admin_pin or default_pin)
+    created = 0
+    updated = 0
+
+    for rec in records:
+        existing = session.query(Employee).filter_by(dept_id=rec["dept_id"]).first()
+        if existing:
+            existing.name = rec["name"]
+            existing.role = rec["role"]
+            existing.ot_threshold = rec["ot_threshold"]
+            existing.active = True
+            updated += 1
+        else:
+            pin_hash = officer_hash if rec["role"] in ("officer", "cfo") else member_hash
+            session.add(
+                Employee(
+                    dept_id=rec["dept_id"],
+                    name=rec["name"],
+                    role=rec["role"],
+                    ot_threshold=rec["ot_threshold"],
+                    pin_hash=pin_hash,
+                    active=True,
+                )
+            )
+            created += 1
+
+    return created, updated
+
+
+def load_startup_roster_csv() -> str | None:
+    """
+    Checks for roster CSV content from ROSTER_CSV env var or local Name_and_ID.csv file.
+    """
+    env_csv = os.environ.get("ROSTER_CSV", "").strip()
+    if env_csv:
+        return env_csv
+
+    custom_path = os.environ.get("ROSTER_CSV_PATH", "").strip()
+    candidate_paths = [
+        custom_path,
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "Name_and_ID.csv"),
+    ]
+    for path in candidate_paths:
+        if path and os.path.isfile(path):
+            with open(path, "r", encoding="utf-8-sig") as f:
+                return f.read()
+    return None
+
 
 def init_db():
     Base.metadata.create_all(bind=engine)
@@ -347,321 +469,48 @@ def init_db():
     session = SessionLocal()
     try:
         existing_count = session.query(Employee).count()
-        if existing_count == 0:
-            default_admin_pin = os.environ.get("INITIAL_ADMIN_PIN", "1234")
-            default_member_hash = generate_password_hash("1234")
-            admin_hash = generate_password_hash(default_admin_pin)
+        default_admin_pin = os.environ.get("INITIAL_ADMIN_PIN", "1234")
+        default_member_pin = os.environ.get("INITIAL_MEMBER_PIN", "1234")
 
+        # If a roster CSV is present on disk or in ROSTER_CSV env var and DB is empty, seed from it
+        csv_text = load_startup_roster_csv()
+        if existing_count == 0 and csv_text:
+            records, skipped = parse_roster_csv_text(csv_text)
+            if records:
+                created, updated = upsert_roster_records(
+                    session,
+                    records,
+                    default_pin=default_member_pin,
+                    admin_pin=default_admin_pin,
+                )
+                skip_note = f" Skipped {len(skipped)}: {', '.join(skipped)}." if skipped else ""
+                log_audit(
+                    session,
+                    actor_id="SYSTEM",
+                    actor_name="System Initializer",
+                    action="INITIAL_ROSTER_SEED",
+                    target_type="employee",
+                    target_id=f"{created} members",
+                    details=f"Seeded {created} department members from Name_and_ID.csv.{skip_note}",
+                )
+                session.commit()
+                return
+
+        if existing_count == 0:
+            admin_hash = generate_password_hash(default_admin_pin)
             seed_employees = [
-                Employee(dept_id="900", name="T. Couch", role="officer", ot_threshold=40, pin_hash=admin_hash, active=True),
-                Employee(dept_id="901", name="M. Reynolds", role="cfo", ot_threshold=40, pin_hash=admin_hash, active=True),
-                Employee(dept_id="902", name="J. Miller", role="officer", ot_threshold=40, pin_hash=default_member_hash, active=True),
-                Employee(dept_id="903", name="S. Davis", role="officer", ot_threshold=40, pin_hash=default_member_hash, active=True),
-                Employee(dept_id="904", name="R. Thompson", role="member", ot_threshold=53, pin_hash=default_member_hash, active=True),
-                Employee(dept_id="905", name="K. Patel", role="member", ot_threshold=40, pin_hash=default_member_hash, active=True),
-                Employee(dept_id="906", name="B. Henderson", role="member", ot_threshold=40, pin_hash=default_member_hash, active=True),
-                Employee(dept_id="907", name="A. Morales", role="member", ot_threshold=53, pin_hash=default_member_hash, active=True),
-                Employee(dept_id="908", name="D. Brooks", role="member", ot_threshold=40, pin_hash=default_member_hash, active=True),
-                Employee(dept_id="909", name="C. Wallace", role="member", ot_threshold=40, pin_hash=default_member_hash, active=True),
-                Employee(dept_id="910", name="H. Nguyen", role="member", ot_threshold=40, pin_hash=default_member_hash, active=False),
+                Employee(dept_id="953", name="Tyler Couch", role="officer", ot_threshold=40, pin_hash=admin_hash, active=True),
+                Employee(dept_id="930", name="David Hord", role="officer", ot_threshold=40, pin_hash=admin_hash, active=True),
             ]
             session.add_all(seed_employees)
-            session.flush()
-
-            # Seed sample multi-week shift entries (Current Week & Previous Week)
-            today = date.today()
-            curr_start_str, curr_end_str = get_weekly_pay_period(today)
-            curr_mon = parse_shift_date(curr_start_str)
-            prev_mon = curr_mon - timedelta(days=7)
-            prev_start_str, prev_end_str = get_weekly_pay_period(prev_mon)
-            prev_sun = parse_shift_date(prev_end_str)
-            now = utc_now()
-
-            seed_entries = [
-                # Previous Week (Approved Payroll Week + Sunday Midnight Split Part 1)
-                TimeEntry(
-                    dept_id="902",
-                    shift_date=prev_mon.isoformat(),
-                    start_time="07:00",
-                    end_time="17:00",
-                    is_overnight=False,
-                    duration_hours=10.0,
-                    pay_period_start=prev_start_str,
-                    pay_period_end=prev_end_str,
-                    notes="",
-                    status="approved",
-                    reviewed_by="900 T. Couch",
-                    reviewed_at=now,
-                ),
-                TimeEntry(
-                    dept_id="904",
-                    shift_date=(prev_mon + timedelta(days=1)).isoformat(),
-                    start_time="07:00",
-                    end_time="17:00",
-                    is_overnight=False,
-                    duration_hours=10.0,
-                    pay_period_start=prev_start_str,
-                    pay_period_end=prev_end_str,
-                    notes="Ladder 1 aerial check",
-                    status="approved",
-                    reviewed_by="902 J. Miller",
-                    reviewed_at=now,
-                ),
-                TimeEntry(
-                    dept_id="905",
-                    shift_date=(prev_mon + timedelta(days=2)).isoformat(),
-                    start_time="07:00",
-                    end_time="17:00",
-                    is_overnight=False,
-                    duration_hours=10.0,
-                    pay_period_start=prev_start_str,
-                    pay_period_end=prev_end_str,
-                    notes="",
-                    status="approved",
-                    reviewed_by="902 J. Miller",
-                    reviewed_at=now,
-                ),
-                TimeEntry(
-                    dept_id="906",
-                    shift_date=(prev_mon + timedelta(days=4)).isoformat(),
-                    start_time="19:00",
-                    end_time="07:00",
-                    is_overnight=True,
-                    duration_hours=12.0,
-                    pay_period_start=prev_start_str,
-                    pay_period_end=prev_end_str,
-                    notes="",
-                    status="approved",
-                    reviewed_by="903 S. Davis",
-                    reviewed_at=now,
-                ),
-                TimeEntry(
-                    dept_id="907",
-                    shift_date=(prev_mon + timedelta(days=5)).isoformat(),
-                    start_time="08:00",
-                    end_time="20:00",
-                    is_overnight=False,
-                    duration_hours=12.0,
-                    pay_period_start=prev_start_str,
-                    pay_period_end=prev_end_str,
-                    notes="Community event medical standby (ATV 1)",
-                    status="approved",
-                    reviewed_by="900 T. Couch",
-                    reviewed_at=now,
-                ),
-                TimeEntry(
-                    dept_id="904",
-                    shift_date=prev_sun.isoformat(),
-                    start_time="20:00",
-                    end_time="24:00",
-                    is_overnight=False,
-                    duration_hours=4.0,
-                    pay_period_start=prev_start_str,
-                    pay_period_end=prev_end_str,
-                    notes="Engine 1 overnight coverage [Part 1/2 - Split at Sun Midnight]",
-                    status="approved",
-                    reviewed_by="900 T. Couch",
-                    reviewed_at=now,
-                ),
-                # Current Week (Approved, Pending, Sunday Midnight Split Part 2, and Rejected example)
-                TimeEntry(
-                    dept_id="904",
-                    shift_date=curr_mon.isoformat(),
-                    start_time="00:00",
-                    end_time="06:00",
-                    is_overnight=False,
-                    duration_hours=6.0,
-                    pay_period_start=curr_start_str,
-                    pay_period_end=curr_end_str,
-                    notes="Engine 1 overnight coverage [Part 2/2 - Split at Sun Midnight]",
-                    status="approved",
-                    reviewed_by="900 T. Couch",
-                    reviewed_at=now,
-                ),
-                TimeEntry(
-                    dept_id="902",
-                    shift_date=curr_mon.isoformat(),
-                    start_time="07:00",
-                    end_time="17:00",
-                    is_overnight=False,
-                    duration_hours=10.0,
-                    pay_period_start=curr_start_str,
-                    pay_period_end=curr_end_str,
-                    notes="",
-                    status="approved",
-                    reviewed_by="900 T. Couch",
-                    reviewed_at=now,
-                ),
-                TimeEntry(
-                    dept_id="905",
-                    shift_date=curr_mon.isoformat(),
-                    start_time="07:00",
-                    end_time="17:00",
-                    is_overnight=False,
-                    duration_hours=10.0,
-                    pay_period_start=curr_start_str,
-                    pay_period_end=curr_end_str,
-                    notes="Medical inventory check (Squad 1)",
-                    status="approved",
-                    reviewed_by="902 J. Miller",
-                    reviewed_at=now,
-                ),
-                TimeEntry(
-                    dept_id="906",
-                    shift_date=curr_mon.isoformat(),
-                    start_time="19:00",
-                    end_time="07:00",
-                    is_overnight=True,
-                    duration_hours=12.0,
-                    pay_period_start=curr_start_str,
-                    pay_period_end=curr_end_str,
-                    notes="",
-                    status="approved",
-                    reviewed_by="903 S. Davis",
-                    reviewed_at=now,
-                ),
-                TimeEntry(
-                    dept_id="907",
-                    shift_date=(curr_mon + timedelta(days=1)).isoformat(),
-                    start_time="07:00",
-                    end_time="17:00",
-                    is_overnight=False,
-                    duration_hours=10.0,
-                    pay_period_start=curr_start_str,
-                    pay_period_end=curr_end_str,
-                    notes="Rescue 1 ALS coverage & 3 medical calls",
-                    status="approved",
-                    reviewed_by="902 J. Miller",
-                    reviewed_at=now,
-                ),
-                TimeEntry(
-                    dept_id="904",
-                    shift_date=(curr_mon + timedelta(days=1)).isoformat(),
-                    start_time="18:00",
-                    end_time="22:00",
-                    is_overnight=False,
-                    duration_hours=4.0,
-                    pay_period_start=curr_start_str,
-                    pay_period_end=curr_end_str,
-                    notes="Weekly department pump ops & drafting drill (Tanker 1)",
-                    status="approved",
-                    reviewed_by="902 J. Miller",
-                    reviewed_at=now,
-                ),
-                TimeEntry(
-                    dept_id="908",
-                    shift_date=(curr_mon + timedelta(days=1)).isoformat(),
-                    start_time="18:00",
-                    end_time="22:00",
-                    is_overnight=False,
-                    duration_hours=4.0,
-                    pay_period_start=curr_start_str,
-                    pay_period_end=curr_end_str,
-                    notes="",
-                    status="approved",
-                    reviewed_by="902 J. Miller",
-                    reviewed_at=now,
-                ),
-                TimeEntry(
-                    dept_id="909",
-                    shift_date=(curr_mon + timedelta(days=1)).isoformat(),
-                    start_time="18:00",
-                    end_time="22:00",
-                    is_overnight=False,
-                    duration_hours=4.0,
-                    pay_period_start=curr_start_str,
-                    pay_period_end=curr_end_str,
-                    notes="SCBA & ladder evolution drill",
-                    status="approved",
-                    reviewed_by="903 S. Davis",
-                    reviewed_at=now,
-                ),
-                TimeEntry(
-                    dept_id="905",
-                    shift_date=(curr_mon + timedelta(days=2)).isoformat(),
-                    start_time="02:15",
-                    end_time="05:45",
-                    is_overnight=False,
-                    duration_hours=3.5,
-                    pay_period_start=curr_start_str,
-                    pay_period_end=curr_end_str,
-                    notes="Emergency call-back: Mutual aid structure fire standby",
-                    status="pending",
-                ),
-                TimeEntry(
-                    dept_id="904",
-                    shift_date=(curr_mon + timedelta(days=3)).isoformat(),
-                    start_time="07:00",
-                    end_time="17:00",
-                    is_overnight=False,
-                    duration_hours=10.0,
-                    pay_period_start=curr_start_str,
-                    pay_period_end=curr_end_str,
-                    notes="",
-                    status="pending",
-                ),
-                TimeEntry(
-                    dept_id="906",
-                    shift_date=(curr_mon + timedelta(days=3)).isoformat(),
-                    start_time="13:00",
-                    end_time="21:30",
-                    is_overnight=False,
-                    duration_hours=8.5,
-                    pay_period_start=curr_start_str,
-                    pay_period_end=curr_end_str,
-                    notes="Brush/Grass 1 pump maintenance",
-                    status="pending",
-                ),
-                TimeEntry(
-                    dept_id="907",
-                    shift_date=(curr_mon + timedelta(days=4)).isoformat(),
-                    start_time="19:00",
-                    end_time="07:00",
-                    is_overnight=True,
-                    duration_hours=12.0,
-                    pay_period_start=curr_start_str,
-                    pay_period_end=curr_end_str,
-                    notes="",
-                    status="pending",
-                ),
-                TimeEntry(
-                    dept_id="908",
-                    shift_date=(curr_mon + timedelta(days=4)).isoformat(),
-                    start_time="07:00",
-                    end_time="17:00",
-                    is_overnight=False,
-                    duration_hours=10.0,
-                    pay_period_start=curr_start_str,
-                    pay_period_end=curr_end_str,
-                    notes="Elementary school fire safety demo",
-                    status="pending",
-                ),
-                TimeEntry(
-                    dept_id="908",
-                    shift_date=(curr_mon + timedelta(days=1)).isoformat(),
-                    start_time="18:00",
-                    end_time="22:00",
-                    is_overnight=False,
-                    duration_hours=4.0,
-                    pay_period_start=curr_start_str,
-                    pay_period_end=curr_end_str,
-                    notes="",
-                    status="rejected",
-                    reviewed_by="902 J. Miller",
-                    reviewed_at=now,
-                    review_note="Duplicate entry — already approved.",
-                ),
-            ]
-            session.add_all(seed_entries)
-
             log_audit(
                 session,
                 actor_id="SYSTEM",
                 actor_name="System Initializer",
                 action="INITIAL_SEED",
                 target_type="employee",
-                target_id="900-910",
-                details="Created initial roster accounts (900-910) and multi-week sample shift entries.",
+                target_id="930, 953",
+                details="Created bootstrap officer accounts (953 Tyler Couch, 930 David Hord). Use Roster -> Import CSV to load full roster.",
             )
             session.commit()
     except Exception as exc:
@@ -1507,6 +1356,44 @@ def update_employee(dept_id: str):
         g.db.commit()
 
     return jsonify({"message": f"Updated {emp.dept_id}.", "employee": emp.to_dict()})
+
+
+@app.route("/api/employees/import-csv", methods=["POST"])
+@require_reviewer
+def import_employees_csv():
+    actor = g.current_user
+    data = request.get_json(silent=True) or {}
+    csv_text = str(data.get("csv_text", "")).strip()
+    default_pin = str(data.get("default_pin") or os.environ.get("INITIAL_MEMBER_PIN", "1234")).strip()
+
+    if not csv_text:
+        return jsonify({"error": "CSV content is required."}), 400
+    if len(default_pin) < 4:
+        return jsonify({"error": "Default PIN must be at least 4 characters."}), 400
+
+    records, skipped = parse_roster_csv_text(csv_text)
+    if not records:
+        return jsonify({"error": "No valid 900–999 employee rows found in CSV.", "skipped": skipped}), 400
+
+    created, updated = upsert_roster_records(g.db, records, default_pin=default_pin)
+    skip_msg = f" ({len(skipped)} skipped)" if skipped else ""
+    log_audit(
+        g.db,
+        actor_id=actor.dept_id,
+        actor_name=actor.name,
+        action="ROSTER_CSV_IMPORTED",
+        target_type="employee",
+        target_id=f"{len(records)} members",
+        details=f"Imported roster CSV: {created} added, {updated} updated{skip_msg}.",
+    )
+    g.db.commit()
+
+    return jsonify({
+        "message": f"Imported {len(records)} members ({created} added, {updated} updated){skip_msg}.",
+        "created": created,
+        "updated": updated,
+        "skipped": skipped,
+    })
 
 
 @app.route("/api/audit-logs", methods=["GET"])

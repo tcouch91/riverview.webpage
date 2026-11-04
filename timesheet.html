@@ -1574,7 +1574,7 @@
                     </button>
                 </form>
 
-                <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px dashed #e5e7eb; font-size: 0.85rem; color: var(--text-muted);">
+                <div id="demoAccountsPanel" style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px dashed #e5e7eb; font-size: 0.85rem; color: var(--text-muted);">
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.6rem;">
                         <span style="font-weight: 700; color: #374151;">Demo Accounts (PIN: <code>1234</code>)</span>
                         <button type="button" class="btn btn-outline btn-sm" onclick="resetDemoDataset()">Reset Data</button>
@@ -1730,7 +1730,7 @@
                         <div class="duration-preview" id="durationPreviewBox">
                             <div>
                                 <div style="font-weight: 700; color: var(--primary-dark);">Duration</div>
-                                <div class="calc-sub" id="durationSubText">10h 0m</div>
+                                <div class="calc-sub" id="durationSubText" style="display: none;"></div>
                             </div>
                             <div class="calc-value" id="durationValueText">10.00 hrs</div>
                         </div>
@@ -2046,6 +2046,12 @@
                 <div class="card">
                     <div class="card-header">
                         <div class="card-title">Roster</div>
+                        <div>
+                            <input type="file" id="rosterCsvFileInput" accept=".csv,text/csv" style="display: none;" onchange="handleRosterCsvUpload(this)">
+                            <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('rosterCsvFileInput').click()">
+                                &#8679; Import CSV
+                            </button>
+                        </div>
                     </div>
                     <div class="table-responsive">
                         <table class="data-table">
@@ -3004,6 +3010,8 @@
                         useLocalDemoStorage = false;
                         badge.className = "status-pill online";
                         text.textContent = "Server Connected";
+                        const demoPanel = document.getElementById("demoAccountsPanel");
+                        if (demoPanel) demoPanel.style.display = "none";
                         return;
                     }
                 } catch (_) {
@@ -3015,6 +3023,8 @@
             LocalDB.init();
             badge.className = "status-pill local";
             text.textContent = "Demo Mode";
+            const demoPanel = document.getElementById("demoAccountsPanel");
+            if (demoPanel) demoPanel.style.display = "block";
         }
 
         async function apiRequest(path, options = {}) {
@@ -3348,6 +3358,50 @@
                 return { message: `Updated ${id}.`, employee: emp };
             }
 
+            if (pathname === "/api/employees/import-csv" && method === "POST") {
+                const csvText = String(body.csv_text || "").trim();
+                const defaultPin = String(body.default_pin || "1234").trim();
+                const lines = csvText.replace(/\r\n/g, "\n").split("\n").filter(l => l.trim());
+                if (lines.length < 2) throw new Error("CSV has no data rows.");
+                const headers = lines[0].split(",").map(h => h.trim().toUpperCase());
+                let created = 0, updated = 0;
+                const skipped = [];
+                for (let i = 1; i < lines.length; i++) {
+                    const cols = lines[i].split(",").map(c => c.trim());
+                    const row = {};
+                    headers.forEach((h, idx) => { row[h] = cols[idx] || ""; });
+                    const deptId = row["AGENCY PERSONNEL ID"] || row["DEPT_ID"] || row["ID"] || "";
+                    const fullName = row["NAME"] || `${row["FIRST NAME"] || ""} ${row["LAST NAME"] || ""}`.trim();
+                    if (!/^9\d{2}$/.test(deptId)) {
+                        skipped.push(fullName || `Row ${i + 1}`);
+                        continue;
+                    }
+                    const rankLower = (row["RANK"] || "").toLowerCase();
+                    const statusLower = (row["EMPLOYMENT STATUS"] || "").toLowerCase();
+                    let role = "member";
+                    if (deptId === "953" || ["chief", "captain", "lieutenant", "officer"].some(k => rankLower.includes(k))) {
+                        role = "officer";
+                    } else if (["administrator", "support", "cfo"].some(k => rankLower.includes(k))) {
+                        role = "cfo";
+                    }
+                    const ot_threshold = (statusLower.includes("full time") || statusLower.includes("full-time")) ? 53 : 40;
+                    const existing = employees.find(e => e.dept_id === deptId);
+                    if (existing) {
+                        existing.name = fullName;
+                        existing.role = role;
+                        existing.ot_threshold = ot_threshold;
+                        existing.active = true;
+                        updated++;
+                    } else {
+                        employees.push({ dept_id: deptId, name: fullName, role, ot_threshold, pin: defaultPin, active: true });
+                        created++;
+                    }
+                }
+                LocalDB.saveEmployees(employees);
+                LocalDB.addAudit(currentUser.dept_id, currentUser.name, "ROSTER_CSV_IMPORTED", "employee", `${created + updated} members`, `Imported CSV: ${created} added, ${updated} updated.`);
+                return { message: `Imported ${created + updated} members (${created} added, ${updated} updated)${skipped.length ? ` (${skipped.length} skipped)` : ""}.`, created, updated, skipped };
+            }
+
             if (pathname === "/api/audit-logs" && method === "GET") {
                 return { logs: LocalDB.getAudit() };
             }
@@ -3610,18 +3664,20 @@
             const calc = calculateDurationClient(startTime, endTime);
             if (!calc) {
                 valEl.textContent = "0.00 hrs";
-                subEl.textContent = "Select start and end times.";
+                subEl.textContent = "";
+                subEl.style.display = "none";
                 sunNotice.style.display = "none";
                 if (conflictNotice) conflictNotice.style.display = "none";
                 return;
             }
 
             valEl.textContent = `${calc.hours.toFixed(2)} hrs`;
-            const hmLabel = `${calc.wholeHours}h ${calc.remMins}m`;
             if (calc.isOvernight) {
-                subEl.innerHTML = `${hmLabel} &bull; <b style="color: #1e40af;">Overnight (+1d)</b>`;
+                subEl.innerHTML = `<b style="color: #1e40af;">Overnight (+1d)</b>`;
+                subEl.style.display = "block";
             } else {
-                subEl.textContent = hmLabel;
+                subEl.textContent = "";
+                subEl.style.display = "none";
             }
 
             // Check if Shift Date is a Sunday and crosses midnight
@@ -4614,6 +4670,25 @@
                 await loadRoster();
             } catch (err) {
                 showAlert(err.message, "error");
+            }
+        }
+
+        async function handleRosterCsvUpload(fileInput) {
+            const file = fileInput && fileInput.files && fileInput.files[0];
+            if (!file) return;
+            try {
+                const csvText = await file.text();
+                const res = await apiRequest("/api/employees/import-csv", {
+                    method: "POST",
+                    body: JSON.stringify({ csv_text: csvText })
+                });
+                showAlert(res.message);
+                await populateMemberDropdowns();
+                await refreshActiveViews();
+            } catch (err) {
+                showAlert(err.message, "error");
+            } finally {
+                fileInput.value = "";
             }
         }
 

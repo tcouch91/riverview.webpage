@@ -1,0 +1,12 @@
+# Sensitive personnel roster CSV (keep out of public Git repo)
+timesheet_backend/Name_and_ID.csv
+
+# Python / Flask local artifacts
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.env
+timesheet_backend/*.db
+timesheet_backend/*.sqlite*
