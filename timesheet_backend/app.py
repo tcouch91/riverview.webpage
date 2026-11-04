@@ -44,14 +44,18 @@ app.config["SECRET_KEY"] = os.environ.get(
 TOKEN_MAX_AGE_SECONDS = int(os.environ.get("TOKEN_MAX_AGE_SECONDS", 60 * 60 * 12))  # 12h
 
 # Database configuration: defaults to local SQLite, automatically uses PostgreSQL
-# when DATABASE_URL is provided (e.g., on Northflank).
-raw_db_url = os.environ.get("DATABASE_URL", "").strip()
+# when DATABASE_URL or POSTGRES_URI is provided (e.g., on Northflank).
+raw_db_url = (
+    os.environ.get("DATABASE_URL", "").strip()
+    or os.environ.get("POSTGRES_URI", "").strip()
+)
 if raw_db_url:
     if raw_db_url.startswith("postgres://"):
         raw_db_url = raw_db_url.replace("postgres://", "postgresql://", 1)
     DATABASE_URI = raw_db_url
 else:
-    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "timesheet.db")
+    default_db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "timesheet.db")
+    db_path = os.environ.get("SQLITE_DB_PATH", default_db_path).strip() or default_db_path
     DATABASE_URI = f"sqlite:///{db_path}"
 
 # Configure CORS for riverviewfire.org and local development
