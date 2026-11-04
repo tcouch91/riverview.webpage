@@ -27,7 +27,6 @@ from sqlalchemy import (
     Text,
     DateTime,
     ForeignKey,
-    func,
     text,
 )
 from sqlalchemy.orm import declarative_base, sessionmaker, scoped_session, relationship
@@ -59,7 +58,7 @@ else:
     DATABASE_URI = f"sqlite:///{db_path}"
 
 # Configure CORS for riverviewfire.org and local development
-allowed_origins_env = os.environ.get("CORS_ORIGINS", "")
+allowed_origins_env = os.environ.get("CORS_ORIGINS", "") or os.environ.get("ALLOWED_ORIGINS", "")
 if allowed_origins_env:
     allowed_origins = [o.strip() for o in allowed_origins_env.split(",") if o.strip()]
 else:
@@ -74,7 +73,6 @@ else:
 CORS(
     app,
     resources={r"/api/*": {"origins": allowed_origins}},
-    supports_credentials=True,
     expose_headers=["Content-Disposition"],
 )
 
@@ -168,11 +166,11 @@ class AuditLog(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     timestamp = Column(DateTime(timezone=True), default=utc_now, index=True)
-    actor_id = Column(String(20), nullable=False)
+    actor_id = Column(String(64), nullable=False)
     actor_name = Column(String(120), nullable=False)
     action = Column(String(60), nullable=False)
     target_type = Column(String(40), nullable=False)
-    target_id = Column(String(40), nullable=False)
+    target_id = Column(String(64), nullable=False)
     details = Column(Text, nullable=True)
 
     def to_dict(self):
@@ -648,8 +646,10 @@ ENTRY_MAX_PER_HOUR = int(os.environ.get("ENTRY_MAX_PER_HOUR", 30))
 def get_client_ip() -> str:
     forwarded = request.headers.get("X-Forwarded-For", "")
     if forwarded:
-        return forwarded.split(",")[0].strip()
-    return (request.remote_addr or "unknown").strip()
+        ip = forwarded.split(",")[0].strip()
+    else:
+        ip = (request.remote_addr or "unknown").strip()
+    return ip[:64]
 
 
 def is_login_rate_limited(session, dept_id: str, client_ip: str) -> str | None:
@@ -1619,4 +1619,5 @@ def get_audit_logs():
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    debug_mode = os.environ.get("FLASK_DEBUG", "false").lower() in ("true", "1")
+    app.run(host="0.0.0.0", port=port, debug=debug_mode)
