@@ -1154,13 +1154,6 @@
                 font-size: 0.96rem !important;
             }
 
-            .pay-period-controls input[type="date"] {
-                grid-column: 1 / -1;
-                width: 100% !important;
-                min-height: 52px !important;
-                font-size: 1rem !important;
-            }
-
             /* Full-Width 2-Column Portal Tabs on Mobile */
             .portal-tabs {
                 display: grid !important;
@@ -1587,21 +1580,13 @@
             <!-- Shared Weekly Pay Period Navigator -->
             <div class="pay-period-bar">
                 <div class="pay-period-info">
-                    <h3 id="payPeriodTitle">Pay Period: Loading...</h3>
+                    <h3 id="payPeriodTitle">Viewing Pay Period: Loading...</h3>
                     <p>Monday 00:00 &ndash; Sunday 24:00</p>
                 </div>
                 <div class="pay-period-controls">
                     <button type="button" class="btn btn-outline btn-sm" onclick="shiftPayPeriod(-7)" title="Previous week" aria-label="Previous week">&larr;</button>
                     <button type="button" class="btn btn-secondary btn-sm" onclick="resetToCurrentWeek()">This Week</button>
                     <button type="button" class="btn btn-outline btn-sm" onclick="shiftPayPeriod(7)" title="Next week" aria-label="Next week">&rarr;</button>
-                    <input
-                        type="date"
-                        id="weekPickerInput"
-                        class="form-control"
-                        style="width: auto; padding: 0.35rem 0.65rem; font-size: 0.88rem;"
-                        title="Jump to week"
-                        onchange="onWeekPickerChange(this.value)"
-                    >
                 </div>
             </div>
 
@@ -2068,11 +2053,10 @@
     <!-- ======================================================================
          CHANGE PIN MODAL
          ====================================================================== -->
-    <div id="pinModal" class="modal-backdrop no-print">
+    <div id="pinModal" class="modal-backdrop no-print" onclick="if (event.target === this) closePinModal()">
         <div class="modal-content">
             <div class="card-header">
                 <div class="card-title">Change PIN</div>
-                <button type="button" class="btn btn-outline btn-sm" onclick="closePinModal()">&#10005;</button>
             </div>
             <form id="changePinForm">
                 <div class="form-group">
@@ -2315,7 +2299,10 @@
             const hasExactDuplicate = conflicts.some(c => c.isDuplicate);
             const conflictListText = conflicts.map(c => {
                 const overnightLabel = c.is_overnight ? " (overnight +1d)" : "";
-                return `${c.shift_date} from ${c.start_time} to ${c.end_time}${overnightLabel} (${Number(c.duration_hours).toFixed(2)} hrs, ${c.status})`;
+                const otherPeriodNote = (c.pay_period_start && selectedPayPeriodStart && c.pay_period_start !== selectedPayPeriodStart)
+                    ? ` [in Pay Period ${formatPayPeriodRangeLabel(c.pay_period_start, c.pay_period_end || addDaysStr(c.pay_period_start, 6))}]`
+                    : "";
+                return `${c.shift_date} from ${c.start_time} to ${c.end_time}${overnightLabel} (${Number(c.duration_hours).toFixed(2)} hrs, ${c.status})${otherPeriodNote}`;
             }).join("; ");
 
             if (hasExactDuplicate && conflicts.length === 1) {
@@ -2595,9 +2582,8 @@
                 calendarSelectedDate = isoDate;
             }
 
-            document.getElementById("weekPickerInput").value = selectedPayPeriodStart;
             document.getElementById("payPeriodTitle").textContent =
-                formatDateRange(selectedPayPeriodStart, selectedPayPeriodEnd);
+                `Viewing Pay Period: ${formatDateRange(selectedPayPeriodStart, selectedPayPeriodEnd)}`;
 
             if (triggerRefresh) {
                 refreshActiveViews();
@@ -2616,13 +2602,6 @@
             const todayIso = toIsoDate(new Date());
             calendarSelectedDate = todayIso;
             setPayPeriodByDate(todayIso, true);
-        }
-
-        function onWeekPickerChange(val) {
-            if (val) {
-                calendarSelectedDate = val;
-                setPayPeriodByDate(val, true);
-            }
         }
 
         // =====================================================================
@@ -2722,7 +2701,15 @@
             const el = document.getElementById(id);
             if (el) {
                 el.addEventListener("input", updateDurationPreview);
-                el.addEventListener("change", updateDurationPreview);
+                el.addEventListener("change", () => {
+                    if (id === "entryShiftDate" && el.value) {
+                        const pp = getMondaySundayPeriod(el.value);
+                        if (pp.start !== selectedPayPeriodStart) {
+                            setPayPeriodByDate(el.value, true);
+                        }
+                    }
+                    updateDurationPreview();
+                });
             }
         });
 
@@ -2770,8 +2757,8 @@
 
                 // Jump pay period view to the logged shift's week so the user sees it immediately
                 setPayPeriodByDate(shift_date, false);
-                resetEntryForm();
                 await refreshActiveViews();
+                resetEntryForm();
             } catch (err) {
                 showAlert(err.message, "error");
             } finally {
@@ -2813,7 +2800,10 @@
         async function deleteEntryById(entryId) {
             if (!confirm("Delete this shift?")) return;
             try {
-                await apiRequest(`/api/entries/${entryId}`, { method: "DELETE" });
+                const res = await apiRequest(`/api/entries/${entryId}`, { method: "DELETE" });
+                const removedIds = new Set((res.deleted_ids || [entryId]).map(Number));
+                cachedEntriesForConflictCheck = cachedEntriesForConflictCheck.filter(e => !removedIds.has(Number(e.id)));
+                updateDurationPreview();
                 showAlert("Shift entry deleted.");
                 await refreshActiveViews();
             } catch (err) {

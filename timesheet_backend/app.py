@@ -271,6 +271,65 @@ def get_shift_interval_minutes(shift_date_str: str, start_time_str: str, end_tim
     return start_abs, end_abs
 
 
+SPLIT_PART1_TAG = "[Part 1/2 - Split at Sun Midnight]"
+SPLIT_PART2_TAG = "[Part 2/2 - Split at Sun Midnight]"
+
+
+def find_split_partner_entry(session, entry: TimeEntry) -> TimeEntry | None:
+    """
+    If `entry` is one half of an overnight Sunday midnight split shift, finds
+    the matching partner entry on the adjacent day for the same employee.
+    """
+    notes = entry.notes or ""
+    try:
+        dt = parse_shift_date(entry.shift_date)
+    except ValueError:
+        return None
+
+    if SPLIT_PART1_TAG in notes and entry.end_time == "24:00":
+        mon_iso = (dt + timedelta(days=1)).isoformat()
+        candidates = session.query(TimeEntry).filter(
+            TimeEntry.dept_id == entry.dept_id,
+            TimeEntry.shift_date == mon_iso,
+            TimeEntry.start_time == "00:00",
+        ).all()
+        for c in candidates:
+            if SPLIT_PART2_TAG in (c.notes or ""):
+                return c
+    elif SPLIT_PART2_TAG in notes and entry.start_time == "00:00":
+        sun_iso = (dt - timedelta(days=1)).isoformat()
+        candidates = session.query(TimeEntry).filter(
+            TimeEntry.dept_id == entry.dept_id,
+            TimeEntry.shift_date == sun_iso,
+            TimeEntry.end_time == "24:00",
+        ).all()
+        for c in candidates:
+            if SPLIT_PART1_TAG in (c.notes or ""):
+                return c
+    return None
+
+
+def cleanup_orphaned_split_entries(session, dept_id: str | None = None):
+    """
+    Removes any pending half of a Sunday midnight split shift whose partner half
+    was previously deleted by the user.
+    """
+    query = session.query(TimeEntry).filter(TimeEntry.status == "pending")
+    if dept_id:
+        query = query.filter(TimeEntry.dept_id == dept_id)
+
+    removed_any = False
+    for entry in query.all():
+        notes = entry.notes or ""
+        if SPLIT_PART1_TAG in notes or SPLIT_PART2_TAG in notes:
+            partner = find_split_partner_entry(session, entry)
+            if partner is None:
+                session.delete(entry)
+                removed_any = True
+    if removed_any:
+        session.commit()
+
+
 def check_overlapping_entries(
     session,
     dept_id: str,
@@ -284,6 +343,7 @@ def check_overlapping_entries(
     shift for the same employee. Returns a formatted error message if a conflict
     exists, or None if valid.
     """
+    cleanup_orphaned_split_entries(session, dept_id)
     cand_start, cand_end = get_shift_interval_minutes(shift_date_str, start_time_str, end_time_str)
     query = session.query(TimeEntry).filter(
         TimeEntry.dept_id == dept_id,
@@ -305,7 +365,7 @@ def check_overlapping_entries(
             overnight_tag = " (overnight +1d)" if existing.is_overnight else ""
             conflicts.append(
                 f"{existing.shift_date} from {existing.start_time} to {existing.end_time}{overnight_tag} "
-                f"({existing.duration_hours:.2f} hrs, {existing.status})"
+                f"({existing.duration_hours:.2f} hrs, {existing.status}, Pay Period {existing.pay_period_start})"
             )
 
     if not conflicts:
@@ -518,12 +578,19 @@ def init_db():
                 session.delete(emp_930)
                 session.commit()
 
-        # Always guarantee 953 (Tyler Couch) exists as an active Officer with INITIAL_ADMIN_PIN
+        # Always guarantee 953 (Tyler Couch) exists as an active Officer
         admin_953 = session.query(Employee).filter_by(dept_id="953").first()
         if admin_953:
             admin_953.name = "Tyler Couch"
             admin_953.role = "officer"
-            admin_953.pin_hash = admin_hash
+            has_custom_pin = (
+                session.query(AuditLog)
+                .filter_by(target_id="953", action="PIN_CHANGED")
+                .first()
+                is not None
+            )
+            if not has_custom_pin:
+                admin_953.pin_hash = admin_hash
             admin_953.active = True
             session.commit()
         else:
@@ -873,6 +940,7 @@ def list_entries():
     emp = g.current_user
     is_reviewer = emp.role in ("officer", "cfo")
 
+    cleanup_orphaned_split_entries(g.db, None if is_reviewer else emp.dept_id)
     query = g.db.query(TimeEntry)
 
     # Regular members only see their own entries
@@ -1132,19 +1200,27 @@ def delete_entry(entry_id: int):
         if entry.status != "pending":
             return jsonify({"error": "Only pending entries can be deleted by members."}), 400
 
+    partner = find_split_partner_entry(g.db, entry)
+    deleted_ids = [str(entry.id)]
     details = f"Deleted entry {entry.id} for {entry.dept_id} ({entry.shift_date} {entry.start_time}-{entry.end_time}, {entry.duration_hours}h)"
     g.db.delete(entry)
+
+    if partner and (is_reviewer or partner.status == "pending"):
+        deleted_ids.append(str(partner.id))
+        details += f" and split partner entry {partner.id} ({partner.shift_date} {partner.start_time}-{partner.end_time}, {partner.duration_hours}h)"
+        g.db.delete(partner)
+
     log_audit(
         g.db,
         actor_id=emp.dept_id,
         actor_name=emp.name,
         action="ENTRY_DELETED",
         target_type="time_entry",
-        target_id=str(entry_id),
+        target_id=",".join(deleted_ids),
         details=details,
     )
     g.db.commit()
-    return jsonify({"message": "Time entry deleted."})
+    return jsonify({"message": "Time entry deleted.", "deleted_ids": [int(i) for i in deleted_ids]})
 
 
 @app.route("/api/entries/<int:entry_id>/review", methods=["POST"])
