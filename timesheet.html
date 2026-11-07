@@ -1683,7 +1683,7 @@
                                 <div style="font-weight: 700; color: var(--primary-dark);">Duration</div>
                                 <div class="calc-sub" id="durationSubText" style="display: none;"></div>
                             </div>
-                            <div class="calc-value" id="durationValueText">10.00 hrs</div>
+                            <div class="calc-value" id="durationValueText">0.00 hrs</div>
                         </div>
 
                         <!-- Sunday Midnight Split Notice -->
@@ -2163,7 +2163,6 @@
         let calendarMode = "month";      // "month" or "week"
         let calendarCursorDate = "";     // YYYY-MM-DD cursor for calendar navigation
         let calendarSelectedDate = "";   // YYYY-MM-DD selected date in calendar
-        let cachedEntriesForConflictCheck = []; // Cached entries for live overlap/duplicate checking
 
         // =====================================================================
         // Date & Weekly Pay Period Helpers (Monday 00:00 - Sunday 24:00)
@@ -2248,67 +2247,6 @@
                 remMins,
                 isOvernight
             };
-        }
-
-        function getShiftIntervalMinutes(shiftDate, startTime, endTime) {
-            if (!shiftDate || !startTime || !endTime) return null;
-            const [y, m, d] = String(shiftDate).split("-").map(Number);
-            if (!y || !m || !d) return null;
-            const parseMins = (t) => {
-                if (t === "24:00") return 1440;
-                const [hh, mm] = String(t).split(":").map(Number);
-                return hh * 60 + mm;
-            };
-            const sMins = parseMins(startTime);
-            const eMins = parseMins(endTime);
-            if (isNaN(sMins) || isNaN(eMins)) return null;
-            const baseDayMins = Math.round(Date.UTC(y, m - 1, d) / 60000);
-            const startAbs = baseDayMins + sMins;
-            const endAbs = eMins <= sMins ? baseDayMins + 1440 + eMins : baseDayMins + eMins;
-            return {
-                startAbs,
-                endAbs,
-                isOvernight: eMins <= sMins
-            };
-        }
-
-        function findConflictingEntries(entriesList, deptId, shiftDate, startTime, endTime, excludeEntryId = null) {
-            const candidate = getShiftIntervalMinutes(shiftDate, startTime, endTime);
-            if (!candidate) return [];
-            const targetDept = String(deptId || "").trim();
-            const excludeId = excludeEntryId ? Number(excludeEntryId) : null;
-
-            return (entriesList || [])
-                .filter(existing => {
-                    if (String(existing.dept_id) !== targetDept) return false;
-                    if (excludeId && Number(existing.id) === excludeId) return false;
-                    if (existing.status === "rejected") return false;
-                    const exInterval = getShiftIntervalMinutes(existing.shift_date, existing.start_time, existing.end_time);
-                    if (!exInterval) return false;
-                    return candidate.startAbs < exInterval.endAbs && exInterval.startAbs < candidate.endAbs;
-                })
-                .map(existing => {
-                    const exInterval = getShiftIntervalMinutes(existing.shift_date, existing.start_time, existing.end_time);
-                    const isDuplicate = exInterval.startAbs === candidate.startAbs && exInterval.endAbs === candidate.endAbs;
-                    return { ...existing, isDuplicate };
-                });
-        }
-
-        function formatConflictErrorMessage(conflicts, shiftDate, startTime, endTime) {
-            if (!conflicts || conflicts.length === 0) return "";
-            const hasExactDuplicate = conflicts.some(c => c.isDuplicate);
-            const conflictListText = conflicts.map(c => {
-                const overnightLabel = c.is_overnight ? " (overnight +1d)" : "";
-                const otherPeriodNote = (c.pay_period_start && selectedPayPeriodStart && c.pay_period_start !== selectedPayPeriodStart)
-                    ? ` [in Pay Period ${formatPayPeriodRangeLabel(c.pay_period_start, c.pay_period_end || addDaysStr(c.pay_period_start, 6))}]`
-                    : "";
-                return `${c.shift_date} from ${c.start_time} to ${c.end_time}${overnightLabel} (${Number(c.duration_hours).toFixed(2)} hrs, ${c.status})${otherPeriodNote}`;
-            }).join("; ");
-
-            if (hasExactDuplicate && conflicts.length === 1) {
-                return `Duplicate of an existing entry: ${conflictListText}.`;
-            }
-            return `Overlaps an existing entry: ${conflictListText}.`;
         }
 
         // Clean up any legacy demo keys from localStorage
@@ -2475,7 +2413,7 @@
             if (!startSelect || !endSelect) return;
 
             const buildOptionsHtml = (includeMidnightEnd) => {
-                const items = [];
+                const items = ['<option value=""></option>'];
                 for (let h = 0; h < 24; h++) {
                     for (const m of [0, 15, 30, 45]) {
                         const hh24 = String(h).padStart(2, "0");
@@ -2492,8 +2430,8 @@
 
             startSelect.innerHTML = buildOptionsHtml(false);
             endSelect.innerHTML = buildOptionsHtml(true);
-            startSelect.value = "07:00";
-            endSelect.value = "17:00";
+            startSelect.value = "";
+            endSelect.value = "";
         }
 
         async function enterPortal() {
@@ -2512,15 +2450,15 @@
 
             populateQuarterHourTimeSelects();
 
-            // Default shift date, normal day shift (07:00 - 17:00), & current pay period
+            // Default shift date & current pay period (start and end times begin blank)
             const todayIso = toIsoDate(new Date());
             calendarCursorDate = todayIso;
             calendarSelectedDate = todayIso;
             const shiftDateInput = document.getElementById("entryShiftDate");
             shiftDateInput.max = getMaxAllowedShiftDateIso();
             shiftDateInput.value = todayIso;
-            document.getElementById("entryStartTime").value = "07:00";
-            document.getElementById("entryEndTime").value = "17:00";
+            document.getElementById("entryStartTime").value = "";
+            document.getElementById("entryEndTime").value = "";
             updateDurationPreview();
             setPayPeriodByDate(todayIso, false);
 
@@ -2646,13 +2584,14 @@
             const conflictNotice = document.getElementById("overlapConflictNotice");
             const editId = document.getElementById("editEntryId").value;
 
+            if (conflictNotice) conflictNotice.style.display = "none";
+
             const calc = calculateDurationClient(startTime, endTime);
             if (!calc) {
                 valEl.textContent = "0.00 hrs";
                 subEl.textContent = "";
                 subEl.style.display = "none";
                 sunNotice.style.display = "none";
-                if (conflictNotice) conflictNotice.style.display = "none";
                 return;
             }
 
@@ -2675,25 +2614,6 @@
                 }
             } else {
                 sunNotice.style.display = "none";
-            }
-
-            // Live check for duplicate / overlapping shift entries
-            if (conflictNotice && currentUser && shiftDate) {
-                let targetDeptId = (currentUser.role === "officer" || currentUser.role === "cfo")
-                    ? (document.getElementById("entryDeptId").value || currentUser.dept_id)
-                    : currentUser.dept_id;
-                const sourceEntries = cachedEntriesForConflictCheck;
-                if (editId) {
-                    const editingEntry = sourceEntries.find(e => Number(e.id) === Number(editId));
-                    if (editingEntry) targetDeptId = editingEntry.dept_id;
-                }
-                const conflicts = findConflictingEntries(sourceEntries, targetDeptId, shiftDate, startTime, endTime, editId || null);
-                if (conflicts.length > 0) {
-                    conflictNotice.textContent = formatConflictErrorMessage(conflicts, shiftDate, startTime, endTime);
-                    conflictNotice.style.display = "block";
-                } else {
-                    conflictNotice.style.display = "none";
-                }
             }
         }
 
@@ -2721,9 +2641,17 @@
             const end_time = document.getElementById("entryEndTime").value;
             const notes = document.getElementById("entryNotes").value.trim();
             const split_sunday_midnight = document.getElementById("splitSundayMidnight").checked;
+            const conflictNotice = document.getElementById("overlapConflictNotice");
             const dept_id = (currentUser.role === "officer" || currentUser.role === "cfo")
                 ? (document.getElementById("entryDeptId").value || currentUser.dept_id)
                 : currentUser.dept_id;
+
+            if (conflictNotice) conflictNotice.style.display = "none";
+
+            if (!start_time || !end_time) {
+                showAlert("Please select both a start time and end time.", "error");
+                return;
+            }
 
             if (shift_date > getMaxAllowedShiftDateIso()) {
                 showAlert("Shift date can't be more than 1 day ahead.", "error");
@@ -2760,6 +2688,10 @@
                 await refreshActiveViews();
                 resetEntryForm();
             } catch (err) {
+                if (conflictNotice && /duplicate|overlap/i.test(err.message || "")) {
+                    conflictNotice.textContent = err.message;
+                    conflictNotice.style.display = "block";
+                }
                 showAlert(err.message, "error");
             } finally {
                 btn.disabled = false;
@@ -2777,8 +2709,8 @@
             document.getElementById("entryFormTitle").textContent = "Log Shift";
             document.getElementById("saveEntryBtn").textContent = "Submit Shift";
             document.getElementById("cancelEditBtn").style.display = "none";
-            document.getElementById("entryStartTime").value = "07:00";
-            document.getElementById("entryEndTime").value = "17:00";
+            document.getElementById("entryStartTime").value = "";
+            document.getElementById("entryEndTime").value = "";
             document.getElementById("entryNotes").value = "";
             updateDurationPreview();
         }
@@ -2800,9 +2732,7 @@
         async function deleteEntryById(entryId) {
             if (!confirm("Delete this shift?")) return;
             try {
-                const res = await apiRequest(`/api/entries/${entryId}`, { method: "DELETE" });
-                const removedIds = new Set((res.deleted_ids || [entryId]).map(Number));
-                cachedEntriesForConflictCheck = cachedEntriesForConflictCheck.filter(e => !removedIds.has(Number(e.id)));
+                await apiRequest(`/api/entries/${entryId}`, { method: "DELETE" });
                 updateDurationPreview();
                 showAlert("Shift entry deleted.");
                 await refreshActiveViews();
@@ -3040,10 +2970,6 @@
             try {
                 const data = await apiRequest(`/api/entries?${query.toString()}`);
                 const entries = data.entries || [];
-                if (!query.get("dept_id")) {
-                    cachedEntriesForConflictCheck = entries;
-                    updateDurationPreview();
-                }
                 const byDate = new Map();
                 entries.forEach(e => {
                     if (!byDate.has(e.shift_date)) {
