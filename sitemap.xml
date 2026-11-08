@@ -2,22 +2,92 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://www.riverviewfire.org/index.html</loc>
-    <lastmod>2024-01-01</lastmod>
+    <lastmod>2026-07-07</lastmod>
     <priority>1.00</priority>
   </url>
   <url>
     <loc>https://www.riverviewfire.org/about.html</loc>
-    <lastmod>2024-01-01</lastmod>
+    <lastmod>2026-06-04</lastmod>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://www.riverviewfire.org/apply.html</loc>
+    <lastmod>2026-02-27</lastmod>
     <priority>0.80</priority>
   </url>
   <url>
     <loc>https://www.riverviewfire.org/district_checker.html</loc>
-    <lastmod>2024-01-01</lastmod>
+    <lastmod>2026-01-17</lastmod>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://www.riverviewfire.org/statistics.html</loc>
+    <lastmod>2026-01-17</lastmod>
     <priority>0.80</priority>
   </url>
   <url>
     <loc>https://www.riverviewfire.org/july_fourth.html</loc>
-    <lastmod>2024-07-07</lastmod>
+    <lastmod>2026-07-07</lastmod>
     <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://www.riverviewfire.org/station1.html</loc>
+    <lastmod>2026-03-24</lastmod>
+    <priority>0.70</priority>
+  </url>
+  <url>
+    <loc>https://www.riverviewfire.org/station2.html</loc>
+    <lastmod>2026-03-25</lastmod>
+    <priority>0.70</priority>
+  </url>
+  <url>
+    <loc>https://www.riverviewfire.org/engine1.html</loc>
+    <lastmod>2026-03-24</lastmod>
+    <priority>0.60</priority>
+  </url>
+  <url>
+    <loc>https://www.riverviewfire.org/engine2.html</loc>
+    <lastmod>2026-03-25</lastmod>
+    <priority>0.60</priority>
+  </url>
+  <url>
+    <loc>https://www.riverviewfire.org/ladder1.html</loc>
+    <lastmod>2026-03-25</lastmod>
+    <priority>0.60</priority>
+  </url>
+  <url>
+    <loc>https://www.riverviewfire.org/rescue1.html</loc>
+    <lastmod>2026-03-24</lastmod>
+    <priority>0.60</priority>
+  </url>
+  <url>
+    <loc>https://www.riverviewfire.org/tanker1.html</loc>
+    <lastmod>2026-03-24</lastmod>
+    <priority>0.60</priority>
+  </url>
+  <url>
+    <loc>https://www.riverviewfire.org/squad1.html</loc>
+    <lastmod>2026-03-24</lastmod>
+    <priority>0.60</priority>
+  </url>
+  <url>
+    <loc>https://www.riverviewfire.org/squad2.html</loc>
+    <lastmod>2026-03-25</lastmod>
+    <priority>0.60</priority>
+  </url>
+  <url>
+    <loc>https://www.riverviewfire.org/grass1.html</loc>
+    <lastmod>2026-03-24</lastmod>
+    <priority>0.60</priority>
+  </url>
+  <url>
+    <loc>https://www.riverviewfire.org/atv1.html</loc>
+    <lastmod>2026-03-24</lastmod>
+    <priority>0.60</priority>
+  </url>
+  <url>
+    <loc>https://www.riverviewfire.org/car1.html</loc>
+    <lastmod>2026-03-24</lastmod>
+    <priority>0.60</priority>
   </url>
 </urlset>

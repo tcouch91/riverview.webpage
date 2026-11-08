@@ -1,4 +1,6 @@
 User-agent: *
 Disallow: /calendar.html
+Disallow: /timesheet.html
+Disallow: /timesheet_backend/
 
 Sitemap: https://www.riverviewfire.org/sitemap.xml
