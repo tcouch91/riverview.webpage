@@ -4,14 +4,19 @@ Riverview Fire Department - Employee Timesheet Backend API
 Lightweight Flask application with SQLite / PostgreSQL (Northflank) storage,
 CORS configured for riverviewfire.org, Department ID (900-999) + PIN authentication,
 retro shift logging with automatic duration calculation, weekly pay period
-(Monday 00:00 - Sunday 24:00) aggregation, audit logging, and CFO CSV exports.
+(Monday 00:00 - Sunday 24:00) aggregation, audit logging, CFO CSV exports,
+and monthly shift scheduling (availability, officer schedule builder with
+projected hours, and vacancy sign-ups).
 """
 
+import copy
 import csv
 import io
+import json
 import os
 import re
-from datetime import datetime, date, timedelta, timezone
+from collections import defaultdict
+from datetime import datetime, date, time as dt_time, timedelta, timezone
 from functools import wraps
 
 from flask import Flask, request, jsonify, Response, g
@@ -27,8 +32,10 @@ from sqlalchemy import (
     Text,
     DateTime,
     ForeignKey,
+    UniqueConstraint,
     text,
 )
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import declarative_base, sessionmaker, scoped_session, relationship
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -92,6 +99,15 @@ def utc_now():
     return datetime.now(timezone.utc)
 
 
+def iso_utc(dt: datetime | None) -> str | None:
+    """ISO timestamp with an explicit UTC offset (SQLite drops tzinfo on read)."""
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.isoformat()
+
+
 class Employee(Base):
     __tablename__ = "employees"
 
@@ -99,6 +115,7 @@ class Employee(Base):
     name = Column(String(120), nullable=False)
     role = Column(String(20), nullable=False, default="member")  # member | officer | cfo
     ot_threshold = Column(Integer, nullable=False, default=40)   # 53 for Full-Time 24/48, 40 for standard staff
+    is_driver = Column(Boolean, nullable=False, default=False)  # Qualified apparatus driver (scheduling)
     pin_hash = Column(String(256), nullable=False)
     active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime(timezone=True), default=utc_now)
@@ -111,6 +128,7 @@ class Employee(Base):
             "name": self.name,
             "role": self.role,
             "ot_threshold": self.ot_threshold if self.ot_threshold in (40, 53) else 40,
+            "is_driver": bool(self.is_driver),
             "active": self.active,
             "is_reviewer": self.role in ("officer", "cfo"),
             "created_at": self.created_at.isoformat() if self.created_at else None,
@@ -183,6 +201,110 @@ class AuditLog(Base):
             "target_type": self.target_type,
             "target_id": self.target_id,
             "details": self.details or "",
+        }
+
+
+# ------------------------------------------------------------------------------
+# Scheduling Models
+# ------------------------------------------------------------------------------
+
+class ScheduleSetting(Base):
+    """Key/value JSON settings for scheduling (e.g., the staffing template)."""
+    __tablename__ = "schedule_settings"
+
+    key = Column(String(60), primary_key=True)
+    value = Column(Text, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+
+
+class ScheduleMonth(Base):
+    """One row per scheduled month (YYYY-MM): draft while being built, then published."""
+    __tablename__ = "schedule_months"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    month = Column(String(7), nullable=False, unique=True, index=True)  # YYYY-MM
+    status = Column(String(20), nullable=False, default="draft")       # draft | published
+    availability_deadline = Column(String(10), nullable=False)         # YYYY-MM-DD (inclusive)
+    notes = Column(Text, nullable=True, default="")
+    created_by = Column(String(120), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now)
+    published_by = Column(String(120), nullable=True)
+    published_at = Column(DateTime(timezone=True), nullable=True)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+
+
+class ScheduleSlot(Base):
+    """A single seat on the schedule (date + shift + position + seat number)."""
+    __tablename__ = "schedule_slots"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    month = Column(String(7), nullable=False, index=True)        # YYYY-MM
+    shift_date = Column(String(10), nullable=False, index=True)  # YYYY-MM-DD the shift starts
+    shift_key = Column(String(20), nullable=False)               # e.g. day | night
+    shift_label = Column(String(40), nullable=False)
+    position_key = Column(String(20), nullable=False)            # e.g. st1 | st2 | squad
+    position_label = Column(String(40), nullable=False)
+    seat = Column(Integer, nullable=False, default=1)
+    start_time = Column(String(5), nullable=False)
+    end_time = Column(String(5), nullable=False)
+    dept_id = Column(String(3), ForeignKey("employees.dept_id"), nullable=True, index=True)
+    assigned_via = Column(String(20), nullable=True)             # officer | signup | autofill
+    assigned_by = Column(String(120), nullable=True)
+    assigned_at = Column(DateTime(timezone=True), nullable=True)
+    # Partial coverage: minutes from shift_date 00:00 that the assignee actually works
+    # (e.g. 480-1020 = 08:00-17:00). NULL means the full seat. The seat still counts as filled.
+    cover_start_min = Column(Integer, nullable=True)
+    cover_end_min = Column(Integer, nullable=True)
+
+    employee = relationship("Employee")
+
+
+class ScheduleAvailability(Base):
+    """
+    A member's available hours for one operational day (by default 07:00 to
+    07:00 the next morning, so a full night shift is one continuous block).
+    Bit i of hours_mask = available for the hour starting at (start_hour + i)
+    on op_date; bits past midnight fall on the next calendar day.
+    """
+    __tablename__ = "schedule_availability_hours"
+    __table_args__ = (
+        UniqueConstraint("dept_id", "op_date", name="uq_schedule_availability_member_day"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    dept_id = Column(String(3), ForeignKey("employees.dept_id"), nullable=False, index=True)
+    month = Column(String(7), nullable=False, index=True)
+    op_date = Column(String(10), nullable=False, index=True)
+    start_hour = Column(Integer, nullable=False, default=7)
+    hours_mask = Column(Integer, nullable=False, default=0)
+    created_at = Column(DateTime(timezone=True), default=utc_now)
+
+
+class ScheduleSubmission(Base):
+    """Tracks that a member submitted availability for a month, plus notes / max hours."""
+    __tablename__ = "schedule_submissions"
+    __table_args__ = (
+        UniqueConstraint("dept_id", "month", name="uq_schedule_submission_member_month"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    dept_id = Column(String(3), ForeignKey("employees.dept_id"), nullable=False, index=True)
+    month = Column(String(7), nullable=False, index=True)
+    notes = Column(Text, nullable=True, default="")
+    max_hours = Column(Integer, nullable=True)
+    submitted_by = Column(String(120), nullable=True)
+    submitted_at = Column(DateTime(timezone=True), default=utc_now)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+
+    def to_dict(self):
+        return {
+            "dept_id": self.dept_id,
+            "month": self.month,
+            "notes": self.notes or "",
+            "max_hours": self.max_hours,
+            "submitted_by": self.submitted_by,
+            "submitted_at": iso_utc(self.submitted_at),
+            "updated_at": iso_utc(self.updated_at),
         }
 
 
@@ -451,11 +573,21 @@ def parse_roster_csv_text(csv_text: str) -> tuple[list[dict], list[str]]:
         else:
             ot_threshold = 40
 
+        # Optional DRIVER / QUALIFIED DRIVER column (yes/no). None = leave unchanged.
+        driver_raw = (row.get("DRIVER") or row.get("QUALIFIED DRIVER") or row.get("IS_DRIVER") or "").strip().lower()
+        if driver_raw in ("y", "yes", "true", "1", "x"):
+            is_driver = True
+        elif driver_raw in ("n", "no", "false", "0"):
+            is_driver = False
+        else:
+            is_driver = None
+
         records.append({
             "dept_id": dept_id,
             "name": full_name,
             "role": role,
             "ot_threshold": ot_threshold,
+            "is_driver": is_driver,
             "rank": rank,
             "employment_status": emp_status,
             "pin": row.get("PIN", "").strip(),
@@ -486,6 +618,8 @@ def upsert_roster_records(session, records: list[dict], default_pin: str = "1234
             existing.name = rec["name"]
             existing.role = role
             existing.ot_threshold = rec["ot_threshold"]
+            if rec.get("is_driver") is not None:
+                existing.is_driver = rec["is_driver"]
             if is_primary_admin and env_admin_pin:
                 existing.pin_hash = officer_hash
             elif len(csv_pin) >= 4:
@@ -505,6 +639,7 @@ def upsert_roster_records(session, records: list[dict], default_pin: str = "1234
                     name=rec["name"],
                     role=role,
                     ot_threshold=rec["ot_threshold"],
+                    is_driver=bool(rec.get("is_driver")),
                     pin_hash=pin_hash,
                     active=True,
                 )
@@ -536,13 +671,21 @@ def load_startup_roster_csv() -> str | None:
 
 def init_db():
     Base.metadata.create_all(bind=engine)
-    # Safe migration if existing table lacks ot_threshold column
-    with engine.connect() as conn:
-        try:
-            conn.execute(text("ALTER TABLE employees ADD COLUMN ot_threshold INTEGER NOT NULL DEFAULT 40"))
-            conn.commit()
-        except Exception:
-            pass
+    # Safe column migrations for tables created by older versions. Each runs on its
+    # own connection so a failure ("column already exists") can't abort the next one
+    # (PostgreSQL aborts the whole transaction after any error).
+    for ddl in (
+        "ALTER TABLE employees ADD COLUMN ot_threshold INTEGER NOT NULL DEFAULT 40",
+        "ALTER TABLE employees ADD COLUMN is_driver BOOLEAN NOT NULL DEFAULT FALSE",
+        "ALTER TABLE schedule_slots ADD COLUMN cover_start_min INTEGER",
+        "ALTER TABLE schedule_slots ADD COLUMN cover_end_min INTEGER",
+    ):
+        with engine.connect() as conn:
+            try:
+                conn.execute(text(ddl))
+                conn.commit()
+            except Exception:
+                conn.rollback()
 
     session = SessionLocal()
     try:
@@ -1553,6 +1696,7 @@ def create_employee():
     name = str(data.get("name", "")).strip()
     role = str(data.get("role", "member")).strip().lower()
     ot_threshold = 53 if int(data.get("ot_threshold", 40) or 40) == 53 else 40
+    is_driver = bool(data.get("is_driver", False))
     pin = str(data.get("pin", "")).strip()
 
     if not is_valid_dept_id(dept_id):
@@ -1573,6 +1717,7 @@ def create_employee():
         name=name,
         role=role,
         ot_threshold=ot_threshold,
+        is_driver=is_driver,
         pin_hash=generate_password_hash(pin),
         active=True,
     )
@@ -1584,7 +1729,10 @@ def create_employee():
         action="EMPLOYEE_CREATED",
         target_type="employee",
         target_id=dept_id,
-        details=f"Added {dept_id} ({name}) with role '{role}' and {ot_threshold}h OT threshold.",
+        details=(
+            f"Added {dept_id} ({name}) with role '{role}' and {ot_threshold}h OT threshold"
+            + (", qualified driver." if is_driver else ".")
+        ),
     )
     g.db.commit()
     return jsonify({"message": f"Added {dept_id} ({name}).", "employee": new_emp.to_dict()}), 201
@@ -1618,6 +1766,12 @@ def update_employee(dept_id: str):
         if new_ot != emp.ot_threshold:
             changes.append(f"ot_threshold {emp.ot_threshold}h -> {new_ot}h")
             emp.ot_threshold = new_ot
+
+    if "is_driver" in data:
+        new_driver = bool(data["is_driver"])
+        if new_driver != bool(emp.is_driver):
+            changes.append(f"qualified driver {bool(emp.is_driver)} -> {new_driver}")
+            emp.is_driver = new_driver
 
     if "active" in data:
         new_active = bool(data["active"])
@@ -1692,6 +1846,1703 @@ def get_audit_logs():
     logs = g.db.query(AuditLog).order_by(AuditLog.timestamp.desc(), AuditLog.id.desc()).limit(limit).all()
     return jsonify({"logs": [l.to_dict() for l in logs]})
 
+
+# ==============================================================================
+# Scheduling: Staffing Template, Availability, Builder & Vacancy Sign-Ups
+# ==============================================================================
+#
+# Workflow:
+#   1. Members drag across an hour-by-hour grid (1-hour granularity) to mark
+#      when they can work in an upcoming month. It's due `availability_lead_days`
+#      (default 14) before the month starts; officers can move the deadline.
+#   2. An officer fills seats in the Builder, by hand or with Auto-Fill, while
+#      watching each member's projected hours per Monday-Sunday pay week against
+#      their OT threshold (40h standard / 53h 24-48). Someone available for only
+#      part of a shift (e.g. can't start until 08:00) can still fill the seat: the
+#      seat counts as filled and their hours reflect the part they work.
+#      Positions marked `requires_driver` need a qualified driver on every shift.
+#   3. The officer publishes the month. Members can then sign up for open seats.
+
+try:
+    from zoneinfo import ZoneInfo
+    LOCAL_TZ = ZoneInfo(os.environ.get("LOCAL_TIMEZONE", "America/New_York"))
+except Exception:  # tz database unavailable (e.g. Windows without the tzdata package)
+    LOCAL_TZ = timezone(timedelta(hours=-5))
+
+SIGNUP_DROP_CUTOFF_HOURS = int(os.environ.get("SIGNUP_DROP_CUTOFF_HOURS", 24))
+MAX_CONTINUOUS_HOURS = int(os.environ.get("SCHEDULE_MAX_CONTINUOUS_HOURS", 24))  # Auto-Fill rest rule
+MONTH_REGEX = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
+TEMPLATE_KEY_REGEX = re.compile(r"^[a-z0-9_]{1,20}$")
+FULL_DAY_MASK = (1 << 24) - 1
+
+DEFAULT_STAFFING_TEMPLATE = {
+    "positions": [
+        {"key": "st1", "label": "Station 1", "requires_driver": True},
+        {"key": "st2", "label": "Station 2", "requires_driver": True},
+        {"key": "squad", "label": "Squad", "requires_driver": False},
+    ],
+    "shifts": [
+        {
+            "key": "day",
+            "label": "Day",
+            "start": "07:00",
+            "end": "17:00",
+            "staffing": {"st1": 2, "st2": 2, "squad": 1},
+        },
+        {
+            "key": "night",
+            "label": "Night",
+            "start": "17:00",
+            "end": "07:00",
+            "staffing": {"st1": 1, "st2": 1, "squad": 0},
+        },
+    ],
+    "availability_lead_days": 14,
+    # Partial availability counts toward a shift when it covers at least this share of it
+    "min_coverage_pct": 75,
+}
+
+
+def local_now() -> datetime:
+    return datetime.now(LOCAL_TZ)
+
+
+def local_today() -> date:
+    return local_now().date()
+
+
+def local_abs_minutes(dt: datetime) -> int:
+    """Minutes on the same absolute timeline as get_shift_interval_minutes()."""
+    return dt.date().toordinal() * 1440 + dt.hour * 60 + dt.minute
+
+
+def is_reviewer_role(emp: Employee) -> bool:
+    return emp.role in ("officer", "cfo")
+
+
+def actor_label(emp: Employee) -> str:
+    return f"{emp.dept_id} {emp.name}"
+
+
+def parse_month(month_str: str) -> date:
+    month_str = (month_str or "").strip()
+    if not MONTH_REGEX.match(month_str):
+        raise ValueError("Month must be in YYYY-MM format.")
+    year, month = map(int, month_str.split("-"))
+    return date(year, month, 1)
+
+
+def add_months(first: date, delta: int) -> date:
+    idx = first.year * 12 + (first.month - 1) + delta
+    return date(idx // 12, idx % 12 + 1, 1)
+
+
+def month_last_day(first: date) -> date:
+    return add_months(first, 1) - timedelta(days=1)
+
+
+def month_offset(first: date) -> int:
+    today = local_today()
+    return (first.year - today.year) * 12 + (first.month - today.month)
+
+
+def iter_month_dates(first: date):
+    d = first
+    last = month_last_day(first)
+    while d <= last:
+        yield d
+        d += timedelta(days=1)
+
+
+def month_display(month_str: str) -> str:
+    return parse_month(month_str).strftime("%B %Y")
+
+
+def default_availability_deadline(first: date, lead_days: int) -> str:
+    return (first - timedelta(days=lead_days)).isoformat()
+
+
+def minutes_to_hhmm(mins: int) -> str:
+    return f"{(mins // 60) % 24:02d}:{mins % 60:02d}"
+
+
+def validate_schedule_month(month_str: str, emp: Employee) -> tuple[date | None, str | None]:
+    try:
+        first = parse_month(month_str)
+    except ValueError as err:
+        return None, str(err)
+    low, high = (-24, 18) if is_reviewer_role(emp) else (-12, 6)
+    if not low <= month_offset(first) <= high:
+        return None, "That month is outside the scheduling window."
+    return first, None
+
+
+def validate_staffing_template(data) -> tuple[dict | None, str | None]:
+    """Validates and normalizes a staffing template. Returns (template, error)."""
+    if not isinstance(data, dict):
+        return None, "Staffing template must be an object."
+    positions_in = data.get("positions")
+    shifts_in = data.get("shifts")
+    if not isinstance(positions_in, list) or not 1 <= len(positions_in) <= 8:
+        return None, "Staffing template needs between 1 and 8 positions."
+    if not isinstance(shifts_in, list) or not 1 <= len(shifts_in) <= 4:
+        return None, "Staffing template needs between 1 and 4 shifts."
+
+    positions = []
+    for p in positions_in:
+        p = p if isinstance(p, dict) else {}
+        key = str(p.get("key", "")).strip().lower()
+        label = str(p.get("label", "")).strip()[:40]
+        if not TEMPLATE_KEY_REGEX.match(key) or any(x["key"] == key for x in positions):
+            return None, f"Invalid or duplicate position key '{key}'."
+        if not label:
+            return None, f"Position '{key}' needs a label."
+        positions.append({"key": key, "label": label, "requires_driver": bool(p.get("requires_driver", False))})
+
+    shifts = []
+    for s in shifts_in:
+        s = s if isinstance(s, dict) else {}
+        key = str(s.get("key", "")).strip().lower()
+        label = str(s.get("label", "")).strip()[:40]
+        if not TEMPLATE_KEY_REGEX.match(key) or any(x["key"] == key for x in shifts):
+            return None, f"Invalid or duplicate shift key '{key}'."
+        if not label:
+            return None, f"Shift '{key}' needs a label."
+        start = str(s.get("start", "")).strip()
+        end = str(s.get("end", "")).strip()
+        try:
+            calculate_duration(start, end)
+        except ValueError as err:
+            return None, f"{label} shift: {err}"
+        staffing_in = s.get("staffing") if isinstance(s.get("staffing"), dict) else {}
+        staffing = {}
+        for p in positions:
+            try:
+                count = int(staffing_in.get(p["key"], 0) or 0)
+            except (TypeError, ValueError):
+                return None, f"Staffing for {label} / {p['label']} must be a whole number."
+            if not 0 <= count <= 6:
+                return None, f"Staffing for {label} / {p['label']} must be between 0 and 6."
+            staffing[p["key"]] = count
+        shifts.append({"key": key, "label": label, "start": start, "end": end, "staffing": staffing})
+
+    try:
+        lead_days = int(data.get("availability_lead_days", 14))
+    except (TypeError, ValueError):
+        return None, "Availability lead time must be a whole number of days."
+    if not 0 <= lead_days <= 60:
+        return None, "Availability lead time must be between 0 and 60 days."
+
+    try:
+        min_coverage = int(data.get("min_coverage_pct", 75))
+    except (TypeError, ValueError):
+        return None, "Minimum coverage must be a whole-number percent."
+    if not 10 <= min_coverage <= 100:
+        return None, "Minimum coverage must be between 10% and 100%."
+
+    return {
+        "positions": positions,
+        "shifts": shifts,
+        "availability_lead_days": lead_days,
+        "min_coverage_pct": min_coverage,
+    }, None
+
+
+def get_staffing_template(session) -> dict:
+    row = session.get(ScheduleSetting, "staffing_template")
+    if row:
+        try:
+            tpl, _ = validate_staffing_template(json.loads(row.value))
+            if tpl:
+                return tpl
+        except (TypeError, ValueError):
+            pass
+    return copy.deepcopy(DEFAULT_STAFFING_TEMPLATE)
+
+
+def template_day_start_hour(tpl: dict) -> int:
+    """The availability grid's day runs from the first shift's start hour to the same hour next day."""
+    return time_to_minutes(tpl["shifts"][0]["start"]) // 60
+
+
+def driver_positions(tpl: dict) -> set:
+    return {p["key"] for p in tpl["positions"] if p.get("requires_driver")}
+
+
+# ------------------------------------------------------------------------------
+# Seat time math
+# ------------------------------------------------------------------------------
+
+def slot_seat_interval(slot: ScheduleSlot) -> tuple[int, int]:
+    return get_shift_interval_minutes(slot.shift_date, slot.start_time, slot.end_time)
+
+
+def slot_work_interval(slot: ScheduleSlot) -> tuple[int, int]:
+    """The minutes the assignee actually works (partial coverage), else the whole seat."""
+    if slot.cover_start_min is not None and slot.cover_end_min is not None:
+        base = parse_shift_date(slot.shift_date).toordinal() * 1440
+        return base + slot.cover_start_min, base + slot.cover_end_min
+    return slot_seat_interval(slot)
+
+
+def slot_hours(slot: ScheduleSlot) -> float:
+    try:
+        start, end = slot_work_interval(slot)
+    except ValueError:
+        return 0.0
+    return round((end - start) / 60.0, 2)
+
+
+def slot_work_times(slot: ScheduleSlot) -> tuple[str, str, str]:
+    """(work_date, start HH:MM, end HH:MM) for timesheet logging."""
+    start, end = slot_work_interval(slot)
+    day = start // 1440
+    start_rel, end_rel = start - day * 1440, end - day * 1440
+    end_str = "24:00" if end_rel == 1440 else minutes_to_hhmm(end_rel)
+    return date.fromordinal(day).isoformat(), minutes_to_hhmm(start_rel), end_str
+
+
+def slot_start_local(slot: ScheduleSlot) -> datetime:
+    mins = time_to_minutes(slot.start_time)
+    return datetime.combine(parse_shift_date(slot.shift_date), dt_time(mins // 60, mins % 60), tzinfo=LOCAL_TZ)
+
+
+def describe_slot(slot: ScheduleSlot) -> str:
+    try:
+        _, start, end = slot_work_times(slot)
+    except ValueError:
+        start, end = slot.start_time, slot.end_time
+    return f"{slot.shift_date} {slot.shift_label} {start}-{end} ({slot.position_label})"
+
+
+def group_key(slot: ScheduleSlot) -> tuple[str, str, str]:
+    return slot.shift_date, slot.shift_key, slot.position_key
+
+
+def interval_week_segments(start_abs: int, end_abs: int) -> list[tuple[str, float]]:
+    """
+    Splits an absolute interval into Monday-Sunday pay weeks, mirroring the
+    timesheet (an overnight Sunday shift puts the hours after midnight in the
+    next week). Returns [(monday_iso, hours), ...].
+    """
+    segments = []
+    t = start_abs
+    while t < end_abs:
+        d = date.fromordinal(t // 1440)
+        monday = d - timedelta(days=d.weekday())
+        seg_end = min(end_abs, (monday.toordinal() + 7) * 1440)
+        segments.append((monday.isoformat(), (seg_end - t) / 60.0))
+        t = seg_end
+    return segments
+
+
+def slot_to_dict(slot: ScheduleSlot) -> dict:
+    try:
+        is_overnight = time_to_minutes(slot.end_time) <= time_to_minutes(slot.start_time)
+        seat_start, seat_end = slot_seat_interval(slot)
+        work_date, work_start, work_end = slot_work_times(slot)
+    except ValueError:
+        is_overnight, seat_start, seat_end = False, 0, 0
+        work_date, work_start, work_end = slot.shift_date, slot.start_time, slot.end_time
+    return {
+        "id": slot.id,
+        "month": slot.month,
+        "shift_date": slot.shift_date,
+        "shift_key": slot.shift_key,
+        "shift_label": slot.shift_label,
+        "position_key": slot.position_key,
+        "position_label": slot.position_label,
+        "seat": slot.seat,
+        "start_time": slot.start_time,
+        "end_time": slot.end_time,
+        "seat_hours": round((seat_end - seat_start) / 60.0, 2),
+        "hours": slot_hours(slot),
+        "is_overnight": is_overnight,
+        "cover_start_min": slot.cover_start_min,
+        "cover_end_min": slot.cover_end_min,
+        "is_partial": slot.cover_start_min is not None,
+        "work_date": work_date,
+        "work_start": work_start,
+        "work_end": work_end,
+        "dept_id": slot.dept_id,
+        "employee_name": slot.employee.name if slot.employee else None,
+        "is_driver": bool(slot.employee and slot.employee.is_driver),
+        "assigned_via": slot.assigned_via,
+        "assigned_by": slot.assigned_by,
+        "assigned_at": iso_utc(slot.assigned_at),
+    }
+
+
+def slot_sort_key_factory(tpl: dict):
+    shift_order = {s["key"]: i for i, s in enumerate(tpl["shifts"])}
+    pos_order = {p["key"]: i for i, p in enumerate(tpl["positions"])}
+
+    def sort_key(s: ScheduleSlot):
+        return (
+            s.shift_date,
+            shift_order.get(s.shift_key, 99),
+            s.shift_key,
+            pos_order.get(s.position_key, 99),
+            s.position_key,
+            s.seat,
+            s.id or 0,
+        )
+
+    return sort_key
+
+
+def load_month_slots(session, month_str: str, tpl: dict) -> list:
+    # Warm the identity map so slot.employee doesn't issue one query per seat
+    session.query(Employee).all()
+    return sorted(session.query(ScheduleSlot).filter_by(month=month_str).all(), key=slot_sort_key_factory(tpl))
+
+
+# ------------------------------------------------------------------------------
+# Availability (hourly)
+# ------------------------------------------------------------------------------
+
+def availability_abs_hours(rows) -> set:
+    """Absolute hour indices (ordinal * 24 + hour) a member marked available."""
+    hours = set()
+    for r in rows:
+        base = parse_shift_date(r.op_date).toordinal() * 24 + (r.start_hour or 0)
+        mask = r.hours_mask or 0
+        i = 0
+        while mask:
+            if mask & 1:
+                hours.add(base + i)
+            mask >>= 1
+            i += 1
+    return hours
+
+
+def load_availability_hours(session, first: date, last: date, dept_ids: list | None = None) -> dict:
+    """{dept_id: set(absolute hours)} for operational days touching first..last."""
+    query = session.query(ScheduleAvailability).filter(
+        ScheduleAvailability.op_date >= (first - timedelta(days=1)).isoformat(),
+        ScheduleAvailability.op_date <= (last + timedelta(days=1)).isoformat(),
+    )
+    if dept_ids is not None:
+        query = query.filter(ScheduleAvailability.dept_id.in_(dept_ids or [""]))
+    by_dept = defaultdict(list)
+    for row in query.all():
+        by_dept[row.dept_id].append(row)
+    return {dept: availability_abs_hours(rows) for dept, rows in by_dept.items()}
+
+
+def masks_for_month(abs_hours: set, first: date, start_hour: int) -> dict:
+    """{op_date: 24-bit mask} for each operational day of the month, relative to start_hour."""
+    days = {}
+    if not abs_hours:
+        return days
+    for d in iter_month_dates(first):
+        base = d.toordinal() * 24 + start_hour
+        mask = 0
+        for i in range(24):
+            if base + i in abs_hours:
+                mask |= 1 << i
+        if mask:
+            days[d.isoformat()] = mask
+    return days
+
+
+def seat_coverage(avail_hours: set, start_abs: int, end_abs: int) -> tuple[float, int, int]:
+    """
+    Largest contiguous run of available hours inside a seat [start_abs, end_abs)
+    (absolute minutes). Returns (share_of_seat 0-1, run_start_abs, run_end_abs).
+    """
+    total = end_abs - start_abs
+    if total <= 0 or not avail_hours:
+        return 0.0, start_abs, start_abs
+    best_len, best_start, best_end = 0, start_abs, start_abs
+    run_start = None
+    first_hour = start_abs // 60
+    last_hour = (end_abs - 1) // 60
+    for hour in range(first_hour, last_hour + 2):  # one past the end closes the final run
+        available = hour <= last_hour and hour in avail_hours
+        if available and run_start is None:
+            run_start = hour
+        elif not available and run_start is not None:
+            s = max(start_abs, run_start * 60)
+            e = min(end_abs, hour * 60)
+            if e - s > best_len:
+                best_len, best_start, best_end = e - s, s, e
+            run_start = None
+    return best_len / total, best_start, best_end
+
+
+def cover_for_member(avail_hours: set, slot: ScheduleSlot) -> tuple[int | None, int | None]:
+    """Partial-coverage minutes for an assignee, or (None, None) to work the full seat."""
+    try:
+        seat_start, seat_end = slot_seat_interval(slot)
+    except ValueError:
+        return None, None
+    share, run_start, run_end = seat_coverage(avail_hours, seat_start, seat_end)
+    if 0 < share < 0.999:
+        base = parse_shift_date(slot.shift_date).toordinal() * 1440
+        return run_start - base, run_end - base
+    return None, None
+
+
+# ------------------------------------------------------------------------------
+# Months, seats, hours & coverage
+# ------------------------------------------------------------------------------
+
+def schedule_month_to_dict(m: ScheduleMonth | None, month_str: str, tpl: dict) -> dict:
+    first = parse_month(month_str)
+    today = local_today()
+    if m is None:
+        deadline = default_availability_deadline(first, tpl["availability_lead_days"])
+        status = "draft"
+        extra = {"exists": False, "notes": "", "published_at": None, "published_by": None, "created_at": None}
+    else:
+        deadline = m.availability_deadline
+        status = m.status
+        extra = {
+            "exists": True,
+            "notes": m.notes or "",
+            "published_at": iso_utc(m.published_at),
+            "published_by": m.published_by,
+            "created_at": iso_utc(m.created_at),
+        }
+    return {
+        "month": month_str,
+        "label": first.strftime("%B %Y"),
+        "first_day": first.isoformat(),
+        "last_day": month_last_day(first).isoformat(),
+        "status": status,
+        "availability_deadline": deadline,
+        "availability_open": status != "published" and today.isoformat() <= deadline,
+        "days_until_deadline": (parse_shift_date(deadline) - today).days,
+        **extra,
+    }
+
+
+def sync_month_slots(session, month_obj: ScheduleMonth, tpl: dict) -> dict:
+    """
+    Reconciles a month's seats with the staffing template: adds missing seats,
+    removes extra *open* seats (including ones added by hand), and refreshes
+    labels/times. Filled seats are never removed.
+    """
+    first = parse_month(month_obj.month)
+    by_key = defaultdict(list)
+    for s in session.query(ScheduleSlot).filter_by(month=month_obj.month).all():
+        by_key[group_key(s)].append(s)
+
+    stats = {"added": 0, "removed": 0, "updated": 0, "kept_filled": 0}
+    wanted = set()
+    for d in iter_month_dates(first):
+        iso = d.isoformat()
+        for sh in tpl["shifts"]:
+            for p in tpl["positions"]:
+                key = (iso, sh["key"], p["key"])
+                wanted.add(key)
+                count = int(sh["staffing"].get(p["key"], 0))
+                seats = sorted(by_key.get(key, []), key=lambda s: s.seat)
+
+                meta = (sh["label"], p["label"], sh["start"], sh["end"])
+                for s in seats:
+                    if (s.shift_label, s.position_label, s.start_time, s.end_time) != meta:
+                        if (s.start_time, s.end_time) != (sh["start"], sh["end"]):
+                            s.cover_start_min = None  # times changed: partial window no longer applies
+                            s.cover_end_min = None
+                        s.shift_label, s.position_label, s.start_time, s.end_time = meta
+                        stats["updated"] += 1
+
+                if len(seats) < count:
+                    next_seat = max((s.seat for s in seats), default=0) + 1
+                    for i in range(count - len(seats)):
+                        session.add(ScheduleSlot(
+                            month=month_obj.month,
+                            shift_date=iso,
+                            shift_key=sh["key"],
+                            shift_label=sh["label"],
+                            position_key=p["key"],
+                            position_label=p["label"],
+                            seat=next_seat + i,
+                            start_time=sh["start"],
+                            end_time=sh["end"],
+                        ))
+                        stats["added"] += 1
+                elif len(seats) > count:
+                    extra = len(seats) - count
+                    for s in sorted(seats, key=lambda s: -s.seat):
+                        if extra == 0:
+                            break
+                        if s.dept_id is None:
+                            session.delete(s)
+                            stats["removed"] += 1
+                            extra -= 1
+                    stats["kept_filled"] += extra
+
+    # Seats for shifts/positions that no longer exist in the template
+    for key, seats in by_key.items():
+        if key in wanted:
+            continue
+        for s in seats:
+            if s.dept_id is None:
+                session.delete(s)
+                stats["removed"] += 1
+            else:
+                stats["kept_filled"] += 1
+
+    session.flush()
+    return stats
+
+
+def get_or_create_schedule_month(session, month_str: str, created_by: str) -> ScheduleMonth:
+    m = session.query(ScheduleMonth).filter_by(month=month_str).first()
+    if m:
+        return m
+    tpl = get_staffing_template(session)
+    first = parse_month(month_str)
+    m = ScheduleMonth(
+        month=month_str,
+        status="draft",
+        availability_deadline=default_availability_deadline(first, tpl["availability_lead_days"]),
+        notes="",
+        created_by=created_by,
+    )
+    session.add(m)
+    try:
+        session.flush()
+    except IntegrityError:
+        # Another request created the same month at the same moment
+        session.rollback()
+        return session.query(ScheduleMonth).filter_by(month=month_str).first()
+    sync_month_slots(session, m, tpl)
+    return m
+
+
+def find_schedule_conflict(session, dept_id: str, slot: ScheduleSlot, start_abs: int | None = None,
+                           end_abs: int | None = None) -> ScheduleSlot | None:
+    """Returns another seat held by `dept_id` whose working hours overlap, if any."""
+    try:
+        if start_abs is None or end_abs is None:
+            start_abs, end_abs = slot_work_interval(slot)
+    except ValueError:
+        return None
+    d = parse_shift_date(slot.shift_date)
+    nearby = session.query(ScheduleSlot).filter(
+        ScheduleSlot.dept_id == dept_id,
+        ScheduleSlot.id != slot.id,
+        ScheduleSlot.shift_date >= (d - timedelta(days=1)).isoformat(),
+        ScheduleSlot.shift_date <= (d + timedelta(days=1)).isoformat(),
+    ).all()
+    for other in nearby:
+        try:
+            o_start, o_end = slot_work_interval(other)
+        except ValueError:
+            continue
+        if start_abs < o_end and o_start < end_abs:
+            return other
+    return None
+
+
+def continuous_block_minutes(intervals: list, start_abs: int, end_abs: int) -> int:
+    """Length of the back-to-back block a new interval would join (touching counts)."""
+    block_start, block_end = start_abs, end_abs
+    changed = True
+    while changed:
+        changed = False
+        for s, e in intervals:
+            if s <= block_end and e >= block_start and (s < block_start or e > block_end):
+                block_start, block_end = min(block_start, s), max(block_end, e)
+                changed = True
+    return block_end - block_start
+
+
+def compute_schedule_hours(session, month_str: str, employees: list, tpl: dict,
+                           published_only: bool = False, avail: dict | None = None) -> dict:
+    """
+    Projects scheduled hours for each employee: month total plus every
+    Monday-Sunday pay week that touches the month. Week totals include seats
+    from neighboring months so overtime at month boundaries is accurate.
+    Also reports how much availability each member gave.
+    """
+    first = parse_month(month_str)
+    last = month_last_day(first)
+    first_monday = first - timedelta(days=first.weekday())
+    last_monday = last - timedelta(days=last.weekday())
+
+    weeks = []
+    wk = first_monday
+    while wk <= last_monday:
+        weeks.append({"start": wk.isoformat(), "end": (wk + timedelta(days=6)).isoformat()})
+        wk += timedelta(days=7)
+    week_starts = {w["start"] for w in weeks}
+
+    dept_ids = [e.dept_id for e in employees]
+    query = session.query(ScheduleSlot).filter(
+        ScheduleSlot.dept_id.isnot(None),
+        # Include the Sunday before the first week (overnight spill into Monday)
+        ScheduleSlot.shift_date >= (first_monday - timedelta(days=1)).isoformat(),
+        ScheduleSlot.shift_date <= (last_monday + timedelta(days=6)).isoformat(),
+    )
+    if len(dept_ids) <= 5:
+        query = query.filter(ScheduleSlot.dept_id.in_(dept_ids or [""]))
+    slots = query.all()
+
+    if published_only:
+        months = sorted({s.month for s in slots})
+        published = {
+            row.month for row in session.query(ScheduleMonth.month).filter(
+                ScheduleMonth.month.in_(months), ScheduleMonth.status == "published"
+            ).all()
+        } if months else set()
+        slots = [s for s in slots if s.month in published]
+
+    if avail is None:
+        avail = load_availability_hours(session, first, last, dept_ids if len(dept_ids) <= 5 else None)
+    submissions = {s.dept_id: s for s in session.query(ScheduleSubmission).filter_by(month=month_str).all()}
+    threshold = tpl["min_coverage_pct"] / 100.0
+    start_hour = template_day_start_hour(tpl)
+    window_lo = first.toordinal() * 24 + start_hour
+    window_hi = (last.toordinal() + 1) * 24 + start_hour
+    template_seats = []  # (start_abs, end_abs) for every template shift of the month
+    for d in iter_month_dates(first):
+        for sh in tpl["shifts"]:
+            template_seats.append(get_shift_interval_minutes(d.isoformat(), sh["start"], sh["end"]))
+
+    rows = {}
+    for e in employees:
+        rows[e.dept_id] = {
+            "dept_id": e.dept_id,
+            "name": e.name,
+            "role": e.role,
+            "is_driver": bool(e.is_driver),
+            "ot_threshold": e.ot_threshold if e.ot_threshold in (40, 53) else 40,
+            "month_hours": 0.0,
+            "month_shifts": 0,
+            "partial_shifts": 0,
+            "shifts_by_type": {},
+            "by_week": {w["start"]: 0.0 for w in weeks},
+        }
+
+    first_iso, last_iso = first.isoformat(), last.isoformat()
+    for s in slots:
+        r = rows.get(s.dept_id)
+        if not r:
+            continue
+        try:
+            work_start, work_end = slot_work_interval(s)
+        except ValueError:
+            continue
+        for wk_start, hrs in interval_week_segments(work_start, work_end):
+            if wk_start in week_starts:
+                r["by_week"][wk_start] += hrs
+        if first_iso <= s.shift_date <= last_iso:
+            r["month_hours"] += (work_end - work_start) / 60.0
+            r["month_shifts"] += 1
+            if s.cover_start_min is not None:
+                r["partial_shifts"] += 1
+            r["shifts_by_type"][s.shift_key] = r["shifts_by_type"].get(s.shift_key, 0) + 1
+
+    for dept_id, r in rows.items():
+        thr = r["ot_threshold"]
+        r["by_week"] = {k: round(v, 2) for k, v in r["by_week"].items()}
+        r["month_hours"] = round(r["month_hours"], 2)
+        r["ot_weeks"] = [k for k, v in r["by_week"].items() if v > thr]
+        r["projected_ot_hours"] = round(sum(max(0.0, v - thr) for v in r["by_week"].values()), 2)
+        hours = avail.get(dept_id, set())
+        r["available_hours"] = sum(1 for h in hours if window_lo <= h < window_hi)
+        r["available_shifts"] = sum(
+            1 for s_abs, e_abs in template_seats if hours and seat_coverage(hours, s_abs, e_abs)[0] + 1e-9 >= threshold
+        ) if hours else 0
+        sub = submissions.get(dept_id)
+        r["submitted"] = sub is not None
+        r["max_hours"] = sub.max_hours if sub else None
+        r["availability_notes"] = (sub.notes or "") if sub else ""
+        r["over_max"] = bool(sub and sub.max_hours is not None and r["month_hours"] > sub.max_hours)
+
+    members = sorted(rows.values(), key=lambda r: r["dept_id"])
+    totals = {
+        "scheduled_hours": round(sum(r["month_hours"] for r in members), 2),
+        "projected_ot_hours": round(sum(r["projected_ot_hours"] for r in members), 2),
+        "members_scheduled": sum(1 for r in members if r["month_shifts"] > 0),
+        "members_with_ot": sum(1 for r in members if r["ot_weeks"]),
+        "members_submitted": sum(1 for r in members if r["submitted"]),
+        "member_count": len(members),
+    }
+    return {"weeks": weeks, "members": members, "totals": totals}
+
+
+def summarize_coverage(slots: list, tpl: dict) -> dict:
+    by_shift = {sh["key"]: {"label": sh["label"], "total": 0, "filled": 0} for sh in tpl["shifts"]}
+    filled = 0
+    required = driver_positions(tpl)
+    crews = defaultdict(list)
+    for s in slots:
+        bucket = by_shift.setdefault(s.shift_key, {"label": s.shift_label, "total": 0, "filled": 0})
+        bucket["total"] += 1
+        if s.dept_id:
+            bucket["filled"] += 1
+            filled += 1
+        if s.position_key in required:
+            crews[group_key(s)].append(s)
+
+    with_driver = sum(1 for seats in crews.values() if any(s.dept_id and s.employee and s.employee.is_driver for s in seats))
+    staffed_no_driver = sum(
+        1 for seats in crews.values()
+        if any(s.dept_id for s in seats) and not any(s.dept_id and s.employee and s.employee.is_driver for s in seats)
+    )
+    return {
+        "total": len(slots),
+        "filled": filled,
+        "open": len(slots) - filled,
+        "by_shift": by_shift,
+        "drivers": {
+            "required": len(crews),
+            "covered": with_driver,
+            "missing": len(crews) - with_driver,
+            "staffed_without_driver": staffed_no_driver,
+        },
+    }
+
+
+def seat_reserved_for_driver(session, slot: ScheduleSlot, tpl: dict) -> bool:
+    """True when this is the last open seat on a driver-required crew that has no driver yet."""
+    if slot.position_key not in driver_positions(tpl) or slot.dept_id:
+        return False
+    crew = session.query(ScheduleSlot).filter_by(
+        shift_date=slot.shift_date, shift_key=slot.shift_key, position_key=slot.position_key
+    ).all()
+    if any(s.dept_id and s.employee and s.employee.is_driver for s in crew):
+        return False
+    return sum(1 for s in crew if not s.dept_id) == 1
+
+
+def find_upcoming_availability(session, emp: Employee, tpl: dict) -> dict | None:
+    """The soonest month (next 1-3 months) still accepting availability from members."""
+    today = local_today()
+    this_month = date(today.year, today.month, 1)
+    for i in range(1, 4):
+        month_str = add_months(this_month, i).strftime("%Y-%m")
+        m = session.query(ScheduleMonth).filter_by(month=month_str).first()
+        info = schedule_month_to_dict(m, month_str, tpl)
+        if info["availability_open"]:
+            sub = session.query(ScheduleSubmission).filter_by(dept_id=emp.dept_id, month=month_str).first()
+            return {
+                "month": month_str,
+                "label": info["label"],
+                "deadline": info["availability_deadline"],
+                "days_until_deadline": info["days_until_deadline"],
+                "submitted": sub is not None,
+                "submitted_at": iso_utc(sub.updated_at) if sub else None,
+            }
+    return None
+
+
+def active_employees(session) -> list:
+    return session.query(Employee).filter_by(active=True).order_by(Employee.dept_id.asc()).all()
+
+
+def month_state(session, month_str: str, tpl: dict | None = None) -> dict:
+    """Fresh hours + coverage for a month (returned after every Builder change)."""
+    tpl = tpl or get_staffing_template(session)
+    return {
+        "hours": compute_schedule_hours(session, month_str, active_employees(session), tpl),
+        "coverage": summarize_coverage(load_month_slots(session, month_str, tpl), tpl),
+    }
+
+
+def build_schedule_builder_payload(session, m: ScheduleMonth) -> dict:
+    tpl = get_staffing_template(session)
+    slots = load_month_slots(session, m.month, tpl)
+    employees = active_employees(session)
+    first = parse_month(m.month)
+    last = month_last_day(first)
+    start_hour = template_day_start_hour(tpl)
+
+    avail = load_availability_hours(session, first, last)
+    availability = {}
+    for dept_id, hours in avail.items():
+        days = masks_for_month(hours, first, start_hour)
+        if days:
+            availability[dept_id] = days
+    submissions = {s.dept_id: s.to_dict() for s in session.query(ScheduleSubmission).filter_by(month=m.month).all()}
+
+    # Filled seats in the neighboring months' edge days, for overlap checks at month boundaries
+    edge_slots = session.query(ScheduleSlot).filter(
+        ScheduleSlot.dept_id.isnot(None),
+        ScheduleSlot.month != m.month,
+        ScheduleSlot.shift_date >= (first - timedelta(days=1)).isoformat(),
+        ScheduleSlot.shift_date <= (last + timedelta(days=1)).isoformat(),
+    ).all()
+
+    return {
+        "month": schedule_month_to_dict(m, m.month, tpl),
+        "template": tpl,
+        "slots": [slot_to_dict(s) for s in slots],
+        "edge_slots": [slot_to_dict(s) for s in edge_slots],
+        "employees": [
+            {
+                "dept_id": e.dept_id,
+                "name": e.name,
+                "role": e.role,
+                "is_driver": bool(e.is_driver),
+                "ot_threshold": e.ot_threshold if e.ot_threshold in (40, 53) else 40,
+            }
+            for e in employees
+        ],
+        "avail_start_hour": start_hour,
+        "availability": availability,
+        "submissions": submissions,
+        "hours": compute_schedule_hours(session, m.month, employees, tpl, avail=avail),
+        "coverage": summarize_coverage(slots, tpl),
+        "autofilled_count": sum(1 for s in slots if s.dept_id and s.assigned_via == "autofill"),
+    }
+
+
+def run_autofill(session, m: ScheduleMonth, tpl: dict, actor: Employee, allow_ot: bool = False) -> dict:
+    """
+    Fills open future seats from availability. Rules:
+      * Only members whose availability covers at least `min_coverage_pct` of a
+        seat (partial coverage fills the seat; their hours are what they cover).
+      * No double-booking, no stretch longer than MAX_CONTINUOUS_HOURS, no
+        overtime unless allow_ot, and never past a member's max-hours request.
+      * Every driver-required crew gets a qualified driver first; the last open
+        seat on a crew still lacking a driver is held for a driver.
+      * Scarcest seats first; among candidates, full coverage beats partial, then
+        fewest hours this month, then fewest hours that week.
+    """
+    first = parse_month(m.month)
+    last = month_last_day(first)
+    threshold = tpl["min_coverage_pct"] / 100.0
+    required = driver_positions(tpl)
+    now_abs = local_abs_minutes(local_now())
+    employees = active_employees(session)
+    emp_by_id = {e.dept_id: e for e in employees}
+    avail = load_availability_hours(session, first, last)
+    max_hours = {
+        s.dept_id: s.max_hours
+        for s in session.query(ScheduleSubmission).filter_by(month=m.month).all()
+        if s.max_hours is not None
+    }
+
+    slots = load_month_slots(session, m.month, tpl)
+    crews = defaultdict(list)
+    for s in slots:
+        crews[group_key(s)].append(s)
+
+    # Existing commitments (this month plus a week either side) for overlap, OT, and rest checks
+    intervals = defaultdict(list)
+    week_hours = defaultdict(lambda: defaultdict(float))
+    month_hours = defaultdict(float)
+    first_iso, last_iso = first.isoformat(), last.isoformat()
+    nearby = session.query(ScheduleSlot).filter(
+        ScheduleSlot.dept_id.isnot(None),
+        ScheduleSlot.shift_date >= (first - timedelta(days=8)).isoformat(),
+        ScheduleSlot.shift_date <= (last + timedelta(days=8)).isoformat(),
+    ).all()
+    for s in nearby:
+        try:
+            ws, we = slot_work_interval(s)
+        except ValueError:
+            continue
+        intervals[s.dept_id].append((ws, we))
+        for wk, h in interval_week_segments(ws, we):
+            week_hours[s.dept_id][wk] += h
+        if first_iso <= s.shift_date <= last_iso:
+            month_hours[s.dept_id] += (we - ws) / 60.0
+
+    def has_driver(key) -> bool:
+        return any(s.dept_id and emp_by_id.get(s.dept_id) and emp_by_id[s.dept_id].is_driver for s in crews[key])
+
+    def is_open_future(s) -> bool:
+        if s.dept_id:
+            return False
+        try:
+            return slot_seat_interval(s)[0] > now_abs
+        except ValueError:
+            return False
+
+    def candidates(seat, drivers_only=False) -> list:
+        try:
+            seat_start, seat_end = slot_seat_interval(seat)
+        except ValueError:
+            return []
+        seat_week = interval_week_segments(seat_start, seat_start + 1)[0][0]
+        found = []
+        for e in employees:
+            if drivers_only and not e.is_driver:
+                continue
+            share, cs, ce = seat_coverage(avail.get(e.dept_id, set()), seat_start, seat_end)
+            if share <= 0 or share + 1e-9 < threshold:
+                continue
+            mine = intervals[e.dept_id]
+            if any(cs < oe and os_ < ce for os_, oe in mine):
+                continue
+            if continuous_block_minutes(mine, cs, ce) > MAX_CONTINUOUS_HOURS * 60:
+                continue
+            thr = e.ot_threshold if e.ot_threshold in (40, 53) else 40
+            if not allow_ot and any(
+                week_hours[e.dept_id][wk] + h > thr + 1e-9 for wk, h in interval_week_segments(cs, ce)
+            ):
+                continue
+            cap = max_hours.get(e.dept_id)
+            if cap is not None and month_hours[e.dept_id] + (ce - cs) / 60.0 > cap + 1e-9:
+                continue
+            full = share >= 0.999
+            rank = (0 if full else 1, round(month_hours[e.dept_id], 2), round(week_hours[e.dept_id][seat_week], 2), e.dept_id)
+            found.append((rank, e, cs, ce, full))
+        found.sort(key=lambda c: c[0])
+        return found
+
+    def assign(seat, cand) -> None:
+        _, e, cs, ce, full = cand
+        base = parse_shift_date(seat.shift_date).toordinal() * 1440
+        seat.dept_id = e.dept_id
+        seat.assigned_via = "autofill"
+        seat.assigned_by = actor_label(actor)
+        seat.assigned_at = utc_now()
+        seat.cover_start_min = None if full else cs - base
+        seat.cover_end_min = None if full else ce - base
+        intervals[e.dept_id].append((cs, ce))
+        for wk, h in interval_week_segments(cs, ce):
+            week_hours[e.dept_id][wk] += h
+        month_hours[e.dept_id] += (ce - cs) / 60.0
+
+    filled = 0
+
+    # Pass 1: a qualified driver on every driver-required crew that lacks one (scarcest crews first)
+    needs_driver = []
+    for key, seats in crews.items():
+        if key[2] not in required or has_driver(key):
+            continue
+        opens = sorted((s for s in seats if is_open_future(s)), key=lambda s: s.seat)
+        if opens:
+            needs_driver.append((key, opens[0]))
+    needs_driver.sort(key=lambda kv: (len(candidates(kv[1], drivers_only=True)), kv[0]))
+    for key, seat in needs_driver:
+        if seat.dept_id or has_driver(key):
+            continue
+        cands = candidates(seat, drivers_only=True)
+        if cands:
+            assign(seat, cands[0])
+            filled += 1
+
+    # Pass 2: every other open seat, scarcest first
+    remaining = [s for s in slots if is_open_future(s)]
+    scarcity = {s.id: len(candidates(s)) for s in remaining}
+    remaining.sort(key=lambda s: (scarcity[s.id], s.shift_date, s.shift_key, s.position_key, s.seat))
+    for seat in remaining:
+        if seat.dept_id:
+            continue
+        key = group_key(seat)
+        drivers_only = (
+            key[2] in required
+            and not has_driver(key)
+            and sum(1 for x in crews[key] if not x.dept_id) == 1
+        )
+        cands = candidates(seat, drivers_only=drivers_only)
+        if cands:
+            assign(seat, cands[0])
+            filled += 1
+
+    session.flush()
+    return {
+        "filled": filled,
+        "open_left": sum(1 for s in slots if is_open_future(s)),
+        "driver_gaps": sum(1 for key in crews if key[2] in required and not has_driver(key)),
+    }
+
+
+# ------------------------------------------------------------------------------
+# Scheduling Routes
+# ------------------------------------------------------------------------------
+
+@app.route("/api/schedule/settings", methods=["GET"])
+@require_auth
+def get_schedule_settings():
+    tpl = get_staffing_template(g.db)
+    return jsonify({
+        "template": tpl,
+        "avail_start_hour": template_day_start_hour(tpl),
+        "signup_drop_cutoff_hours": SIGNUP_DROP_CUTOFF_HOURS,
+    })
+
+
+@app.route("/api/schedule/settings", methods=["PUT"])
+@require_reviewer
+def update_schedule_settings():
+    emp = g.current_user
+    data = request.get_json(silent=True) or {}
+    tpl, err = validate_staffing_template(data.get("template", data))
+    if err:
+        return jsonify({"error": err}), 400
+
+    payload = json.dumps(tpl)
+    row = g.db.get(ScheduleSetting, "staffing_template")
+    if row:
+        row.value = payload
+    else:
+        g.db.add(ScheduleSetting(key="staffing_template", value=payload))
+
+    summary = "; ".join(
+        f"{s['label']} {s['start']}-{s['end']}: "
+        + ", ".join(f"{p['label']} {s['staffing'][p['key']]}" for p in tpl["positions"])
+        for s in tpl["shifts"]
+    )
+    drivers = ", ".join(p["label"] for p in tpl["positions"] if p["requires_driver"]) or "none"
+    log_audit(
+        g.db,
+        actor_id=emp.dept_id,
+        actor_name=emp.name,
+        action="SCHEDULE_SETTINGS_UPDATED",
+        target_type="schedule_settings",
+        target_id="staffing_template",
+        details=(
+            f"Saved staffing levels ({summary}). Driver required: {drivers}. "
+            f"Partial availability counts at {tpl['min_coverage_pct']}%+. "
+            f"Availability due {tpl['availability_lead_days']} days before each month."
+        ),
+    )
+    g.db.commit()
+    return jsonify({"message": "Staffing levels saved.", "template": tpl})
+
+
+@app.route("/api/schedule/shifts", methods=["GET"])
+@require_auth
+def list_scheduled_shifts():
+    """Published seats held by one member in a date range (used by Log Shift presets)."""
+    emp = g.current_user
+    dept_id = request.args.get("dept_id", "").strip() or emp.dept_id
+    if dept_id != emp.dept_id and not is_reviewer_role(emp):
+        return jsonify({"error": "You can only view your own scheduled shifts."}), 403
+
+    try:
+        start = parse_shift_date(request.args.get("start", ""))
+        end = parse_shift_date(request.args.get("end", "") or start.isoformat())
+    except ValueError:
+        return jsonify({"error": "Start and end dates must be YYYY-MM-DD."}), 400
+    if end < start or (end - start).days > 62:
+        return jsonify({"error": "Date range must be between 0 and 62 days."}), 400
+
+    # Include the day before so a partial night shift starting after midnight shows on its work date
+    slots = g.db.query(ScheduleSlot).join(
+        ScheduleMonth, ScheduleMonth.month == ScheduleSlot.month
+    ).filter(
+        ScheduleMonth.status == "published",
+        ScheduleSlot.dept_id == dept_id,
+        ScheduleSlot.shift_date >= (start - timedelta(days=1)).isoformat(),
+        ScheduleSlot.shift_date <= end.isoformat(),
+    ).order_by(ScheduleSlot.shift_date.asc(), ScheduleSlot.start_time.asc()).all()
+    shifts = [slot_to_dict(s) for s in slots]
+    shifts = [s for s in shifts if start.isoformat() <= s["work_date"] <= end.isoformat()]
+    return jsonify({"shifts": shifts})
+
+
+@app.route("/api/schedule/<month>", methods=["GET"])
+@require_auth
+def get_schedule_month(month: str):
+    """Member view of a month: published seats, plus one member's availability and hours."""
+    emp = g.current_user
+    first, err = validate_schedule_month(month, emp)
+    if err:
+        return jsonify({"error": err}), 400
+
+    target = emp
+    req_dept = request.args.get("dept_id", "").strip()
+    if req_dept and req_dept != emp.dept_id:
+        if not is_reviewer_role(emp):
+            return jsonify({"error": "You can only view your own availability."}), 403
+        target = g.db.query(Employee).filter_by(dept_id=req_dept).first()
+        if not target:
+            return jsonify({"error": f"Department ID {req_dept} not found."}), 404
+
+    tpl = get_staffing_template(g.db)
+    start_hour = template_day_start_hour(tpl)
+    m = g.db.query(ScheduleMonth).filter_by(month=month).first()
+    published = m is not None and m.status == "published"
+    slots = load_month_slots(g.db, month, tpl) if published else []
+
+    avail = load_availability_hours(g.db, first, month_last_day(first), [target.dept_id])
+    submission = g.db.query(ScheduleSubmission).filter_by(dept_id=target.dept_id, month=month).first()
+    hours = compute_schedule_hours(g.db, month, [target], tpl, published_only=True, avail=avail)
+
+    return jsonify({
+        "month": schedule_month_to_dict(m, month, tpl),
+        "template": tpl,
+        "published": published,
+        "slots": [slot_to_dict(s) for s in slots],
+        "coverage": summarize_coverage(slots, tpl) if published else None,
+        "member": {
+            "dept_id": target.dept_id,
+            "name": target.name,
+            "is_driver": bool(target.is_driver),
+            "ot_threshold": target.ot_threshold if target.ot_threshold in (40, 53) else 40,
+        },
+        "availability": {
+            "start_hour": start_hour,
+            "days": masks_for_month(avail.get(target.dept_id, set()), first, start_hour),
+        },
+        "submission": submission.to_dict() if submission else None,
+        "member_hours": hours["members"][0] if hours["members"] else None,
+        "weeks": hours["weeks"],
+        "upcoming_availability": find_upcoming_availability(g.db, target, tpl),
+        "signup_drop_cutoff_hours": SIGNUP_DROP_CUTOFF_HOURS,
+        "now": local_now().isoformat(),
+    })
+
+
+@app.route("/api/schedule/<month>", methods=["PUT"])
+@require_reviewer
+def update_schedule_month(month: str):
+    emp = g.current_user
+    _, err = validate_schedule_month(month, emp)
+    if err:
+        return jsonify({"error": err}), 400
+
+    data = request.get_json(silent=True) or {}
+    m = get_or_create_schedule_month(g.db, month, actor_label(emp))
+    changes = []
+
+    if "availability_deadline" in data:
+        try:
+            deadline = parse_shift_date(str(data.get("availability_deadline", ""))).isoformat()
+        except ValueError:
+            return jsonify({"error": "Availability deadline must be a valid date."}), 400
+        if deadline != m.availability_deadline:
+            changes.append(f"availability deadline {m.availability_deadline} -> {deadline}")
+            m.availability_deadline = deadline
+
+    if "notes" in data:
+        notes = str(data.get("notes") or "").strip()[:1000]
+        if notes != (m.notes or ""):
+            changes.append("notes updated")
+            m.notes = notes
+
+    if changes:
+        log_audit(
+            g.db,
+            actor_id=emp.dept_id,
+            actor_name=emp.name,
+            action="SCHEDULE_MONTH_UPDATED",
+            target_type="schedule_month",
+            target_id=month,
+            details=f"Updated {month} schedule: {', '.join(changes)}.",
+        )
+    g.db.commit()
+    return jsonify({
+        "message": f"{month_display(month)} schedule updated.",
+        "month": schedule_month_to_dict(m, month, get_staffing_template(g.db)),
+    })
+
+
+@app.route("/api/schedule/<month>/availability", methods=["PUT"])
+@require_auth
+def save_schedule_availability(month: str):
+    """
+    Replaces a member's hourly availability for a month.
+    Body: {"dept_id", "start_hour": 7, "days": {"YYYY-MM-DD": 24-bit mask}, "notes", "max_hours"}
+    """
+    emp = g.current_user
+    reviewer = is_reviewer_role(emp)
+    first, err = validate_schedule_month(month, emp)
+    if err:
+        return jsonify({"error": err}), 400
+
+    data = request.get_json(silent=True) or {}
+    target_id = str(data.get("dept_id") or emp.dept_id).strip()
+    if target_id != emp.dept_id and not reviewer:
+        return jsonify({"error": "You can only submit availability for yourself."}), 403
+    target = g.db.query(Employee).filter_by(dept_id=target_id).first()
+    if not target:
+        return jsonify({"error": f"Department ID {target_id} not found."}), 404
+
+    tpl = get_staffing_template(g.db)
+    info = schedule_month_to_dict(g.db.query(ScheduleMonth).filter_by(month=month).first(), month, tpl)
+    if not reviewer and not info["availability_open"]:
+        if info["status"] == "published":
+            msg = f"The {info['label']} schedule is already published. Sign up for open shifts on the Schedule tab instead."
+        else:
+            msg = (
+                f"Availability for {info['label']} closed on {info['availability_deadline']}. "
+                "Contact an officer to make changes."
+            )
+        return jsonify({"error": msg}), 400
+
+    try:
+        start_hour = int(data.get("start_hour", template_day_start_hour(tpl)))
+    except (TypeError, ValueError):
+        return jsonify({"error": "Invalid start hour."}), 400
+    if not 0 <= start_hour <= 23:
+        return jsonify({"error": "Start hour must be between 0 and 23."}), 400
+
+    days_in = data.get("days", {})
+    if not isinstance(days_in, dict) or len(days_in) > 31:
+        return jsonify({"error": "Invalid availability."}), 400
+    first_iso, last_iso = first.isoformat(), month_last_day(first).isoformat()
+    days = {}
+    for d_str, mask in days_in.items():
+        try:
+            d_iso = parse_shift_date(str(d_str)).isoformat()
+            mask = int(mask)
+        except (TypeError, ValueError):
+            return jsonify({"error": f"Invalid availability for '{d_str}'."}), 400
+        if not first_iso <= d_iso <= last_iso:
+            return jsonify({"error": f"{d_iso} is not in {info['label']}."}), 400
+        if not 0 <= mask <= FULL_DAY_MASK:
+            return jsonify({"error": f"Invalid hours for {d_iso}."}), 400
+        if mask:
+            days[d_iso] = mask
+
+    notes = str(data.get("notes") or "").strip()[:500]
+    max_hours = None
+    if data.get("max_hours") not in (None, ""):
+        try:
+            max_hours = int(float(data.get("max_hours")))
+        except (TypeError, ValueError):
+            return jsonify({"error": "Max hours must be a number."}), 400
+        if not 0 <= max_hours <= 744:
+            return jsonify({"error": "Max hours must be between 0 and 744."}), 400
+
+    get_or_create_schedule_month(g.db, month, actor_label(emp))
+    g.db.query(ScheduleAvailability).filter_by(dept_id=target.dept_id, month=month).delete(synchronize_session=False)
+    for d_iso, mask in sorted(days.items()):
+        g.db.add(ScheduleAvailability(
+            dept_id=target.dept_id, month=month, op_date=d_iso, start_hour=start_hour, hours_mask=mask
+        ))
+
+    sub = g.db.query(ScheduleSubmission).filter_by(dept_id=target.dept_id, month=month).first()
+    if sub:
+        sub.notes = notes
+        sub.max_hours = max_hours
+        sub.submitted_by = actor_label(emp)
+        sub.updated_at = utc_now()
+    else:
+        sub = ScheduleSubmission(
+            dept_id=target.dept_id,
+            month=month,
+            notes=notes,
+            max_hours=max_hours,
+            submitted_by=actor_label(emp),
+        )
+        g.db.add(sub)
+
+    total_hours = sum(bin(mask).count("1") for mask in days.values())
+    on_behalf = f" (entered by {emp.dept_id} {emp.name})" if target.dept_id != emp.dept_id else ""
+    log_audit(
+        g.db,
+        actor_id=emp.dept_id,
+        actor_name=emp.name,
+        action="AVAILABILITY_SUBMITTED",
+        target_type="schedule_availability",
+        target_id=f"{target.dept_id}:{month}",
+        details=(
+            f"{target.dept_id} ({target.name}) availability for {month}: {total_hours} hours across {len(days)} days"
+            + (f", max {max_hours}h" if max_hours is not None else "")
+            + f"{on_behalf}."
+        ),
+    )
+    g.db.commit()
+    return jsonify({
+        "message": f"Availability saved for {info['label']} ({total_hours} hours across {len(days)} days).",
+        "availability": {"start_hour": start_hour, "days": days},
+        "submission": sub.to_dict(),
+    })
+
+
+@app.route("/api/schedule/<month>/builder", methods=["GET"])
+@require_reviewer
+def get_schedule_builder(month: str):
+    emp = g.current_user
+    _, err = validate_schedule_month(month, emp)
+    if err:
+        return jsonify({"error": err}), 400
+    m = get_or_create_schedule_month(g.db, month, actor_label(emp))
+    g.db.commit()
+    return jsonify(build_schedule_builder_payload(g.db, m))
+
+
+@app.route("/api/schedule/<month>/sync", methods=["POST"])
+@require_reviewer
+def sync_schedule_month(month: str):
+    emp = g.current_user
+    _, err = validate_schedule_month(month, emp)
+    if err:
+        return jsonify({"error": err}), 400
+    m = get_or_create_schedule_month(g.db, month, actor_label(emp))
+    stats = sync_month_slots(g.db, m, get_staffing_template(g.db))
+    message = (
+        f"Applied staffing levels to {month_display(month)}: {stats['added']} seats added, "
+        f"{stats['removed']} open seats removed"
+        + (f", {stats['kept_filled']} filled seats kept (clear them manually if not needed)" if stats["kept_filled"] else "")
+        + "."
+    )
+    log_audit(
+        g.db,
+        actor_id=emp.dept_id,
+        actor_name=emp.name,
+        action="SCHEDULE_SYNCED",
+        target_type="schedule_month",
+        target_id=month,
+        details=message,
+    )
+    g.db.commit()
+    return jsonify({"message": message, "stats": stats})
+
+
+@app.route("/api/schedule/<month>/autofill", methods=["POST"])
+@require_reviewer
+def autofill_schedule_month(month: str):
+    emp = g.current_user
+    _, err = validate_schedule_month(month, emp)
+    if err:
+        return jsonify({"error": err}), 400
+    data = request.get_json(silent=True) or {}
+    allow_ot = bool(data.get("allow_ot", False))
+    m = get_or_create_schedule_month(g.db, month, actor_label(emp))
+    tpl = get_staffing_template(g.db)
+    result = run_autofill(g.db, m, tpl, emp, allow_ot=allow_ot)
+
+    message = f"Auto-fill placed {result['filled']} people. {result['open_left']} seats are still open"
+    if result["driver_gaps"]:
+        message += f", and {result['driver_gaps']} station shifts still need a driver"
+    message += "."
+    log_audit(
+        g.db,
+        actor_id=emp.dept_id,
+        actor_name=emp.name,
+        action="SCHEDULE_AUTOFILLED",
+        target_type="schedule_month",
+        target_id=month,
+        details=f"{message} (overtime {'allowed' if allow_ot else 'not allowed'})",
+    )
+    g.db.commit()
+    return jsonify({"message": message, **result})
+
+
+@app.route("/api/schedule/<month>/autofill/clear", methods=["POST"])
+@require_reviewer
+def clear_autofill_schedule_month(month: str):
+    emp = g.current_user
+    _, err = validate_schedule_month(month, emp)
+    if err:
+        return jsonify({"error": err}), 400
+    seats = g.db.query(ScheduleSlot).filter_by(month=month, assigned_via="autofill").all()
+    for s in seats:
+        s.dept_id = None
+        s.assigned_via = None
+        s.assigned_by = None
+        s.assigned_at = None
+        s.cover_start_min = None
+        s.cover_end_min = None
+    message = f"Cleared {len(seats)} auto-filled seats in {month_display(month)}."
+    if seats:
+        log_audit(
+            g.db,
+            actor_id=emp.dept_id,
+            actor_name=emp.name,
+            action="SCHEDULE_AUTOFILL_CLEARED",
+            target_type="schedule_month",
+            target_id=month,
+            details=message,
+        )
+    g.db.commit()
+    return jsonify({"message": message, "cleared": len(seats)})
+
+
+@app.route("/api/schedule/<month>/publish", methods=["POST"])
+@require_reviewer
+def publish_schedule_month(month: str):
+    emp = g.current_user
+    _, err = validate_schedule_month(month, emp)
+    if err:
+        return jsonify({"error": err}), 400
+    m = g.db.query(ScheduleMonth).filter_by(month=month).first()
+    if not m:
+        return jsonify({"error": "Open this month in the Builder before publishing."}), 404
+
+    data = request.get_json(silent=True) or {}
+    publish = bool(data.get("published", True))
+    tpl = get_staffing_template(g.db)
+    coverage = summarize_coverage(load_month_slots(g.db, month, tpl), tpl)
+
+    if publish:
+        m.status = "published"
+        m.published_at = utc_now()
+        m.published_by = actor_label(emp)
+        action = "SCHEDULE_PUBLISHED"
+        driver_note = (
+            f", {coverage['drivers']['missing']} station shifts without a driver" if coverage["drivers"]["missing"] else ""
+        )
+        details = (
+            f"Published {month} schedule ({coverage['filled']}/{coverage['total']} seats filled, "
+            f"{coverage['open']} open for sign-up{driver_note})."
+        )
+        message = f"{month_display(month)} schedule published. {coverage['open']} open shifts are available for sign-up."
+    else:
+        m.status = "draft"
+        action = "SCHEDULE_UNPUBLISHED"
+        details = f"Returned {month} schedule to draft."
+        message = f"{month_display(month)} schedule returned to draft. Members can no longer see it."
+
+    log_audit(
+        g.db,
+        actor_id=emp.dept_id,
+        actor_name=emp.name,
+        action=action,
+        target_type="schedule_month",
+        target_id=month,
+        details=details,
+    )
+    g.db.commit()
+    return jsonify({"message": message, "month": schedule_month_to_dict(m, month, tpl)})
+
+
+@app.route("/api/schedule/<month>/slots", methods=["POST"])
+@require_reviewer
+def add_schedule_seat(month: str):
+    """Adds one seat to a shift/position on one date. Body: {shift_date, shift_key, position_key}"""
+    emp = g.current_user
+    first, err = validate_schedule_month(month, emp)
+    if err:
+        return jsonify({"error": err}), 400
+    data = request.get_json(silent=True) or {}
+    shift_key = str(data.get("shift_key", "")).strip()
+    position_key = str(data.get("position_key", "")).strip()
+    try:
+        shift_date = parse_shift_date(str(data.get("shift_date", ""))).isoformat()
+    except ValueError:
+        return jsonify({"error": "A valid shift date is required."}), 400
+    if not first.isoformat() <= shift_date <= month_last_day(first).isoformat():
+        return jsonify({"error": f"{shift_date} is not in {month_display(month)}."}), 400
+
+    m = get_or_create_schedule_month(g.db, month, actor_label(emp))
+    tpl = get_staffing_template(g.db)
+    sh = next((s for s in tpl["shifts"] if s["key"] == shift_key), None)
+    pos = next((p for p in tpl["positions"] if p["key"] == position_key), None)
+    month_seats = g.db.query(ScheduleSlot).filter_by(month=m.month, shift_key=shift_key, position_key=position_key).all()
+    crew = [s for s in month_seats if s.shift_date == shift_date]
+    sample = crew[0] if crew else (month_seats[0] if month_seats else None)
+
+    if sh and pos:
+        meta = (sh["label"], pos["label"], sh["start"], sh["end"])
+    elif sample:
+        meta = (sample.shift_label, sample.position_label, sample.start_time, sample.end_time)
+    else:
+        return jsonify({"error": "Unknown shift or position."}), 400
+    if len(crew) >= 10:
+        return jsonify({"error": "That shift already has the maximum of 10 seats."}), 400
+
+    slot = ScheduleSlot(
+        month=m.month,
+        shift_date=shift_date,
+        shift_key=shift_key,
+        shift_label=meta[0],
+        position_key=position_key,
+        position_label=meta[1],
+        seat=max((s.seat for s in crew), default=0) + 1,
+        start_time=meta[2],
+        end_time=meta[3],
+    )
+    g.db.add(slot)
+    g.db.flush()
+    log_audit(
+        g.db,
+        actor_id=emp.dept_id,
+        actor_name=emp.name,
+        action="SCHEDULE_SEAT_ADDED",
+        target_type="schedule_slot",
+        target_id=str(slot.id),
+        details=f"Added seat {slot.seat} to {shift_date} {meta[0]} ({meta[1]}).",
+    )
+    g.db.commit()
+    return jsonify({"message": "Seat added.", "slot": slot_to_dict(slot), **month_state(g.db, m.month, tpl)}), 201
+
+
+@app.route("/api/schedule/slots/<int:slot_id>", methods=["DELETE"])
+@require_reviewer
+def remove_schedule_seat(slot_id: int):
+    emp = g.current_user
+    slot = g.db.get(ScheduleSlot, slot_id)
+    if not slot:
+        return jsonify({"error": "Schedule seat not found."}), 404
+    force = request.args.get("force", "").lower() == "true"
+    if slot.dept_id and not force:
+        name = slot.employee.name if slot.employee else slot.dept_id
+        return jsonify({"error": f"This seat is filled by {name}. Clear it first or confirm removal."}), 409
+
+    month = slot.month
+    details = f"Removed seat {slot.seat} from {slot.shift_date} {slot.shift_label} ({slot.position_label})"
+    if slot.dept_id:
+        details += f", unassigning {slot.dept_id} ({slot.employee.name if slot.employee else 'unknown'})"
+    g.db.delete(slot)
+    log_audit(
+        g.db,
+        actor_id=emp.dept_id,
+        actor_name=emp.name,
+        action="SCHEDULE_SEAT_REMOVED",
+        target_type="schedule_slot",
+        target_id=str(slot_id),
+        details=details + ".",
+    )
+    g.db.commit()
+    return jsonify({"message": "Seat removed.", "deleted_id": slot_id, **month_state(g.db, month)})
+
+
+@app.route("/api/schedule/slots/<int:slot_id>", methods=["PUT"])
+@require_reviewer
+def assign_schedule_slot(slot_id: int):
+    emp = g.current_user
+    slot = g.db.get(ScheduleSlot, slot_id)
+    if not slot:
+        return jsonify({"error": "Schedule seat not found."}), 404
+
+    data = request.get_json(silent=True) or {}
+    new_dept = str(data.get("dept_id") or "").strip() or None
+    old_dept = slot.dept_id
+    old_name = slot.employee.name if slot.employee else None
+
+    if new_dept != old_dept:
+        if new_dept:
+            target = g.db.query(Employee).filter_by(dept_id=new_dept).first()
+            if not target or not target.active:
+                return jsonify({"error": f"Department ID {new_dept} is not an active member."}), 400
+            # If they're only available for part of the seat, they work that part; the seat still counts as filled
+            first = parse_month(slot.month)
+            avail = load_availability_hours(g.db, first, month_last_day(first), [new_dept])
+            cover_start, cover_end = cover_for_member(avail.get(new_dept, set()), slot)
+            if cover_start is not None:
+                base = parse_shift_date(slot.shift_date).toordinal() * 1440
+                work = (base + cover_start, base + cover_end)
+            else:
+                work = slot_seat_interval(slot)
+            conflict = find_schedule_conflict(g.db, new_dept, slot, *work)
+            if conflict:
+                return jsonify({"error": f"{target.name} is already scheduled {describe_slot(conflict)}."}), 409
+            slot.dept_id = new_dept
+            slot.assigned_via = "officer"
+            slot.assigned_by = actor_label(emp)
+            slot.assigned_at = utc_now()
+            slot.cover_start_min = cover_start
+            slot.cover_end_min = cover_end
+            action = "SCHEDULE_ASSIGNED"
+            details = f"Assigned {new_dept} ({target.name}) to {describe_slot(slot)}"
+            details += f", replacing {old_dept} ({old_name})." if old_dept else "."
+            message = f"{target.name} assigned."
+        else:
+            slot.dept_id = None
+            slot.assigned_via = None
+            slot.assigned_by = None
+            slot.assigned_at = None
+            slot.cover_start_min = None
+            slot.cover_end_min = None
+            action = "SCHEDULE_UNASSIGNED"
+            details = f"Removed {old_dept} ({old_name}) from {describe_slot(slot)}."
+            message = "Seat cleared."
+
+        log_audit(
+            g.db,
+            actor_id=emp.dept_id,
+            actor_name=emp.name,
+            action=action,
+            target_type="schedule_slot",
+            target_id=str(slot.id),
+            details=details,
+        )
+        g.db.commit()
+    else:
+        message = "No change."
+
+    return jsonify({"message": message, "slot": slot_to_dict(slot), **month_state(g.db, slot.month)})
+
+
+@app.route("/api/schedule/slots/<int:slot_id>/signup", methods=["POST"])
+@require_auth
+def signup_schedule_slot(slot_id: int):
+    emp = g.current_user
+    slot = g.db.get(ScheduleSlot, slot_id)
+    if not slot:
+        return jsonify({"error": "Schedule seat not found."}), 404
+
+    m = g.db.query(ScheduleMonth).filter_by(month=slot.month).first()
+    if not m or m.status != "published":
+        return jsonify({"error": "This schedule hasn't been published yet."}), 400
+    if slot_start_local(slot) <= local_now():
+        return jsonify({"error": "This shift has already started."}), 400
+    if slot.dept_id:
+        if slot.dept_id == emp.dept_id:
+            return jsonify({"error": "You're already signed up for this shift."}), 409
+        return jsonify({"error": "This shift was just filled by someone else."}), 409
+    if not emp.is_driver and seat_reserved_for_driver(g.db, slot, get_staffing_template(g.db)):
+        return jsonify({"error": "This seat is held for a qualified driver so the crew has one."}), 409
+
+    conflict = find_schedule_conflict(g.db, emp.dept_id, slot, *slot_seat_interval(slot))
+    if conflict:
+        return jsonify({"error": f"You're already scheduled {describe_slot(conflict)}."}), 409
+
+    # Conditional update so two people can't claim the same open seat at once
+    claimed = g.db.query(ScheduleSlot).filter(
+        ScheduleSlot.id == slot.id,
+        ScheduleSlot.dept_id.is_(None),
+    ).update(
+        {
+            ScheduleSlot.dept_id: emp.dept_id,
+            ScheduleSlot.assigned_via: "signup",
+            ScheduleSlot.assigned_by: actor_label(emp),
+            ScheduleSlot.assigned_at: utc_now(),
+            ScheduleSlot.cover_start_min: None,
+            ScheduleSlot.cover_end_min: None,
+        },
+        synchronize_session=False,
+    )
+    if not claimed:
+        g.db.rollback()
+        return jsonify({"error": "This shift was just filled by someone else."}), 409
+
+    log_audit(
+        g.db,
+        actor_id=emp.dept_id,
+        actor_name=emp.name,
+        action="VACANCY_SIGNUP",
+        target_type="schedule_slot",
+        target_id=str(slot.id),
+        details=f"{emp.dept_id} ({emp.name}) signed up for {describe_slot(slot)}.",
+    )
+    g.db.commit()
+    g.db.refresh(slot)
+    return jsonify({
+        "message": f"You're signed up: {slot.shift_label} {slot.start_time}–{slot.end_time}, {slot.position_label}.",
+        "slot": slot_to_dict(slot),
+    })
+
+
+@app.route("/api/schedule/slots/<int:slot_id>/drop", methods=["POST"])
+@require_auth
+def drop_schedule_slot(slot_id: int):
+    emp = g.current_user
+    slot = g.db.get(ScheduleSlot, slot_id)
+    if not slot:
+        return jsonify({"error": "Schedule seat not found."}), 404
+    if slot.dept_id != emp.dept_id:
+        return jsonify({"error": "You can only drop your own shifts."}), 403
+    if slot.assigned_via != "signup":
+        return jsonify({"error": "This shift was assigned by an officer. Contact an officer to change it."}), 400
+    if slot_start_local(slot) - local_now() < timedelta(hours=SIGNUP_DROP_CUTOFF_HOURS):
+        return jsonify({
+            "error": f"Sign-ups can only be dropped more than {SIGNUP_DROP_CUTOFF_HOURS} hours before the shift. Contact an officer."
+        }), 400
+
+    slot.dept_id = None
+    slot.assigned_via = None
+    slot.assigned_by = None
+    slot.assigned_at = None
+    slot.cover_start_min = None
+    slot.cover_end_min = None
+    log_audit(
+        g.db,
+        actor_id=emp.dept_id,
+        actor_name=emp.name,
+        action="VACANCY_DROPPED",
+        target_type="schedule_slot",
+        target_id=str(slot.id),
+        details=f"{emp.dept_id} ({emp.name}) dropped their sign-up for {describe_slot(slot)}.",
+    )
+    g.db.commit()
+    return jsonify({"message": "You've been removed from that shift. It's open for sign-up again.", "slot": slot_to_dict(slot)})
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

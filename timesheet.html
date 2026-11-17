@@ -1472,6 +1472,7 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="css/schedule.css?v=3">
 </head>
 <body>
     <header class="header no-print">
@@ -1492,7 +1493,8 @@
                     <li><a href="index.html#stations" onclick="closeMenu()">Stations</a></li>
                     <li><a href="index.html#apparatus" onclick="closeMenu()">Apparatus</a></li>
                     <li><a href="district_checker.html" onclick="closeMenu()">District Locator</a></li>
-                    <li><a href="timesheet.html" onclick="closeMenu()" style="color: var(--primary-red-light); font-weight: 700;">Timesheet</a></li>
+                    <li><a href="timesheet.html" id="navTimesheetLink" onclick="closeMenu()" style="color: var(--primary-red-light); font-weight: 700;">Timesheet</a></li>
+                    <li><a href="timesheet.html#schedule" id="navScheduleLink" onclick="closeMenu()">Schedule</a></li>
                 </ul>
             </nav>
         </div>
@@ -1501,7 +1503,7 @@
     <div class="container container--page no-print">
         <div class="portal-topbar">
             <div>
-                <h2 class="section-title" style="margin-bottom: 0; text-align: left; font-size: 2rem;">Timesheet</h2>
+                <h2 class="section-title" id="portalTitle" style="margin-bottom: 0; text-align: left; font-size: 2rem;">Timesheet</h2>
             </div>
             <div id="connectionBadge" class="status-pill">
                 <span class="dot"></span>
@@ -1577,8 +1579,18 @@
                 </div>
             </div>
 
-            <!-- Shared Weekly Pay Period Navigator -->
-            <div class="pay-period-bar">
+            <!-- Timesheet | Schedule Switcher -->
+            <div class="app-switcher" role="tablist" aria-label="Portal section">
+                <button type="button" class="app-switch-btn active" data-app="timesheet" role="tab" aria-selected="true" onclick="switchApp('timesheet')">
+                    &#9201; Timesheet
+                </button>
+                <button type="button" class="app-switch-btn" data-app="schedule" role="tab" aria-selected="false" onclick="switchApp('schedule')">
+                    &#128203; Schedule
+                </button>
+            </div>
+
+            <!-- Shared Weekly Pay Period Navigator (Timesheet) -->
+            <div class="pay-period-bar" id="payPeriodBar">
                 <div class="pay-period-info">
                     <h3 id="payPeriodTitle">Viewing Pay Period: Loading...</h3>
                     <p>Monday 00:00 &ndash; Sunday 24:00</p>
@@ -1587,6 +1599,19 @@
                     <button type="button" class="btn btn-outline btn-sm" onclick="shiftPayPeriod(-7)" title="Previous week" aria-label="Previous week">&larr;</button>
                     <button type="button" class="btn btn-secondary btn-sm" onclick="resetToCurrentWeek()">This Week</button>
                     <button type="button" class="btn btn-outline btn-sm" onclick="shiftPayPeriod(7)" title="Next week" aria-label="Next week">&rarr;</button>
+                </div>
+            </div>
+
+            <!-- Month Navigator (Schedule) -->
+            <div class="pay-period-bar" id="scheduleMonthBar" style="display: none;">
+                <div class="pay-period-info">
+                    <h3 id="schMonthTitle">Month</h3>
+                    <p id="schMonthSub"></p>
+                </div>
+                <div class="pay-period-controls">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="schShiftMonth(-1)" title="Previous month" aria-label="Previous month">&larr;</button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="schMonthResetBtn" onclick="schResetMonth()">This Month</button>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="schShiftMonth(1)" title="Next month" aria-label="Next month">&rarr;</button>
                 </div>
             </div>
 
@@ -1610,6 +1635,15 @@
                 </button>
                 <button type="button" class="tab-btn reviewer-only" data-tab="tabAudit" onclick="switchTab('tabAudit')" style="display: none;">
                     Audit Log
+                </button>
+                <button type="button" class="tab-btn" data-app="schedule" data-tab="tabSchedule" onclick="switchTab('tabSchedule')" style="display: none;">
+                    Schedule
+                </button>
+                <button type="button" class="tab-btn" data-app="schedule" data-tab="tabAvailability" onclick="switchTab('tabAvailability')" style="display: none;">
+                    Availability
+                </button>
+                <button type="button" class="tab-btn reviewer-only" data-app="schedule" data-tab="tabScheduleBuilder" onclick="switchTab('tabScheduleBuilder')" style="display: none;">
+                    Builder
                 </button>
             </div>
 
@@ -1657,6 +1691,9 @@
                                 <input type="date" id="entryShiftDate" class="form-control" required>
                             </div>
                         </div>
+
+                        <!-- One-Tap Presets from the Published Schedule (filled by js/schedule.js) -->
+                        <div class="preset-bar" id="scheduledPresetBar" style="display: none;"></div>
 
                         <!-- Quick-Tap Shift Time Presets for Mobile Convenience -->
                         <div class="preset-bar">
@@ -1978,6 +2015,13 @@
                                 </select>
                             </div>
                             <div class="form-group">
+                                <label for="rosterDriver">Qualified Driver</label>
+                                <select id="rosterDriver" class="form-control">
+                                    <option value="0">No</option>
+                                    <option value="1">Yes</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
                                 <label for="rosterPin">PIN</label>
                                 <input
                                     type="text"
@@ -2011,6 +2055,7 @@
                                     <th>ID</th>
                                     <th>Name</th>
                                     <th>Schedule</th>
+                                    <th>Driver</th>
                                     <th>Role</th>
                                     <th>Status</th>
                                     <th>Actions</th>
@@ -2046,6 +2091,235 @@
                         </table>
                     </div>
                 </div>
+            </div>
+
+            <!-- ==============================================================
+                 SCHEDULE: PUBLISHED MONTH, MY SHIFTS & OPEN SHIFT SIGN-UP
+                 ============================================================== -->
+            <div id="tabSchedule" class="tab-pane" data-app="schedule" style="display: none;">
+                <div id="schAvailCallout" class="sch-callout" style="display: none;"></div>
+
+                <div class="stats-grid">
+                    <div class="stat-card stat-primary">
+                        <div class="stat-label">My Shifts</div>
+                        <div class="stat-value" id="schMyShiftCount">0</div>
+                        <div class="stat-sub" id="schMyShiftSub">this month</div>
+                    </div>
+                    <div class="stat-card stat-approved">
+                        <div class="stat-label">Scheduled Hours</div>
+                        <div class="stat-value" id="schMyHours">0</div>
+                        <div class="stat-sub" id="schMyHoursSub">this month</div>
+                    </div>
+                    <div class="stat-card stat-pending">
+                        <div class="stat-label">Open Shifts</div>
+                        <div class="stat-value" id="schOpenCount">0</div>
+                        <div class="stat-sub">available to sign up</div>
+                    </div>
+                </div>
+
+                <div id="schUnpublishedCard" class="card" style="display: none;"></div>
+
+                <div id="schPublishedWrap" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">My Shifts</div>
+                            <div class="sch-week-chips" id="schMyWeekChips"></div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Shift</th>
+                                        <th>Assignment</th>
+                                        <th>Hours</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="schMyShiftsTbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">Open Shifts</div>
+                                <div class="sch-subtle">Tap a shift to sign up. First come, first served.</div>
+                            </div>
+                        </div>
+                        <div id="schVacancyList"></div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Full Schedule</div>
+                            <div class="sch-toolbar">
+                                <select id="schViewFilter" class="form-control sch-compact-select" onchange="renderScheduleGrid()" aria-label="Filter days">
+                                    <option value="all">All days</option>
+                                    <option value="mine">My shifts</option>
+                                    <option value="open">Open shifts</option>
+                                </select>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="schPrintSchedule('view')">&#128424; Print</button>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table sch-grid-table" id="schViewGrid"></table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==============================================================
+                 AVAILABILITY: MEMBERS MARK DAY / NIGHT BY DATE
+                 ============================================================== -->
+            <div id="tabAvailability" class="tab-pane" data-app="schedule" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title" id="availTitle">Availability</div>
+                            <div class="sch-subtle" id="availStatusText"></div>
+                        </div>
+                        <span class="badge" id="availStatusBadge"></span>
+                    </div>
+
+                    <div class="form-group" id="availMemberGroup" style="display: none; max-width: 420px;">
+                        <label for="availMemberSelect">Member</label>
+                        <select id="availMemberSelect" class="form-control" onchange="schChangeAvailMember(this.value)"></select>
+                    </div>
+
+                    <div class="preset-bar" id="availQuickBar"></div>
+                    <p class="sch-subtle" style="margin: -0.4rem 0 0.9rem;">
+                        Click and drag over the hours you can work (like When2meet). Start on an empty hour to add, or on a
+                        green hour to erase. Tap a date to toggle the whole day, or an hour to toggle it all week.
+                        Each day runs 07:00 to 07:00 so a night shift is one straight drag.
+                    </p>
+
+                    <div class="sch-week-nav">
+                        <button type="button" class="btn btn-outline btn-sm" id="availWeekPrev" onclick="schAvailShiftWeek(-1)" aria-label="Previous week">&larr;</button>
+                        <div class="sch-week-tabs" id="availWeekTabs"></div>
+                        <button type="button" class="btn btn-outline btn-sm" id="availWeekNext" onclick="schAvailShiftWeek(1)" aria-label="Next week">&rarr;</button>
+                    </div>
+                    <div class="sch-locked-note" id="availLockedNote" style="display: none;"></div>
+                    <div class="sch-hg" id="availHourGrid"></div>
+
+                    <div class="duration-preview" style="margin-top: 1.15rem;">
+                        <div>
+                            <div style="font-weight: 700; color: var(--primary-dark);">Selected</div>
+                            <div class="calc-sub" id="availSummarySub"></div>
+                        </div>
+                        <div class="calc-value" id="availSummaryValue">0 hrs</div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="availMaxHours">Max hours this month (optional)</label>
+                            <input type="number" id="availMaxHours" class="form-control" min="0" max="744" step="1" inputmode="numeric" placeholder="No limit">
+                        </div>
+                        <div class="form-group">
+                            <label for="availNotes">Notes for the scheduling officer</label>
+                            <input type="text" id="availNotes" class="form-control" maxlength="500" placeholder="Optional (e.g., prefer Station 2)">
+                        </div>
+                    </div>
+
+                    <div class="sch-save-row">
+                        <button type="button" id="availSaveBtn" class="btn btn-primary" onclick="schSaveAvailability()">Submit Availability</button>
+                        <span class="sch-subtle" id="availDirtyText"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==============================================================
+                 BUILDER (OFFICERS): FILL SEATS WITH PROJECTED HOURS
+                 ============================================================== -->
+            <div id="tabScheduleBuilder" class="tab-pane" data-app="schedule" style="display: none;">
+                <div class="stats-grid" id="builderStats"></div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title" id="builderTitle">Builder</div>
+                            <div class="sch-subtle" id="builderStatusText"></div>
+                        </div>
+                        <div class="sch-toolbar" id="builderActions"></div>
+                    </div>
+                    <div class="sch-autofill-row">
+                        <button type="button" class="btn btn-dark btn-sm" id="autofillBtn" onclick="schAutoFill()">&#9889; Auto-Fill Open Seats</button>
+                        <label class="sch-check"><input type="checkbox" id="autofillAllowOt"> Allow overtime</label>
+                        <button type="button" class="btn btn-outline btn-sm" id="autofillUndoBtn" onclick="schClearAutoFill()" style="display: none;">Undo Auto-Fill</button>
+                        <span class="sch-subtle">Fills from availability: a driver on each station first, then fewest hours first. Never double-books or schedules more than 24h straight.</span>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="builderDeadline">Availability due</label>
+                            <div class="sch-inline-field">
+                                <input type="date" id="builderDeadline" class="form-control">
+                                <button type="button" class="btn btn-outline btn-sm" onclick="schSaveDeadline()">Save</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Waiting on availability <span id="builderMissingCount"></span></label>
+                            <div class="sch-chip-list" id="builderMissingList"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">Projected Hours</div>
+                            <div class="sch-subtle">Mon&ndash;Sun pay weeks &bull; OT after 40h (Standard) / 53h (24/48) &bull; tap a member to highlight them</div>
+                        </div>
+                        <select id="builderHoursSort" class="form-control sch-compact-select" onchange="renderBuilderHours()" aria-label="Sort members">
+                            <option value="name">Sort: Name</option>
+                            <option value="hours_desc">Sort: Most hours</option>
+                            <option value="hours_asc">Sort: Fewest hours</option>
+                            <option value="avail_desc">Sort: Most available</option>
+                        </select>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table sch-hours-table">
+                            <thead id="builderHoursThead"></thead>
+                            <tbody id="builderHoursTbody"></tbody>
+                            <tfoot id="builderHoursTfoot"></tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">Schedule Grid</div>
+                            <div class="sch-subtle">Members available for the shift appear first, fewest hours on top. Partial availability shows its hours (e.g. 08:00–17:00) and still fills the seat. Changes save instantly.</div>
+                        </div>
+                        <div class="sch-toolbar">
+                            <select id="builderGridFilter" class="form-control sch-compact-select" onchange="renderBuilderGrid()" aria-label="Filter days">
+                                <option value="all">All days</option>
+                                <option value="open">Days with open seats</option>
+                                <option value="driver">Crews missing a driver</option>
+                            </select>
+                            <label class="sch-check"><input type="checkbox" id="builderEditSeats" onchange="schToggleEditSeats(this.checked)"> Add / remove seats</label>
+                        </div>
+                    </div>
+                    <div class="sch-legend">
+                        <span class="lg-open">Open</span>
+                        <span class="lg-driver">Open, needs a driver</span>
+                        <span class="lg-filled">Filled</span>
+                        <span class="lg-auto">Auto-filled</span>
+                        <span class="lg-unavail">Not on their availability</span>
+                        <span class="lg-ot">Overtime week</span>
+                        <span class="lg-text"><b>(D)</b> qualified driver</span>
+                    </div>
+                    <div id="builderFocusBanner" class="sch-focus-banner" style="display: none;"></div>
+                    <div class="table-responsive">
+                        <table class="data-table sch-grid-table sch-builder-grid" id="builderGrid"></table>
+                    </div>
+                </div>
+
+                <details class="card sch-details" id="builderTemplateCard">
+                    <summary><span class="card-title">Staffing Levels</span></summary>
+                    <div id="builderTemplateBody"></div>
+                </details>
             </div>
         </div>
     </div>
@@ -2137,13 +2411,17 @@
         </div>
     </div>
 
+    <!-- Printable monthly schedule (filled by js/schedule.js when printing) -->
+    <div id="printableSchedule"></div>
+
     <footer class="no-print">
         <p>&copy; 2026 Riverview Fire Department | York County, South Carolina</p>
         <p style="margin-top: 0.5rem;">Dedicated to Protecting Our Community</p>
-        <p style="margin-top: 0.5rem; font-size: 0.85rem; color: #9ca3af;">Timesheet Portal <b>Beta v0.8</b></p>
+        <p style="margin-top: 0.5rem; font-size: 0.85rem; color: #9ca3af;">Timesheet &amp; Scheduling Portal <b>Beta v0.9</b></p>
     </footer>
 
     <script src="js/main.js"></script>
+    <script src="js/schedule.js?v=3"></script>
     <script>
         /**
          * Riverview Fire Department - Timesheet Portal Frontend
@@ -2155,6 +2433,7 @@
 
         let apiBaseUrl = CONFIG.PROD_BACKEND_URL || CONFIG.LOCAL_BACKEND_URL;
         let serverConnected = false;
+        let lockedBackendUrl = null; // Once connected, stay on that backend (sessions are backend-specific)
         let authToken = localStorage.getItem("rvfd_ts_token") || null;
         let currentUser = null;
         let selectedPayPeriodStart = ""; // Monday YYYY-MM-DD
@@ -2272,6 +2551,7 @@
 
         function setServerOnlineState(url) {
             apiBaseUrl = url;
+            lockedBackendUrl = url;
             serverConnected = true;
             const badge = document.getElementById("connectionBadge");
             const text = document.getElementById("connectionText");
@@ -2292,13 +2572,24 @@
                 window.location.hostname === "127.0.0.1"
             );
 
-            // Avoid probing 127.0.0.1 from public HTTPS domains (like riverviewfire.org)
+            // Avoid probing 127.0.0.1 from public HTTPS domains (like riverviewfire.org).
+            // When served from a local dev server (http://localhost), prefer the local backend.
+            const isLocalDevServer = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
             const candidates = [];
-            if (CONFIG.PROD_BACKEND_URL) {
+            if (lockedBackendUrl) {
+                // Reconnect to the same backend only. Switching servers mid-session would send this
+                // session's token to a different backend (e.g. local dev -> production).
+                candidates.push(lockedBackendUrl);
+            } else if (CONFIG.PROD_BACKEND_URL) {
                 candidates.push(CONFIG.PROD_BACKEND_URL.replace(/\/+$/, ""));
             }
-            if (isLocalHost && CONFIG.LOCAL_BACKEND_URL) {
-                candidates.push(CONFIG.LOCAL_BACKEND_URL.replace(/\/+$/, ""));
+            if (!lockedBackendUrl && isLocalHost && CONFIG.LOCAL_BACKEND_URL) {
+                const localUrl = CONFIG.LOCAL_BACKEND_URL.replace(/\/+$/, "");
+                if (isLocalDevServer) {
+                    candidates.unshift(localUrl);
+                } else {
+                    candidates.push(localUrl);
+                }
             }
 
             for (const url of candidates) {
@@ -2403,6 +2694,7 @@
             authToken = null;
             currentUser = null;
             localStorage.removeItem("rvfd_ts_token");
+            resetScheduleState();
             document.getElementById("portalView").style.display = "none";
             document.getElementById("loginView").style.display = "block";
         }
@@ -2446,6 +2738,7 @@
             document.querySelectorAll(".reviewer-only").forEach(el => {
                 el.style.display = isReviewer ? "inline-flex" : "none";
             });
+            applyPortalTabVisibility();
             document.getElementById("logForMemberGroup").style.display = isReviewer ? "block" : "none";
 
             populateQuarterHourTimeSelects();
@@ -2465,8 +2758,8 @@
             if (isReviewer) {
                 await populateMemberDropdowns();
             }
-            switchTab("tabLogHours");
-            await refreshActiveViews();
+            // Open the Schedule side directly for timesheet.html#schedule links
+            await switchApp(window.location.hash === "#schedule" ? "schedule" : "timesheet");
         }
 
         async function populateMemberDropdowns() {
@@ -2547,19 +2840,27 @@
         // =====================================================================
 
         function switchTab(tabId) {
+            const target = document.getElementById(tabId);
+            if (!schCanLeaveTab(tabId)) return Promise.resolve();
+            // Remember the last tab used on each side (Timesheet / Schedule)
+            SCH.lastTab[(target && target.getAttribute("data-app")) || "timesheet"] = tabId;
+
             document.querySelectorAll(".tab-pane").forEach(p => {
                 p.style.display = "none";
             });
             document.querySelectorAll(".tab-btn").forEach(b => {
                 b.classList.toggle("active", b.getAttribute("data-tab") === tabId);
             });
-            const target = document.getElementById(tabId);
             if (target) target.style.display = "block";
-            refreshActiveViews();
+            return refreshActiveViews();
         }
 
         async function refreshActiveViews() {
             if (!currentUser) return;
+            if (SCH.app === "schedule") {
+                await refreshScheduleViews();
+                return;
+            }
             await loadMyEntries();
             await renderCalendarView();
             if (currentUser.role === "officer" || currentUser.role === "cfo") {
@@ -2568,6 +2869,7 @@
                 await loadRoster();
                 await loadAuditLogs();
             }
+            loadScheduledPresets();
         }
 
         // =====================================================================
@@ -2627,6 +2929,9 @@
                         if (pp.start !== selectedPayPeriodStart) {
                             setPayPeriodByDate(el.value, true);
                         }
+                    }
+                    if (id === "entryShiftDate" || id === "entryDeptId") {
+                        loadScheduledPresets();
                     }
                     updateDurationPreview();
                 });
@@ -3433,6 +3738,7 @@
                             <td data-label="ID"><b>${escapeHtml(emp.dept_id)}</b></td>
                             <td data-label="Name"><b>${escapeHtml(emp.name)}</b></td>
                             <td data-label="Schedule">${schedBadge}</td>
+                            <td data-label="Driver">${emp.is_driver ? '<span class="badge sch-driver-badge">Driver</span>' : '<span style="color: var(--text-muted);">—</span>'}</td>
                             <td data-label="Role"><span class="badge badge-role">${escapeHtml(emp.role)}</span></td>
                             <td data-label="Status">
                                 <span class="badge ${emp.active ? 'badge-approved' : 'badge-rejected'}">
@@ -3460,6 +3766,7 @@
             document.getElementById("rosterName").value = emp.name;
             document.getElementById("rosterRole").value = emp.role;
             document.getElementById("rosterOtThreshold").value = String(Number(emp.ot_threshold) === 53 ? 53 : 40);
+            document.getElementById("rosterDriver").value = emp.is_driver ? "1" : "0";
             document.getElementById("rosterPin").value = "";
             document.getElementById("rosterPin").placeholder = "Leave blank to keep current PIN";
             window.scrollTo({ top: 160, behavior: "smooth" });
@@ -3470,6 +3777,7 @@
             document.getElementById("rosterName").value = "";
             document.getElementById("rosterRole").value = "member";
             document.getElementById("rosterOtThreshold").value = "40";
+            document.getElementById("rosterDriver").value = "0";
             document.getElementById("rosterPin").value = "";
             document.getElementById("rosterPin").placeholder = "Min 4 characters";
         }
@@ -3480,6 +3788,7 @@
             const name = document.getElementById("rosterName").value.trim();
             const role = document.getElementById("rosterRole").value;
             const ot_threshold = Number(document.getElementById("rosterOtThreshold").value) === 53 ? 53 : 40;
+            const is_driver = document.getElementById("rosterDriver").value === "1";
             const pin = document.getElementById("rosterPin").value.trim();
 
             try {
@@ -3487,7 +3796,7 @@
                 const exists = (rosterData.employees || []).some(emp => emp.dept_id === dept_id);
 
                 if (exists) {
-                    const payload = { name, role, ot_threshold };
+                    const payload = { name, role, ot_threshold, is_driver };
                     if (pin) payload.pin = pin;
                     await apiRequest(`/api/employees/${dept_id}`, {
                         method: "PUT",
@@ -3504,7 +3813,7 @@
                     }
                     await apiRequest("/api/employees", {
                         method: "POST",
-                        body: JSON.stringify({ dept_id, name, role, ot_threshold, pin })
+                        body: JSON.stringify({ dept_id, name, role, ot_threshold, is_driver, pin })
                     });
                     showAlert(`Added member ${dept_id} (${name}) to roster.`);
                 }

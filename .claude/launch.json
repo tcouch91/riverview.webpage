@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "schedule-demo-api",
+      "runtimeExecutable": "timesheet_backend/.venv/Scripts/python.exe",
+      "runtimeArgs": ["timesheet_backend/demo_data.py", "--serve"],
+      "port": 5000
+    },
+    {
+      "name": "site",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8080", "--bind", "127.0.0.1"],
+      "port": 8080
+    }
+  ]
+}
