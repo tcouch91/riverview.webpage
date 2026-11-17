@@ -1898,6 +1898,9 @@
                             <button type="button" class="btn btn-primary btn-sm" onclick="exportCsv('summary', false)">
                                 &#8681; Summary CSV
                             </button>
+                            <button type="button" class="btn btn-success btn-sm" id="paychexExportBtn" onclick="exportPaychex()" title="Approved shifts in Paychex's Punch Detail Import layout (.xlsx)">
+                                &#8681; Paychex Import
+                            </button>
                             <button type="button" class="btn btn-dark btn-sm" onclick="exportCsv('detailed', false)">
                                 &#8681; Detailed CSV
                             </button>
@@ -1978,6 +1981,19 @@
                                 </select>
                             </div>
                             <div class="form-group">
+                                <label for="rosterPayrollId">Payroll ID (Paychex)</label>
+                                <input
+                                    type="text"
+                                    id="rosterPayrollId"
+                                    class="form-control"
+                                    placeholder="Paychex Worker ID"
+                                    maxlength="10"
+                                    pattern="[A-Za-z0-9]{1,10}"
+                                    inputmode="numeric"
+                                    autocomplete="off"
+                                >
+                            </div>
+                            <div class="form-group">
                                 <label for="rosterPin">PIN</label>
                                 <input
                                     type="text"
@@ -1996,11 +2012,21 @@
 
                 <div class="card">
                     <div class="card-header">
-                        <div class="card-title">Roster</div>
                         <div>
+                            <div class="card-title">Roster</div>
+                            <div style="font-size: 0.84rem; color: var(--text-muted); margin-top: 2px;">
+                                Paychex Company ID: <b id="paychexCompanyIdText">Not set</b>
+                                <button type="button" class="btn btn-outline btn-sm" style="min-height: 28px; padding: 0.15rem 0.55rem; margin-left: 0.35rem;" onclick="editPaychexCompanyId()">Edit</button>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
                             <input type="file" id="rosterCsvFileInput" accept=".csv,text/csv" style="display: none;" onchange="handleRosterCsvUpload(this)">
                             <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('rosterCsvFileInput').click()">
                                 &#8679; Import CSV
+                            </button>
+                            <input type="file" id="paychexListingFileInput" accept=".csv,text/csv" style="display: none;" onchange="handlePaychexListingUpload(this)">
+                            <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('paychexListingFileInput').click()" title="Upload Paychex's employee listing export to fill in Payroll IDs">
+                                &#8679; Import Paychex IDs
                             </button>
                         </div>
                     </div>
@@ -2010,6 +2036,7 @@
                                 <tr>
                                     <th>ID</th>
                                     <th>Name</th>
+                                    <th>Payroll ID</th>
                                     <th>Schedule</th>
                                     <th>Role</th>
                                     <th>Status</th>
@@ -2072,6 +2099,43 @@
                     <button type="submit" class="btn btn-primary">Update PIN</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- ======================================================================
+         PAYCHEX ID IMPORT REVIEW MODAL
+         ====================================================================== -->
+    <div id="paychexImportModal" class="modal-backdrop no-print" onclick="if (event.target === this) closePaychexImportModal()">
+        <div class="modal-content" style="max-width: 860px; max-height: 90vh; overflow-y: auto;">
+            <div class="card-header">
+                <div>
+                    <div class="card-title">Review Paychex IDs</div>
+                    <div style="font-size: 0.84rem; color: var(--text-muted); margin-top: 2px;" id="paychexImportSummary"></div>
+                </div>
+            </div>
+            <div class="form-group" style="max-width: 320px;">
+                <label for="paychexImportCompanyId">Paychex Company ID</label>
+                <input type="text" id="paychexImportCompanyId" class="form-control" maxlength="12" autocomplete="off">
+            </div>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Use</th>
+                            <th>Paychex Name</th>
+                            <th>Worker ID</th>
+                            <th>Roster Member</th>
+                            <th>Match</th>
+                        </tr>
+                    </thead>
+                    <tbody id="paychexImportTbody"></tbody>
+                </table>
+            </div>
+            <div id="paychexImportUnmatched" style="font-size: 0.86rem; color: #92400e; margin: 0.75rem 0;"></div>
+            <div style="display: flex; justify-content: flex-end; gap: 0.6rem; flex-wrap: wrap;">
+                <button type="button" class="btn btn-outline" onclick="closePaychexImportModal()">Cancel</button>
+                <button type="button" class="btn btn-primary" id="paychexImportApplyBtn" onclick="applyPaychexImport()">Save Payroll IDs</button>
+            </div>
         </div>
     </div>
 
@@ -2155,6 +2219,7 @@
 
         let apiBaseUrl = CONFIG.PROD_BACKEND_URL || CONFIG.LOCAL_BACKEND_URL;
         let serverConnected = false;
+        let lockedBackendUrl = null; // Once connected, stay on that backend (sessions are backend-specific)
         let authToken = localStorage.getItem("rvfd_ts_token") || null;
         let currentUser = null;
         let selectedPayPeriodStart = ""; // Monday YYYY-MM-DD
@@ -2272,6 +2337,7 @@
 
         function setServerOnlineState(url) {
             apiBaseUrl = url;
+            lockedBackendUrl = url;
             serverConnected = true;
             const badge = document.getElementById("connectionBadge");
             const text = document.getElementById("connectionText");
@@ -2292,13 +2358,24 @@
                 window.location.hostname === "127.0.0.1"
             );
 
-            // Avoid probing 127.0.0.1 from public HTTPS domains (like riverviewfire.org)
+            // Avoid probing 127.0.0.1 from public HTTPS domains (like riverviewfire.org).
+            // When served from a local dev server (http://localhost), prefer the local backend.
+            const isLocalDevServer = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
             const candidates = [];
-            if (CONFIG.PROD_BACKEND_URL) {
+            if (lockedBackendUrl) {
+                // Reconnect to the same backend only. Switching servers mid-session would send this
+                // session's token to a different backend (e.g. local dev -> production).
+                candidates.push(lockedBackendUrl);
+            } else if (CONFIG.PROD_BACKEND_URL) {
                 candidates.push(CONFIG.PROD_BACKEND_URL.replace(/\/+$/, ""));
             }
-            if (isLocalHost && CONFIG.LOCAL_BACKEND_URL) {
-                candidates.push(CONFIG.LOCAL_BACKEND_URL.replace(/\/+$/, ""));
+            if (!lockedBackendUrl && isLocalHost && CONFIG.LOCAL_BACKEND_URL) {
+                const localUrl = CONFIG.LOCAL_BACKEND_URL.replace(/\/+$/, "");
+                if (isLocalDevServer) {
+                    candidates.unshift(localUrl);
+                } else {
+                    candidates.push(localUrl);
+                }
             }
 
             for (const url of candidates) {
@@ -3419,6 +3496,7 @@
         // =====================================================================
 
         async function loadRoster() {
+            loadPaychexCompanyId();
             try {
                 const data = await apiRequest("/api/employees");
                 const tbody = document.getElementById("rosterTbody");
@@ -3432,6 +3510,9 @@
                         <tr>
                             <td data-label="ID"><b>${escapeHtml(emp.dept_id)}</b></td>
                             <td data-label="Name"><b>${escapeHtml(emp.name)}</b></td>
+                            <td data-label="Payroll ID">${emp.payroll_id
+                                ? `<b>${escapeHtml(emp.payroll_id)}</b>`
+                                : (emp.active ? '<span class="badge badge-pending">Missing</span>' : '<span style="color: var(--text-muted);">&mdash;</span>')}</td>
                             <td data-label="Schedule">${schedBadge}</td>
                             <td data-label="Role"><span class="badge badge-role">${escapeHtml(emp.role)}</span></td>
                             <td data-label="Status">
@@ -3460,6 +3541,7 @@
             document.getElementById("rosterName").value = emp.name;
             document.getElementById("rosterRole").value = emp.role;
             document.getElementById("rosterOtThreshold").value = String(Number(emp.ot_threshold) === 53 ? 53 : 40);
+            document.getElementById("rosterPayrollId").value = emp.payroll_id || "";
             document.getElementById("rosterPin").value = "";
             document.getElementById("rosterPin").placeholder = "Leave blank to keep current PIN";
             window.scrollTo({ top: 160, behavior: "smooth" });
@@ -3470,6 +3552,7 @@
             document.getElementById("rosterName").value = "";
             document.getElementById("rosterRole").value = "member";
             document.getElementById("rosterOtThreshold").value = "40";
+            document.getElementById("rosterPayrollId").value = "";
             document.getElementById("rosterPin").value = "";
             document.getElementById("rosterPin").placeholder = "Min 4 characters";
         }
@@ -3480,6 +3563,7 @@
             const name = document.getElementById("rosterName").value.trim();
             const role = document.getElementById("rosterRole").value;
             const ot_threshold = Number(document.getElementById("rosterOtThreshold").value) === 53 ? 53 : 40;
+            const payroll_id = document.getElementById("rosterPayrollId").value.trim();
             const pin = document.getElementById("rosterPin").value.trim();
 
             try {
@@ -3487,7 +3571,7 @@
                 const exists = (rosterData.employees || []).some(emp => emp.dept_id === dept_id);
 
                 if (exists) {
-                    const payload = { name, role, ot_threshold };
+                    const payload = { name, role, ot_threshold, payroll_id };
                     if (pin) payload.pin = pin;
                     await apiRequest(`/api/employees/${dept_id}`, {
                         method: "PUT",
@@ -3504,7 +3588,7 @@
                     }
                     await apiRequest("/api/employees", {
                         method: "POST",
-                        body: JSON.stringify({ dept_id, name, role, ot_threshold, pin })
+                        body: JSON.stringify({ dept_id, name, role, ot_threshold, payroll_id, pin })
                     });
                     showAlert(`Added member ${dept_id} (${name}) to roster.`);
                 }
@@ -3546,6 +3630,170 @@
                 showAlert(err.message, "error");
             } finally {
                 fileInput.value = "";
+            }
+        }
+
+        // =====================================================================
+        // Paychex: Company ID, Worker ID import, and Punch Detail export
+        // =====================================================================
+
+        let paychexPreview = null;
+
+        async function loadPaychexCompanyId() {
+            try {
+                const data = await apiRequest("/api/settings/payroll");
+                document.getElementById("paychexCompanyIdText").textContent = data.paychex_company_id || "Not set";
+            } catch (err) {
+                console.error("Failed loading payroll settings:", err);
+            }
+        }
+
+        async function editPaychexCompanyId() {
+            const current = document.getElementById("paychexCompanyIdText").textContent;
+            const value = prompt("Paychex Company ID:", current === "Not set" ? "" : current);
+            if (value === null) return;
+            try {
+                const res = await apiRequest("/api/settings/payroll", {
+                    method: "PUT",
+                    body: JSON.stringify({ paychex_company_id: value.trim() })
+                });
+                document.getElementById("paychexCompanyIdText").textContent = res.paychex_company_id || "Not set";
+                showAlert(res.message);
+            } catch (err) {
+                showAlert(err.message, "error");
+            }
+        }
+
+        async function handlePaychexListingUpload(fileInput) {
+            const file = fileInput && fileInput.files && fileInput.files[0];
+            if (!file) return;
+            try {
+                const csvText = await file.text();
+                paychexPreview = await apiRequest("/api/employees/payroll-ids/preview", {
+                    method: "POST",
+                    body: JSON.stringify({ csv_text: csvText })
+                });
+                renderPaychexImportModal();
+                document.getElementById("paychexImportModal").classList.add("open");
+            } catch (err) {
+                showAlert(err.message, "error");
+            } finally {
+                fileInput.value = "";
+            }
+        }
+
+        function renderPaychexImportModal() {
+            const p = paychexPreview;
+            const counts = { exact: 0, probable: 0, ambiguous: 0, none: 0 };
+            p.rows.forEach(r => { counts[r.status] = (counts[r.status] || 0) + 1; });
+            document.getElementById("paychexImportSummary").textContent =
+                `${p.rows.length} people in the Paychex file: ${counts.exact} matched, ${counts.probable} to double-check, ` +
+                `${counts.ambiguous + counts.none} not matched (pick a member or leave unchecked).`;
+            document.getElementById("paychexImportCompanyId").value = p.company_ids[0] || p.current_company_id || "";
+
+            const memberOptions = (selected) => '<option value="">— Not on roster —</option>' + p.employees.map(e =>
+                `<option value="${escapeHtml(e.dept_id)}" ${e.dept_id === selected ? "selected" : ""}>${escapeHtml(e.dept_id)} — ${escapeHtml(e.name)}${e.active ? "" : " (inactive)"}${e.payroll_id ? ` [now ${escapeHtml(e.payroll_id)}]` : ""}</option>`
+            ).join("");
+            const badge = {
+                exact: '<span class="badge badge-approved">Matched</span>',
+                probable: '<span class="badge badge-pending">Check name</span>',
+                ambiguous: '<span class="badge badge-rejected">Ambiguous</span>',
+                none: '<span class="badge badge-role">No match</span>'
+            };
+            document.getElementById("paychexImportTbody").innerHTML = p.rows.map((r, i) => `
+                <tr>
+                    <td data-label="Use"><input type="checkbox" id="pxUse_${i}" ${r.status === "exact" ? "checked" : ""} style="width: 18px; height: 18px;"></td>
+                    <td data-label="Paychex Name"><b>${escapeHtml(r.listing_name)}</b></td>
+                    <td data-label="Worker ID">${escapeHtml(r.worker_id)}</td>
+                    <td data-label="Roster Member">
+                        <select class="form-control" id="pxMember_${i}" style="min-height: 38px; padding: 0.3rem 0.5rem; font-size: 0.9rem;"
+                                onchange="document.getElementById('pxUse_${i}').checked = Boolean(this.value)">${memberOptions(r.dept_id)}</select>
+                    </td>
+                    <td data-label="Match">${badge[r.status] || ""}</td>
+                </tr>`).join("");
+
+            const unmatched = p.unmatched_members || [];
+            document.getElementById("paychexImportUnmatched").innerHTML = unmatched.length
+                ? `<b>Active roster members not found in the Paychex file:</b> ${unmatched.map(e => escapeHtml(`${e.dept_id} ${e.name}`)).join(", ")}. Pick them in a row above or add their Payroll ID on the roster.`
+                : "";
+        }
+
+        function closePaychexImportModal() {
+            document.getElementById("paychexImportModal").classList.remove("open");
+        }
+
+        async function applyPaychexImport() {
+            const p = paychexPreview;
+            if (!p) return;
+            const assignments = [];
+            for (let i = 0; i < p.rows.length; i++) {
+                if (!document.getElementById(`pxUse_${i}`).checked) continue;
+                const deptId = document.getElementById(`pxMember_${i}`).value;
+                if (!deptId) {
+                    showAlert(`Pick a roster member for ${p.rows[i].listing_name} or uncheck that row.`, "error");
+                    return;
+                }
+                assignments.push({ dept_id: deptId, payroll_id: p.rows[i].worker_id });
+            }
+            if (!assignments.length) {
+                showAlert("Check at least one row to save.", "error");
+                return;
+            }
+            const btn = document.getElementById("paychexImportApplyBtn");
+            btn.disabled = true;
+            try {
+                const res = await apiRequest("/api/employees/payroll-ids/apply", {
+                    method: "POST",
+                    body: JSON.stringify({
+                        assignments,
+                        company_id: document.getElementById("paychexImportCompanyId").value.trim()
+                    })
+                });
+                closePaychexImportModal();
+                showAlert(res.message);
+                await loadRoster();
+            } catch (err) {
+                showAlert(err.message, "error");
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function exportPaychex() {
+            if (!serverConnected) {
+                showAlert("Unable to connect to the timesheet server. Please contact Tyler.", "error");
+                return;
+            }
+            const pending = lastCfoSummaryData ? Number(lastCfoSummaryData.totals.pending_hours) : 0;
+            if (pending > 0 && !confirm(`${pending.toFixed(2)} pending hours this week aren't approved and won't be in the Paychex file. Export anyway?`)) {
+                return;
+            }
+            const btn = document.getElementById("paychexExportBtn");
+            btn.disabled = true;
+            try {
+                const params = new URLSearchParams({ pay_period_start: selectedPayPeriodStart });
+                const res = await fetch(`${apiBaseUrl}/api/export/paychex?${params.toString()}`, {
+                    headers: { Authorization: `Bearer ${authToken}` }
+                });
+                if (!res.ok) {
+                    const data = await res.json().catch(() => ({}));
+                    throw new Error(data.error || `Export failed (${res.status}).`);
+                }
+                const blob = await res.blob();
+                const disposition = res.headers.get("Content-Disposition") || "";
+                const match = disposition.match(/filename="([^"]+)"/);
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = match ? match[1] : `RVFD_Paychex_Punch_Import_${selectedPayPeriodStart}.xlsx`;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                setTimeout(() => URL.revokeObjectURL(link.href), 5000);
+                showAlert("Paychex import file downloaded (approved shifts only).");
+            } catch (err) {
+                showAlert(err.message, "error");
+            } finally {
+                btn.disabled = false;
             }
         }
 

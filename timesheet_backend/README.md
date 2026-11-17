@@ -16,6 +16,10 @@ Lightweight Flask backend for the Riverview Fire Department retro timesheet & CF
   - One-click **CFO Payroll Summary CSV** (aggregated by employee for the selected Monday–Sunday week).
   - One-click **Detailed Shift Audit CSV** (every individual shift record with review timestamps).
   - Printable / Save-as-PDF formal **Weekly Payroll Timesheet Summary & Sign-Off Report** in `timesheet.html`.
+- **Paychex**:
+  - Each member has a **Payroll ID** (their Paychex Worker ID), shown and editable on the Roster tab. IDs are unique and alphanumeric (max 10). The roster CSV import also accepts an optional `PAYROLL ID` column.
+  - **Import Paychex IDs** (Roster tab) reads Paychex's employee listing export (`Company ID, Company, "Last, First M", Worker ID`, no header). It matches names to the roster, lets an officer review the matches (exact, double-check, or pick by hand), then saves the IDs and the Paychex **Company ID**. Real IDs live only in the database, never in this public repository.
+  - **Paychex Import** (Payroll tab) downloads the selected week's **approved** shifts as `.xlsx` in Paychex's *Punch Detail Import* layout: `Company ID | Worker ID | Punch/Apply Date | Punch Time 1 | Punch Time 2 | Total Hours`, one row per shift (overnight shifts use the start date). The export refuses to run if the Company ID is missing or if anyone with approved hours has no Payroll ID, so no one's pay is silently left out.
 
 ---
 

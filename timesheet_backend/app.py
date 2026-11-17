@@ -9,9 +9,10 @@ retro shift logging with automatic duration calculation, weekly pay period
 
 import csv
 import io
+from collections import defaultdict
 import os
 import re
-from datetime import datetime, date, timedelta, timezone
+from datetime import datetime, date, time as dt_time, timedelta, timezone
 from functools import wraps
 
 from flask import Flask, request, jsonify, Response, g
@@ -99,6 +100,7 @@ class Employee(Base):
     name = Column(String(120), nullable=False)
     role = Column(String(20), nullable=False, default="member")  # member | officer | cfo
     ot_threshold = Column(Integer, nullable=False, default=40)   # 53 for Full-Time 24/48, 40 for standard staff
+    payroll_id = Column(String(20), nullable=True, index=True)   # Paychex Worker ID
     pin_hash = Column(String(256), nullable=False)
     active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime(timezone=True), default=utc_now)
@@ -113,6 +115,7 @@ class Employee(Base):
             "ot_threshold": self.ot_threshold if self.ot_threshold in (40, 53) else 40,
             "active": self.active,
             "is_reviewer": self.role in ("officer", "cfo"),
+            "payroll_id": self.payroll_id or "",
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
@@ -186,6 +189,28 @@ class AuditLog(Base):
         }
 
 
+class AppSetting(Base):
+    """Small key/value settings store (e.g. the Paychex company ID)."""
+    __tablename__ = "app_settings"
+
+    key = Column(String(60), primary_key=True)
+    value = Column(Text, nullable=False, default="")
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+
+
+def get_app_setting(session, key: str, default: str = "") -> str:
+    row = session.get(AppSetting, key)
+    return row.value if row else default
+
+
+def set_app_setting(session, key: str, value: str) -> None:
+    row = session.get(AppSetting, key)
+    if row:
+        row.value = value
+    else:
+        session.add(AppSetting(key=key, value=value))
+
+
 @app.teardown_appcontext
 def shutdown_session(exception=None):
     SessionLocal.remove()
@@ -196,6 +221,7 @@ def shutdown_session(exception=None):
 # ==============================================================================
 
 DEPT_ID_REGEX = re.compile(r"^9\d{2}$")  # Matches 900 - 999
+PAYROLL_ID_REGEX = re.compile(r"^[A-Za-z0-9]{1,10}$")  # Paychex Worker ID: alphanumeric, max 10
 TIME_REGEX = re.compile(r"^([01]\d|2[0-3]):([0-5]\d)$|^24:00$")
 
 
@@ -451,7 +477,9 @@ def parse_roster_csv_text(csv_text: str) -> tuple[list[dict], list[str]]:
         else:
             ot_threshold = 40
 
+        payroll_raw = (row.get("PAYROLL ID") or row.get("PAYCHEX ID") or row.get("WORKER ID") or "").strip()
         records.append({
+            "payroll_id": payroll_raw if PAYROLL_ID_REGEX.match(payroll_raw) else None,
             "dept_id": dept_id,
             "name": full_name,
             "role": role,
@@ -486,6 +514,8 @@ def upsert_roster_records(session, records: list[dict], default_pin: str = "1234
             existing.name = rec["name"]
             existing.role = role
             existing.ot_threshold = rec["ot_threshold"]
+            if rec.get("payroll_id"):
+                existing.payroll_id = rec["payroll_id"]
             if is_primary_admin and env_admin_pin:
                 existing.pin_hash = officer_hash
             elif len(csv_pin) >= 4:
@@ -505,6 +535,7 @@ def upsert_roster_records(session, records: list[dict], default_pin: str = "1234
                     name=rec["name"],
                     role=role,
                     ot_threshold=rec["ot_threshold"],
+                    payroll_id=rec.get("payroll_id"),
                     pin_hash=pin_hash,
                     active=True,
                 )
@@ -536,13 +567,19 @@ def load_startup_roster_csv() -> str | None:
 
 def init_db():
     Base.metadata.create_all(bind=engine)
-    # Safe migration if existing table lacks ot_threshold column
-    with engine.connect() as conn:
-        try:
-            conn.execute(text("ALTER TABLE employees ADD COLUMN ot_threshold INTEGER NOT NULL DEFAULT 40"))
-            conn.commit()
-        except Exception:
-            pass
+    # Safe column migrations for tables created by older versions. Each runs on its
+    # own connection so a failure ("column already exists") can't abort the next one
+    # (PostgreSQL aborts the whole transaction after any error).
+    for ddl in (
+        "ALTER TABLE employees ADD COLUMN ot_threshold INTEGER NOT NULL DEFAULT 40",
+        "ALTER TABLE employees ADD COLUMN payroll_id VARCHAR(20)",
+    ):
+        with engine.connect() as conn:
+            try:
+                conn.execute(text(ddl))
+                conn.commit()
+            except Exception:
+                conn.rollback()
 
     session = SessionLocal()
     try:
@@ -1553,7 +1590,12 @@ def create_employee():
     name = str(data.get("name", "")).strip()
     role = str(data.get("role", "member")).strip().lower()
     ot_threshold = 53 if int(data.get("ot_threshold", 40) or 40) == 53 else 40
+    payroll_id = str(data.get("payroll_id", "") or "").strip()
     pin = str(data.get("pin", "")).strip()
+
+    payroll_err = validate_payroll_id(g.db, payroll_id, dept_id)
+    if payroll_err:
+        return jsonify({"error": payroll_err}), 400
 
     if not is_valid_dept_id(dept_id):
         return jsonify({"error": "Department ID must be a 3-digit number between 900 and 999."}), 400
@@ -1573,6 +1615,7 @@ def create_employee():
         name=name,
         role=role,
         ot_threshold=ot_threshold,
+        payroll_id=payroll_id or None,
         pin_hash=generate_password_hash(pin),
         active=True,
     )
@@ -1618,6 +1661,15 @@ def update_employee(dept_id: str):
         if new_ot != emp.ot_threshold:
             changes.append(f"ot_threshold {emp.ot_threshold}h -> {new_ot}h")
             emp.ot_threshold = new_ot
+
+    if "payroll_id" in data:
+        new_payroll = str(data.get("payroll_id") or "").strip()
+        payroll_err = validate_payroll_id(g.db, new_payroll, emp.dept_id)
+        if payroll_err:
+            return jsonify({"error": payroll_err}), 400
+        if new_payroll != (emp.payroll_id or ""):
+            changes.append(f"payroll ID '{emp.payroll_id or ''}' -> '{new_payroll}'")
+            emp.payroll_id = new_payroll or None
 
     if "active" in data:
         new_active = bool(data["active"])
@@ -1692,6 +1744,338 @@ def get_audit_logs():
     logs = g.db.query(AuditLog).order_by(AuditLog.timestamp.desc(), AuditLog.id.desc()).limit(limit).all()
     return jsonify({"logs": [l.to_dict() for l in logs]})
 
+
+# ==============================================================================
+# Paychex: Worker IDs, Company ID, and Punch Detail Import export
+# ==============================================================================
+#
+# Real payroll IDs are never stored in this (public) repository. They are loaded
+# into the database from Paychex's employee listing export via the Roster tab.
+
+PAYCHEX_COMPANY_KEY = "paychex_company_id"
+NAME_SUFFIXES = {"jr", "sr", "ii", "iii", "iv", "v"}
+
+
+def validate_payroll_id(session, payroll_id: str, dept_id: str) -> str | None:
+    """Returns an error message if the payroll ID is malformed or already used by someone else."""
+    if not payroll_id:
+        return None
+    if not PAYROLL_ID_REGEX.match(payroll_id):
+        return "Payroll ID must be 1-10 letters or numbers (Paychex Worker ID)."
+    other = session.query(Employee).filter(Employee.payroll_id == payroll_id, Employee.dept_id != dept_id).first()
+    if other:
+        return f"Payroll ID {payroll_id} is already assigned to {other.dept_id} ({other.name})."
+    return None
+
+
+def _name_tokens(text_value: str) -> list:
+    cleaned = re.sub(r"[^a-z\s-]", " ", (text_value or "").lower()).replace("-", " ")
+    return [t for t in cleaned.split() if t and t not in NAME_SUFFIXES]
+
+
+def parse_paychex_employee_listing(csv_text: str) -> tuple:
+    """
+    Parses Paychex's employee listing export. Rows look like:
+        12345678,COMPANY NAME,"Last, First M",72
+    (company ID, company name, "Last, First Middle", worker ID). A header row is skipped.
+    """
+    rows, skipped = [], []
+    for raw in csv.reader(io.StringIO(csv_text.lstrip("﻿"))):
+        cells = [c.strip() for c in raw]
+        if not any(cells):
+            continue
+        if len(cells) < 4:
+            skipped.append(", ".join(cells))
+            continue
+        company_id, full_name, worker_id = cells[0], cells[2], cells[3]
+        if not PAYROLL_ID_REGEX.match(worker_id) or not company_id.isalnum():
+            if rows:  # a bad row after data started (a leading header row is ignored quietly)
+                skipped.append(full_name or ", ".join(cells))
+            continue
+        last_part, _, first_part = full_name.partition(",")
+        rows.append({
+            "company_id": company_id,
+            "worker_id": worker_id,
+            "listing_name": full_name,
+            "last_tokens": _name_tokens(last_part),
+            "first_tokens": _name_tokens(first_part),
+        })
+    return rows, skipped
+
+
+def _last_name_matches(emp_tokens: list, last_tokens: list) -> bool:
+    if not emp_tokens or not last_tokens:
+        return False
+    if len(emp_tokens) > len(last_tokens) and emp_tokens[-len(last_tokens):] == last_tokens:
+        return True  # "Fernando Diaz Legorreta" vs "Diaz Legorreta"
+    return emp_tokens[-1] in (last_tokens[0], last_tokens[-1])  # "Fernando Diaz" vs "Diaz Legorreta"
+
+
+def match_paychex_listing(employees: list, rows: list) -> list:
+    """
+    Matches listing rows to roster employees.
+      exact     - same last name and first name
+      probable  - same last name and first initial (e.g. a nickname); needs review
+      ambiguous - more than one possible member
+      none      - nothing reliable; the officer picks the member by hand
+    A member claimed by more than one row is marked ambiguous on every row.
+    """
+    results = []
+    for row in rows:
+        first = row["first_tokens"][0] if row["first_tokens"] else ""
+        exact, probable = [], []
+        for e in employees:
+            tokens = _name_tokens(e.name)
+            if not tokens or not _last_name_matches(tokens, row["last_tokens"]):
+                continue
+            if tokens[0] == first:
+                exact.append(e)
+            elif first and tokens[0][:1] == first[:1]:
+                probable.append(e)
+        if len(exact) == 1:
+            status, match = "exact", exact[0]
+        elif not exact and len(probable) == 1:
+            status, match = "probable", probable[0]
+        else:
+            status, match = ("ambiguous" if (exact or probable) else "none"), None
+        results.append({
+            "company_id": row["company_id"],
+            "worker_id": row["worker_id"],
+            "listing_name": row["listing_name"],
+            "status": status,
+            "dept_id": match.dept_id if match else "",
+            "employee_name": match.name if match else "",
+            "current_payroll_id": (match.payroll_id or "") if match else "",
+        })
+
+    claimed = defaultdict(list)
+    for r in results:
+        if r["dept_id"]:
+            claimed[r["dept_id"]].append(r)
+    for rs in claimed.values():
+        if len(rs) > 1:
+            for r in rs:
+                r.update({"status": "ambiguous", "dept_id": "", "employee_name": "", "current_payroll_id": ""})
+    return results
+
+
+@app.route("/api/employees/payroll-ids/preview", methods=["POST"])
+@require_reviewer
+def preview_payroll_ids():
+    data = request.get_json(silent=True) or {}
+    csv_text = str(data.get("csv_text", "")).strip()
+    if not csv_text:
+        return jsonify({"error": "Choose the Paychex employee listing CSV first."}), 400
+    rows, skipped = parse_paychex_employee_listing(csv_text)
+    if not rows:
+        return jsonify({"error": 'No Paychex employee rows found. Expected: Company ID, Company, "Last, First", Worker ID.'}), 400
+
+    employees = g.db.query(Employee).order_by(Employee.dept_id.asc()).all()
+    results = match_paychex_listing(employees, rows)
+    matched = {r["dept_id"] for r in results if r["dept_id"]}
+    return jsonify({
+        "rows": results,
+        "skipped": skipped,
+        "company_ids": sorted({r["company_id"] for r in rows}),
+        "current_company_id": get_app_setting(g.db, PAYCHEX_COMPANY_KEY),
+        "unmatched_members": [e.to_dict() for e in employees if e.active and e.dept_id not in matched],
+        "employees": [e.to_dict() for e in employees],
+    })
+
+
+@app.route("/api/employees/payroll-ids/apply", methods=["POST"])
+@require_reviewer
+def apply_payroll_ids():
+    actor = g.current_user
+    data = request.get_json(silent=True) or {}
+    assignments = data.get("assignments") or []
+    company_id = str(data.get("company_id", "") or "").strip()
+    if not isinstance(assignments, list) or not assignments:
+        return jsonify({"error": "Select at least one member to update."}), 400
+    if company_id and not re.match(r"^[A-Za-z0-9]{1,12}$", company_id):
+        return jsonify({"error": "Company ID must be letters or numbers."}), 400
+
+    by_dept, by_payroll = {}, {}
+    for a in assignments:
+        a = a if isinstance(a, dict) else {}
+        dept_id = str(a.get("dept_id", "")).strip()
+        payroll_id = str(a.get("payroll_id", "")).strip()
+        if not is_valid_dept_id(dept_id) or not PAYROLL_ID_REGEX.match(payroll_id):
+            return jsonify({"error": f"Invalid assignment ({dept_id} -> {payroll_id})."}), 400
+        if dept_id in by_dept:
+            return jsonify({"error": f"{dept_id} is selected for two different Paychex IDs."}), 400
+        if payroll_id in by_payroll:
+            return jsonify({"error": f"Paychex ID {payroll_id} is selected for two members."}), 400
+        by_dept[dept_id] = payroll_id
+        by_payroll[payroll_id] = dept_id
+
+    employees = {e.dept_id: e for e in g.db.query(Employee).all()}
+    missing = [d for d in by_dept if d not in employees]
+    if missing:
+        return jsonify({"error": f"Department ID(s) not found: {', '.join(missing)}."}), 404
+    # Someone outside this batch already holding one of these IDs would create a duplicate
+    for e in employees.values():
+        if e.payroll_id and e.payroll_id in by_payroll and e.dept_id not in by_dept:
+            return jsonify({
+                "error": f"Paychex ID {e.payroll_id} already belongs to {e.dept_id} ({e.name}). Clear it on the roster first."
+            }), 409
+
+    # Clear first so IDs swapped within the batch don't collide
+    for dept_id in by_dept:
+        employees[dept_id].payroll_id = None
+    g.db.flush()
+    changed = []
+    for dept_id, payroll_id in by_dept.items():
+        employees[dept_id].payroll_id = payroll_id
+        changed.append(f"{dept_id} ({employees[dept_id].name}) = {payroll_id}")
+
+    details = f"Set Paychex Worker IDs for {len(changed)} members: " + "; ".join(changed) + "."
+    if company_id and company_id != get_app_setting(g.db, PAYCHEX_COMPANY_KEY):
+        set_app_setting(g.db, PAYCHEX_COMPANY_KEY, company_id)
+        details += f" Paychex Company ID set to {company_id}."
+    log_audit(
+        g.db,
+        actor_id=actor.dept_id,
+        actor_name=actor.name,
+        action="PAYROLL_IDS_IMPORTED",
+        target_type="employee",
+        target_id=f"{len(changed)} members",
+        details=details,
+    )
+    g.db.commit()
+    return jsonify({"message": f"Saved Paychex IDs for {len(changed)} members.", "updated": len(changed)})
+
+
+@app.route("/api/settings/payroll", methods=["GET"])
+@require_reviewer
+def get_payroll_settings():
+    return jsonify({"paychex_company_id": get_app_setting(g.db, PAYCHEX_COMPANY_KEY)})
+
+
+@app.route("/api/settings/payroll", methods=["PUT"])
+@require_reviewer
+def update_payroll_settings():
+    actor = g.current_user
+    data = request.get_json(silent=True) or {}
+    company_id = str(data.get("paychex_company_id", "") or "").strip()
+    if company_id and not re.match(r"^[A-Za-z0-9]{1,12}$", company_id):
+        return jsonify({"error": "Company ID must be letters or numbers."}), 400
+    old = get_app_setting(g.db, PAYCHEX_COMPANY_KEY)
+    if company_id != old:
+        set_app_setting(g.db, PAYCHEX_COMPANY_KEY, company_id)
+        log_audit(
+            g.db,
+            actor_id=actor.dept_id,
+            actor_name=actor.name,
+            action="PAYROLL_SETTINGS_UPDATED",
+            target_type="settings",
+            target_id=PAYCHEX_COMPANY_KEY,
+            details=f"Paychex Company ID '{old}' -> '{company_id}'.",
+        )
+        g.db.commit()
+    return jsonify({"message": "Payroll settings saved.", "paychex_company_id": company_id})
+
+
+def _excel_number_or_text(value: str):
+    """Paychex's template stores IDs in numeric cells; keep leading zeros / letters as text."""
+    return int(value) if value.isdigit() and not (len(value) > 1 and value.startswith("0")) else value
+
+
+@app.route("/api/export/paychex", methods=["GET"])
+@require_reviewer
+def export_paychex():
+    """
+    Approved shifts for one pay period in Paychex's Punch Detail Import layout:
+    Company ID | Worker ID | Punch/Apply Date | Punch Time 1 | Punch Time 2 | Total Hours
+    One row per approved time entry (overnight shifts: date = start date).
+    """
+    from openpyxl import Workbook
+    from openpyxl.styles import Font
+
+    pay_period_start = request.args.get("pay_period_start", "").strip()
+    try:
+        data = build_payroll_summary(g.db, pay_period_start)
+    except ValueError as err:
+        return jsonify({"error": str(err)}), 400
+
+    company_id = get_app_setting(g.db, PAYCHEX_COMPANY_KEY)
+    if not company_id:
+        return jsonify({"error": "Set the Paychex Company ID first (Roster tab > Import Paychex IDs)."}), 400
+
+    approved = [e for e in data["entries"] if e["status"] == "approved"]
+    if not approved:
+        return jsonify({"error": "No approved hours in this pay period to export."}), 400
+
+    employees = {e.dept_id: e for e in g.db.query(Employee).all()}
+    missing = sorted({
+        f"{e['dept_id']} {e['employee_name']}" for e in approved
+        if not (employees.get(e["dept_id"]) and employees[e["dept_id"]].payroll_id)
+    })
+    if missing:
+        return jsonify({
+            "error": "These members have approved hours but no Paychex ID, so their pay would be left out: "
+                     + ", ".join(missing) + ". Add their Payroll ID on the Roster tab, then export again.",
+            "missing": missing,
+        }), 400
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Required Fields Template"  # same sheet name as Paychex's template
+    ws.append(["Company ID", "Worker ID", "Punch/Apply Date", "Punch Time 1", "Punch Time 2", "Total Hours"])
+    for cell in ws[1]:
+        cell.font = Font(bold=True)
+        cell.number_format = "@"
+
+    def to_time(hhmm: str) -> dt_time:
+        if hhmm == "24:00":
+            return dt_time(0, 0)
+        h, m = map(int, hhmm.split(":"))
+        return dt_time(h, m)
+
+    def worker_sort(e):
+        pid = employees[e["dept_id"]].payroll_id
+        return (0, int(pid), "") if pid.isdigit() else (1, 0, pid)
+
+    rows = sorted(approved, key=lambda e: (worker_sort(e), e["shift_date"], e["start_time"]))
+    for e in rows:
+        ws.append([
+            _excel_number_or_text(company_id),
+            _excel_number_or_text(employees[e["dept_id"]].payroll_id),
+            datetime.strptime(e["shift_date"], "%Y-%m-%d"),
+            to_time(e["start_time"]),
+            to_time(e["end_time"]),
+            round(float(e["duration_hours"]), 2),
+        ])
+        r = ws.max_row
+        ws.cell(r, 3).number_format = "mm-dd-yy"
+        ws.cell(r, 4).number_format = "h:mm AM/PM"
+        ws.cell(r, 5).number_format = "h:mm AM/PM"
+        ws.cell(r, 6).number_format = "0.00"
+    for col, width in zip("ABCDEF", (12, 11, 17, 13, 13, 11)):
+        ws.column_dimensions[col].width = width
+
+    buffer = io.BytesIO()
+    wb.save(buffer)
+    actor = g.current_user
+    log_audit(
+        g.db,
+        actor_id=actor.dept_id,
+        actor_name=actor.name,
+        action="PAYCHEX_EXPORTED",
+        target_type="pay_period",
+        target_id=data["pay_period_start"],
+        details=(
+            f"Exported {len(rows)} approved shifts for {data['pay_period_start']} to "
+            f"{data['pay_period_end']} in Paychex Punch Detail format."
+        ),
+    )
+    g.db.commit()
+    filename = f"RVFD_Paychex_Punch_Import_{data['pay_period_start']}_to_{data['pay_period_end']}.xlsx"
+    return Response(
+        buffer.getvalue(),
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
