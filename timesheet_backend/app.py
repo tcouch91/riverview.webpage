@@ -28,6 +28,7 @@ from sqlalchemy import (
     Text,
     DateTime,
     ForeignKey,
+    or_,
     text,
 )
 from sqlalchemy.orm import declarative_base, sessionmaker, scoped_session, relationship
@@ -1740,9 +1741,72 @@ def import_employees_csv():
 @app.route("/api/audit-logs", methods=["GET"])
 @require_reviewer
 def get_audit_logs():
-    limit = min(int(request.args.get("limit", 100)), 500)
-    logs = g.db.query(AuditLog).order_by(AuditLog.timestamp.desc(), AuditLog.id.desc()).limit(limit).all()
-    return jsonify({"logs": [l.to_dict() for l in logs]})
+    """
+    Audit trail, newest first. Optional filters (combine freely):
+      action  - exact action code (e.g. ENTRY_APPROVED)
+      actor   - who did it (Department ID, SYSTEM, or an IP for failed sign-ins)
+      q       - text search across details, names, action, and target
+      since / until - ISO 8601 timestamps (since inclusive, until exclusive)
+      limit   - 1-500 (default 100)
+    """
+    try:
+        limit = min(max(int(request.args.get("limit", 100)), 1), 500)
+    except ValueError:
+        limit = 100
+
+    query = g.db.query(AuditLog)
+    action = request.args.get("action", "").strip()
+    if action:
+        query = query.filter(AuditLog.action == action)
+    actor = request.args.get("actor", "").strip()
+    if actor:
+        query = query.filter(AuditLog.actor_id == actor)
+    search = request.args.get("q", "").strip()[:100]
+    if search:
+        escaped = search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        like = f"%{escaped}%"
+        query = query.filter(or_(
+            AuditLog.details.ilike(like, escape="\\"),
+            AuditLog.actor_name.ilike(like, escape="\\"),
+            AuditLog.actor_id.ilike(like, escape="\\"),
+            AuditLog.target_id.ilike(like, escape="\\"),
+            AuditLog.target_type.ilike(like, escape="\\"),
+            AuditLog.action.ilike(like, escape="\\"),
+        ))
+    for param, op in (("since", "ge"), ("until", "lt")):
+        raw = request.args.get(param, "").strip()
+        if not raw:
+            continue
+        try:
+            moment = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        except ValueError:
+            return jsonify({"error": f"'{param}' must be an ISO 8601 date/time."}), 400
+        if moment.tzinfo is None:
+            moment = moment.replace(tzinfo=timezone.utc)
+        moment = moment.astimezone(timezone.utc)
+        query = query.filter(AuditLog.timestamp >= moment if op == "ge" else AuditLog.timestamp < moment)
+
+    total = query.count()
+    logs = query.order_by(AuditLog.timestamp.desc(), AuditLog.id.desc()).limit(limit).all()
+
+    # Filter choices: every action code, and every person (not IP addresses) who appears in the log
+    actions = [a for (a,) in g.db.query(AuditLog.action).distinct().order_by(AuditLog.action.asc()).all()]
+    names = {}
+    for actor_id, actor_name in g.db.query(AuditLog.actor_id, AuditLog.actor_name).distinct().all():
+        if is_valid_dept_id(actor_id) or actor_id == "SYSTEM":
+            names.setdefault(actor_id, actor_name)
+    for emp in g.db.query(Employee).all():
+        if emp.dept_id in names:
+            names[emp.dept_id] = emp.name
+    actors = [{"actor_id": k, "actor_name": v} for k, v in sorted(names.items())]
+
+    return jsonify({
+        "logs": [l.to_dict() for l in logs],
+        "total": total,
+        "limit": limit,
+        "actions": actions,
+        "actors": actors,
+    })
 
 
 # ==============================================================================

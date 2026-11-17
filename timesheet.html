@@ -590,6 +590,20 @@
             color: #374151;
         }
 
+        .audit-filter-link {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .audit-filter-link:hover {
+            text-decoration: underline;
+        }
+
+        .audit-filter-link:hover .badge {
+            background: #e0e7ff;
+            color: #1e3a8a;
+        }
+
         /* Shift Date Group Header & Click-to-Expand Note Sub-Row */
         table.data-table tbody tr.date-group-row {
             background: #f1f5f9;
@@ -2055,9 +2069,52 @@
             <div id="tabAudit" class="tab-pane" style="display: none;">
                 <div class="card">
                     <div class="card-header">
-                        <div class="card-title">Audit Log</div>
-                        <button type="button" class="btn btn-outline btn-sm" onclick="loadAuditLogs()">Refresh</button>
+                        <div>
+                            <div class="card-title">Audit Log</div>
+                            <div style="font-size: 0.84rem; color: var(--text-muted); margin-top: 2px;" id="auditResultCount"></div>
+                        </div>
+                        <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+                            <button type="button" class="btn btn-outline btn-sm" onclick="clearAuditFilters()">Clear Filters</button>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="loadAuditLogs()">Refresh</button>
+                        </div>
                     </div>
+
+                    <!-- Filters -->
+                    <div class="form-grid" style="margin-bottom: 1.25rem;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="auditFilterSearch">Search</label>
+                            <input type="search" id="auditFilterSearch" class="form-control" placeholder="Name, ID, or details..." maxlength="100" autocomplete="off">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="auditFilterAction">Action</label>
+                            <select id="auditFilterAction" class="form-control" onchange="loadAuditLogs()">
+                                <option value="">All Actions</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="auditFilterActor">Done By</label>
+                            <select id="auditFilterActor" class="form-control" onchange="loadAuditLogs()">
+                                <option value="">Anyone</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="auditFilterFrom">From</label>
+                            <input type="date" id="auditFilterFrom" class="form-control" onchange="loadAuditLogs()">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="auditFilterTo">To</label>
+                            <input type="date" id="auditFilterTo" class="form-control" onchange="loadAuditLogs()">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="auditFilterLimit">Show</label>
+                            <select id="auditFilterLimit" class="form-control" onchange="loadAuditLogs()">
+                                <option value="100">Latest 100</option>
+                                <option value="250">Latest 250</option>
+                                <option value="500">Latest 500</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <div class="table-responsive">
                         <table class="data-table">
                             <thead>
@@ -3801,30 +3858,116 @@
         // Audit Trail & Change Own PIN Modal
         // =====================================================================
 
+        // "ENTRY_APPROVED" -> "Entry approved"
+        function humanizeAuditAction(action) {
+            const s = String(action || "").toLowerCase().replace(/_/g, " ");
+            return s.charAt(0).toUpperCase() + s.slice(1);
+        }
+
+        // Fill a filter <select> with new choices, keeping the current selection (even if it's no longer listed)
+        function setAuditFilterOptions(selectId, firstLabel, items) {
+            const select = document.getElementById(selectId);
+            const current = select.value;
+            const values = new Set(items.map(i => i.value));
+            const extra = current && !values.has(current) ? [{ value: current, label: current }] : [];
+            select.innerHTML = `<option value="">${escapeHtml(firstLabel)}</option>` + items.concat(extra).map(i =>
+                `<option value="${escapeHtml(i.value)}">${escapeHtml(i.label)}</option>`
+            ).join("");
+            select.value = current;
+        }
+
+        let auditLoadSeq = 0;
         async function loadAuditLogs() {
+            const params = new URLSearchParams();
+            const search = document.getElementById("auditFilterSearch").value.trim();
+            const action = document.getElementById("auditFilterAction").value;
+            const actor = document.getElementById("auditFilterActor").value;
+            const from = document.getElementById("auditFilterFrom").value;
+            const to = document.getElementById("auditFilterTo").value;
+            params.set("limit", document.getElementById("auditFilterLimit").value || "100");
+            if (search) params.set("q", search);
+            if (action) params.set("action", action);
+            if (actor) params.set("actor", actor);
+            // Dates are local days: From = start of that day, To = through the end of that day
+            if (from) params.set("since", parseIsoDateLocal(from).toISOString());
+            if (to) {
+                const end = parseIsoDateLocal(to);
+                end.setDate(end.getDate() + 1);
+                params.set("until", end.toISOString());
+            }
+            const filtered = Boolean(search || action || actor || from || to);
+            const seq = ++auditLoadSeq;
+
             try {
-                const data = await apiRequest("/api/audit-logs");
-                const tbody = document.getElementById("auditLogsTbody");
+                const data = await apiRequest(`/api/audit-logs?${params.toString()}`);
+                if (seq !== auditLoadSeq) return; // a newer filter change already ran
+
+                setAuditFilterOptions("auditFilterAction", "All Actions",
+                    (data.actions || []).map(a => ({ value: a, label: humanizeAuditAction(a) })));
+                setAuditFilterOptions("auditFilterActor", "Anyone",
+                    (data.actors || []).map(a => ({ value: a.actor_id, label: a.actor_id === "SYSTEM" ? "System" : `${a.actor_id} — ${a.actor_name}` })));
+
                 const logs = data.logs || [];
+                const total = Number(data.total || 0);
+                document.getElementById("auditResultCount").textContent = total === 0
+                    ? ""
+                    : `${total > logs.length ? `Showing latest ${logs.length} of ${total.toLocaleString()}` : `${total.toLocaleString()}`} ${filtered ? "matching " : ""}${total === 1 ? "entry" : "entries"}`;
+
+                const tbody = document.getElementById("auditLogsTbody");
                 if (logs.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="5" class="empty-row-cell" style="text-align: center; color: var(--text-muted);">No audit records yet.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="5" class="empty-row-cell" style="text-align: center; color: var(--text-muted);">${filtered ? "No entries match these filters." : "No audit records yet."}</td></tr>`;
                     return;
                 }
-                tbody.innerHTML = logs.map(l => `
+                tbody.innerHTML = logs.map(l => {
+                    const actorFilterable = /^9\d{2}$/.test(l.actor_id) || l.actor_id === "SYSTEM";
+                    return `
                     <tr>
                         <td data-label="Timestamp" style="font-size: 0.82rem; color: var(--text-secondary); white-space: nowrap;">
                             ${new Date(l.timestamp).toLocaleString()}
                         </td>
-                        <td data-label="Actor"><span><b>${escapeHtml(l.actor_id)}</b> ${escapeHtml(l.actor_name)}</span></td>
-                        <td data-label="Action"><span class="badge badge-role">${escapeHtml(l.action)}</span></td>
+                        <td data-label="Actor">
+                            <span>${actorFilterable
+                                ? `<a href="#" class="audit-filter-link" onclick="filterAuditBy('actor', ${escapeHtml(JSON.stringify(l.actor_id))}); return false;" title="Show only entries by ${escapeHtml(l.actor_name)}"><b>${escapeHtml(l.actor_id)}</b> ${escapeHtml(l.actor_name)}</a>`
+                                : `<b>${escapeHtml(l.actor_id)}</b> ${escapeHtml(l.actor_name)}`}</span>
+                        </td>
+                        <td data-label="Action">
+                            <a href="#" class="audit-filter-link" onclick="filterAuditBy('action', ${escapeHtml(JSON.stringify(l.action))}); return false;" title="Show only this action">
+                                <span class="badge badge-role">${escapeHtml(l.action)}</span>
+                            </a>
+                        </td>
                         <td data-label="Target">${escapeHtml(l.target_type)} (${escapeHtml(l.target_id)})</td>
                         <td data-label="Details">${escapeHtml(l.details)}</td>
-                    </tr>
-                `).join("");
+                    </tr>`;
+                }).join("");
             } catch (err) {
+                if (seq === auditLoadSeq) showAlert(err.message, "error");
                 console.error("Failed loading audit logs:", err);
             }
         }
+
+        function filterAuditBy(kind, value) {
+            const select = document.getElementById(kind === "action" ? "auditFilterAction" : "auditFilterActor");
+            if (![...select.options].some(o => o.value === value)) {
+                select.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`);
+            }
+            select.value = value;
+            loadAuditLogs();
+        }
+
+        function clearAuditFilters() {
+            ["auditFilterSearch", "auditFilterAction", "auditFilterActor", "auditFilterFrom", "auditFilterTo"].forEach(id => {
+                document.getElementById(id).value = "";
+            });
+            document.getElementById("auditFilterLimit").value = "100";
+            loadAuditLogs();
+        }
+
+        // Search as you type (after a short pause)
+        let auditSearchTimer = null;
+        document.getElementById("auditFilterSearch").addEventListener("input", () => {
+            clearTimeout(auditSearchTimer);
+            auditSearchTimer = setTimeout(loadAuditLogs, 350);
+        });
 
         function openPinModal() {
             document.getElementById("currentPinInput").value = "";
